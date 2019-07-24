@@ -1,15 +1,14 @@
 
 #subjects=(CrunchPilot03)
-subjects=(OA_test)
+subjects=(ClarkPilot_02)
 #preprocessing_steps=("create_vdm")
 #preprocessing_steps=("realign_fmri")	
 #preprocessing_steps=("slicetime_fmri")
 #preprocessing_steps=("coregister_fmri")
-preprocessing_steps=("segment_fmri")
-preprocessing_steps("skull_strip")
-
-
-#preprocessing_steps=(ants_norm_fmri)
+#preprocessing_steps=("segment_fmri")
+#preprocessing_steps=("skull_strip_t1")
+#preprocessing_steps=("n4_bias_correction")
+#preprocessing_steps=("ants_norm_fmri")
 
 # # # # preprocessing_steps=(spm_norm_fmri)
 
@@ -84,23 +83,32 @@ for SUB in ${subjects[@]}; do
 			cp /ufrc/rachaelseidler/tfettrow/Crunch_Code/MR_Templates/TPM.nii /ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/${SUB}/Processed/MRI_files/${DAT_Folder}/
 			cd /ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/${SUB}/Processed/MRI_files/${DAT_Folder}/
 			matlab -nodesktop -nosplash -r "try; segment_fmri; catch; end; quit"
-			rm TPM.nii
+			#rm TPM.nii
 		done
 	fi
-	if [[ ${preprocessing_steps[*]} =~ "skull_strip" ]]; then
+	if [[ ${preprocessing_steps[*]} =~ "skull_strip_t1" ]]; then
 		data_folder_to_analyze=(02_T1)
 		for DAT_Folder in ${data_folder_to_analyze[@]}; do
 			cd /ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/${SUB}/Processed/MRI_files/${DAT_Folder}/
-			matlab -nodesktop -nosplash -r "try; skull_strip; catch; end; quit"
+			matlab -nodesktop -nosplash -r "try; skull_strip_t1; catch; end; quit"
 		done
 	fi
-
+	if [[ ${preprocessing_steps[*]} =~ "n4_bias_correction" ]]; then
+		data_folder_to_analyze=(02_T1)
+		for DAT_Folder in ${data_folder_to_analyze[@]}; do
+			ml gcc/5.2.0; ml ants 
+			cd /ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/${SUB}/Processed/MRI_files/${DAT_Folder}/
+			N4BiasFieldCorrection -i SkullStripped_Template.nii -o SkullStripped_biascorrected.nii
+		done
+	fi
 	if [[ ${preprocessing_steps[*]} =~ "ants_norm_fmri" ]]; then
 		data_folder_to_analyze=(02_T1)
 		for DAT_Folder in ${data_folder_to_analyze[@]}; do
+			cd /ufrc/rachaelseidler/tfettrow/Crunch_Code/Shell_Scripts
+			cp run_ANTS_MVT.batch /ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/${SUB}/Processed/MRI_files/${DAT_Folder}/
 			cd /ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/${SUB}/Processed/MRI_files/${DAT_Folder}/
 			sbatch run_ANTS_MVT.batch
+			rm run_ANTS_MVT.batch
 		done
 	fi
-
 done
