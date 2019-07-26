@@ -10,7 +10,7 @@
 date; hostname; pwd
 #Use modules to load the environment for R
 module load R
- 
+
 #Run R script 
 Rscript myRscript.R
  

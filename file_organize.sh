@@ -1,5 +1,4 @@
-
-subjects=(CrunchPilot03)
+subjects=(CrunchPilot02)
 
 #####################################################################################
 ml fsl
@@ -107,7 +106,7 @@ for SUB in ${subjects[@]}; do
 		mv -v ${file} "${file:15:20}.nii"
 	done
 	####################################################################################
-	 Resting State
+	# Resting State
 	cd ${Subject_dir}/Raw/MRI_files/RESTSTATE-FMRI_8MIN_0009
 	rm *nii.gz*
 	dcm2nii -a n -i y -r n -x n ${Subject_dir}/Raw/MRI_files/RESTSTATE-FMRI_8MIN_0009
