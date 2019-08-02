@@ -14,8 +14,8 @@ module load matlab
 #inputArray="{'subj_D_01.cfg', 'subj_D_02.cfg', 'subj_D_03.cfg', 'subj_D_04.cfg', 'subj_D_05.cfg', 'subj_D_06.cfg'}"
 #matlab -nodesktop -nosplash -r "try; SWM_Art($inputArray); catch; end; quit"
 
-inputArray="{'subj_E_03.cfg', 'subj_E_04.cfg', 'subj_E_05.cfg', 'subj_E_06.cfg'}"
-matlab -nodesktop -nosplash -r "try; SWM_Art($inputArray); catch; end; quit"
+#inputArray="{'subj_E_03.cfg', 'subj_E_04.cfg', 'subj_E_05.cfg', 'subj_E_06.cfg'}"
+#matlab -nodesktop -nosplash -r "try; SWM_Art($inputArray); catch; end; quit"
 
 #inputArray="{'subj_G_01.cfg', 'subj_G_02.cfg', 'subj_G_03.cfg', 'subj_G_04.cfg', 'subj_G_05.cfg', 'subj_G_06.cfg'}"
 #matlab -nodesktop -nosplash -r "try; SWM_Art($inputArray); catch; end; quit"

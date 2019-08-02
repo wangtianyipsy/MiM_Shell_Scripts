@@ -2,14 +2,13 @@
 #SBATCH --job-name=ANTS_ClarkPilot_TF			# Job name
 #SBATCH --mail-type=ALL               			# Mail events (NONE, BEGIN, END, FAIL, ALL)
 #SBATCH --mail-user=<tfettrow@ufl.edu>  		# Where to send mail	
-#SBATCH --ntasks=1                    			# Run on a single CPU
-#SBATCH --mem=24000mb                   	    # Memory limit
+#SBATCH --ntasks=2                    			# Run on a single CPU
+#SBATCH --mem=1600mb                   	    # Memory limit
 #SBATCH --qos=rachaelseidler
-#SBATCH --time=54:00:00               			# Time limit hrs:min:sec
+#SBATCH --time=96:00:00               			# Time limit hrs:min:sec
 #SBATCH --output=ANTS_output_%j.out    			# Standard output and error log
 #SBATCH --output=ANTS_.%A_%a.out
 #SBATCH --error=ANTS_.%A_%a.error
-
 
 pwd; hostname; date
 
@@ -18,11 +17,15 @@ pwd; hostname; date
 # slurmInfo rachaelseidler
 
 ml gcc/5.2.0; ml ants 
-antsMultivariateTemplateConstruction2.sh -d 3 -i 4 -k 1 -f 4x2x1 -s 2x1x0vox -q 30x20x4 -t BSplineSyN -n 1 -m CC -c 0 -r 1 -l 1 -o multivariate_B_ *.nii
+
+#cd /ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/OA_test/Processed/MRI_files/02_T1
+#N4BiasFieldCorrection -i SkullStripped_Template.nii -o SkullStripped_biascorrected.nii
+
+# did not work too well with ClarkPilot data
+antsMultivariateTemplateConstruction2.sh -d 3 -i 4 -k 1 -f 4x2x1 -s 2x1x0vox -q 30x20x4 -t BSplineSyN -e 0 -n 1 -m CC -c 0 -r 1 -l 1 -o multivariate_B_ *.nii
 
 
-#local: 
-#antsMultivariateTemplateConstruction2.sh -d 3 -i 4 -k 1 -f 4x2x1 -s 2x1x0vox -q 30x20x4 -t BSplineSyN -n 1 -m CC -c 0 -r 1 -l 1 -o multivariate_B_ *.nii
+
 
 date
 
