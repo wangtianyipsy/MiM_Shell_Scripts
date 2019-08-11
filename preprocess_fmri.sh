@@ -1,11 +1,11 @@
 
-subjects=(CrunchPilot02)
+subjects=(CrunchPilot03)
 #subjects=(ClarkPilot_01 ClarkPilot_02)
 
 #preprocessing_steps=("slicetime_fmri")
 #preprocessing_steps=("merge_fieldmap_fmri")
-preprocessing_steps=("create_vdm_fmri")
-#preprocessing_steps=("realign_fmri")
+#preprocessing_steps=("create_vdm_fmri")
+preprocessing_steps=("realign_fmri")
 
 #preprocessing_steps=("segment_fmri")
 #preprocessing_steps=("skull_strip_t1")
@@ -55,14 +55,15 @@ for SUB in ${subjects[@]}; do
 			#cd ${Fieldmap_dir}/${DAT_Folder}
 			cd /ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/${SUB}/Processed/MRI_files/03_Fieldmaps/${DAT_Folder}/
 			
+			ml fsl
 			# Equation for how to find total read out time? ===== #Total readout time (FSL) = (MatrixSizePhase - 1) * EffectiveEchoSpacing ====  (96 - 1) * .213333 ==== .0203 seconds
 			echo 0 -1 0 .0203 >> acqParams.txt
 			echo 0  1 0 .0203 >> acqParams.txt
 			fslmerge -t AP_PA_merged fMRIDistMapAP.nii fMRIDistMapPA.nii
+
 			topup --imain=AP_PA_merged.nii --datain=acqParams.txt --fout=my_fieldmap --config=b02b0.cnf --iout=se_epi_unwarped --out=topup_results
 			ml fsl/5.0.8
 			fslchfiletype ANALYZE my_fieldmap.nii fpm_my_fieldmap
-			#fslmaths se_epi_unwarped_imagery -Tmean my_fieldmap_mask_imagery
 			gunzip *nii.gz*
 	
 			#cd ${Fieldmap_dir}/Fieldmap_nback
@@ -82,17 +83,20 @@ for SUB in ${subjects[@]}; do
 	if [[ ${preprocessing_steps[*]} =~ "create_vdm_fmri" ]]; then
 		data_folder_to_analyze=(Fieldmap_imagery Fieldmap_nback)
 	   	for DAT_Folder in ${data_folder_to_analyze[@]}; do
-   			cp /ufrc/rachaelseidler/tfettrow/Crunch_Code/Matlab_Scripts/helper/Ugrant_defaults.m /ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/${SUB}/Processed/MRI_files/03_Fieldmaps/${DAT_Folder}/;
+   			cp /ufrc/rachaelseidler/tfettrow/Crunch_Code/Matlab_Scripts/helper/Ugrant_defaults.m /ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/${SUB}/Processed/MRI_files/03_Fieldmaps/${DAT_Folder}/
+			cd /ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/${SUB}/Processed/MRI_files/03_Fieldmaps/${DAT_Folder}/ 
 			ml matlab
-			matlab -nodesktop -nosplash -r "create_vdm; quit"
+			matlab -nodesktop -nosplash -r "try; create_vdm; catch; end; quit"
 
-			ml fsl/5.0.8
-			fslchfiletype NIFTI *.hdr
+			# needs to be an .img
 			if [[ $DAT_Folder == Fieldmap_imagery ]]; then
+				#cp vdm5_my_fieldmap.nii /ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/${SUB}/Processed/MRI_files/05_MotorImagery/
 				cp vdm5_fpm_my_fieldmap.hdr /ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/${SUB}/Processed/MRI_files/05_MotorImagery/
 				cp vdm5_fpm_my_fieldmap.img /ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/${SUB}/Processed/MRI_files/05_MotorImagery/
 			fi
 			if [[ $DAT_Folder == Fieldmap_nback ]]; then
+				#cp vdm5_my_fieldmap.nii /ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/${SUB}/Processed/MRI_files/06_Nback/
+				
 				cp vdm5_fpm_my_fieldmap.hdr /ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/${SUB}/Processed/MRI_files/06_Nback/
 				cp vdm5_fpm_my_fieldmap.img /ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/${SUB}/Processed/MRI_files/06_Nback/
 			fi
@@ -113,7 +117,7 @@ for SUB in ${subjects[@]}; do
 		for DAT_Folder in ${data_folder_to_analyze[@]}; do
 			cd /ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/${SUB}/Processed/MRI_files/${DAT_Folder}/
 			ml matlab
-			matlab -nodesktop -nosplash -r "realign_fmri; quit"
+			matlab -nodesktop -nosplash -r "try; realign_fmri; catch; end; quit"
 		done
 	fi
 	
