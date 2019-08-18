@@ -3,7 +3,6 @@
 ml gcc/5.2.0
 ml ants
 
-
 outputFolder=/ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/ANTS_Template_Processing_Folder_Crunch
 t1brain=/ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/ANTS_Template_Processing_Folder_Crunch/multivariate_B_template0warp.nii.gz
 template=/ufrc/rachaelseidler/tfettrow/Crunch_Code/MR_Templates/_ANTs_c0cTemplate_T1_IXI555_MNI152_GS_brain.nii

@@ -43,30 +43,35 @@ for SUB in ${subjects[@]}; do
    	if [[ ${preprocessing_steps[*]} =~ "eddy_correction" ]]; then
    		cd /ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/${SUB}/Processed/MRI_files/03_Fieldmaps/Fieldmap_dti
        
-   		#cp my_fieldmap_mask_brain_dti.nii /ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/${SUB}/Processed/MRI_files/08_DWI
+   		cp my_fieldmap_mask_brain_dti.nii /ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/${SUB}/Processed/MRI_files/08_DWI
 		cp my_fieldmap_dti.nii /ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/${SUB}/Processed/MRI_files/08_DWI
-
+		cp acqParams.txt /ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/${SUB}/Processed/MRI_files/08_DWI
         cd /ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/${SUB}/Processed/MRI_files/08_DWI
 		
-   		# need to remove  a slice from DWI data
-   		fslsplit ep2ddiff5B0DT_denoised slice -z
-		# Remove slice 0000 (remove the most inferior slice). Check what this slice looks like before you delete it!
-		rm slice0000.nii.gz
-		# Merge remaining slices
-		fslmerge -z ep2ddiff5B0DT_denoised_68slices slice0*
-		# We're done with the remaining inidividual slices so delete them
-		rm slice00*.nii.gz
-		gunzip *nii.gz*
-
-		#cp ep2ddiff5B0DT_denoised_68slices.nii /ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/${SUB}/Processed/MRI_files/03_Fieldmaps/Fieldmap_dti
-
-		
-   		
 		ml fsl
+		
+   		# need to remove  a slice from DWI data
+   		#fslsplit ep2ddiff5B0DT_denoised slice -z
+		## Remove slice 0000 (remove the most inferior slice). Check what this slice looks like before you delete it!
+		#rm slice0000.nii.gz
+		## Merge remaining slices
+		#fslmerge -z ep2ddiff5B0DT_denoised_68slices slice0*
+		## We're done with the remaining inidividual slices so delete them
+		#rm slice00*.nii.gz
+		#gunzip *nii.gz*
+#
+		#cp ep2ddiff5B0DT_denoised_68slices.nii /ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/${SUB}/Processed/MRI_files/03_Fieldmaps/Fieldmap_dti
+   		#
+#
 		NVOL=`fslnvols ep2ddiff5B0DT_denoised_68slices`
-		for ((i=1; i<=${NVOL}; i+=1)); do indx="$indx 1"; done; echo $indx > index.txt
+		#for ((i=1; i<=${NVOL}; i+=1)); do indx="$indx 1"; done; echo $indx > index.txt
 
-		eddy_openmp --imain=ep2ddiff5B0DT_denoised_68slices --mask=my_fieldmap_dti --acqp=acqParams.txt --index=index.txt --bvecs=ep2ddiff5B0DT.bvecs --bvals=ep2ddiff5B0DT.bvals --out=eddy_corrected_data
+		# create matching number of slices for mask
+		# mv -v ${file} "${file:15:2}.nii"
+		#for ((i=1; i<=${NVOL}; i+=1)); do mv -v my_fieldmap_dti.nii slice${i}; done;
+
+
+		#eddy_openmp --imain=ep2ddiff5B0DT_denoised_68slices --mask=my_fieldmap_dti --acqp=acqParams.txt --index=index.txt --bvecs=ep2ddiff5B0DT.bvecs --bvals=ep2ddiff5B0DT.bvals --out=eddy_corrected_data
 		
 		# how might this change for multi-band acq?
 	fi

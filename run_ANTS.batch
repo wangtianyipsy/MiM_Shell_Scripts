@@ -1,0 +1,67 @@
+#!/bin/bash
+#SBATCH --job-name=ANTS_CrunchMVT1_TF			# Job name
+#SBATCH --mail-type=ALL               			# Mail events (NONE, BEGIN, END, FAIL, ALL)
+#SBATCH --mail-user=<tfettrow@ufl.edu>  		# Where to send mail	
+#SBATCH --ntasks=1		               			# Run on 4 CPUs
+#SBATCH --mem=18000mb                   	    # Memory limit
+#SBATCH --qos=rachaelseidler
+#SBATCH --time=96:00:00               			# Time limit hrs:min:sec
+#SBATCH --output=ANTS_output_%j.out    			# Standard output and error log
+#SBATCH --output=ANTS_.%A_%a.out
+#SBATCH --error=ANTS_.%A_%a.error
+
+
+pwd; hostname; date
+
+#To check allotments for our group: 
+#ml ufrc; showQos rachaelseidler
+# slurmInfo rachaelseidler
+
+ml gcc/5.2.0; ml ants 
+
+
+#cd /ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/OA_test/Processed/MRI_files/02_T1
+#N4BiasFieldCorrection -i SkullStripped_Template.nii -o SkullStripped_biascorrected.nii
+
+antsMultivariateTemplateConstruction.sh -d 3 -i 4 -g 0.2 -n 1 -j 4 -m 100x70x50x10 -c 0 -t GR -s CC -r 1 -o multivariate_ *.nii
+
+outputFolder=/ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/ANTS_Template_Processing_Folder_Crunch_Batch
+MVT_Template=/ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/ANTS_Template_Processing_Folder_Crunch_Batch/multivariate_template0.nii.gz
+MNI_Template=/ufrc/rachaelseidler/tfettrow/Crunch_Code/MR_Templates/_ANTs_c0cTemplate_T1_IXI555_MNI152_GS_brain.nii
+
+antsRegistration --dimensionality 3 --float 0 \
+        --output [$outputFolder/MVT_to_MNI_,$outputFolder/MVT_to_MNI_Warped.nii.gz] \
+        --interpolation Linear \
+        --winsorize-image-intensities [0.005,0.995] \
+        --use-histogram-matching 0 \
+        --initial-moving-transform [$MVT_Template,$MNI_Template,1] \
+        --transform Rigid[0.1] \
+        --metric MI[$MVT_Template,$MNI_Template,1,32,Regular,0.25] \
+        --convergence [1000x500x250x100,1e-6,10] \
+        --shrink-factors 8x4x2x1 \
+        --smoothing-sigmas 3x2x1x0vox \
+        --transform Affine[0.1] \
+        --metric MI[$MVT_Template,$MNI_Template,1,32,Regular,0.25] \
+        --convergence [1000x500x250x100,1e-6,10] \
+        --shrink-factors 8x4x2x1 \
+        --smoothing-sigmas 3x2x1x0vox \
+        --transform SyN[0.1,3,0] \
+        --metric CC[$MVT_Template,$MNI_Template,1,4] \
+        --convergence [100x70x50x20,1e-6,10] \
+        --shrink-factors 8x4x2x1 \
+        --smoothing-sigmas 3x2x1x0vox
+
+date
+
+
+#To run this script, type the following on HiPerGator: 
+#sbatch *.batch 
+
+#To check its progress and for errors type: 
+#nano -open *.out
+#nano -open *.error 
+
+#To check how it's going / cancel: 
+#squeue -A rachaelseidler 
+#scancel <JOBID>
+

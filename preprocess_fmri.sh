@@ -1,11 +1,11 @@
 
-subjects=(CrunchPilot03)
+subjects=(CrunchPilot02 CrunchPilot03)
 #subjects=(ClarkPilot_01 ClarkPilot_02)
 
 #preprocessing_steps=("slicetime_fmri")
 #preprocessing_steps=("merge_fieldmap_fmri")
 #preprocessing_steps=("create_vdm_fmri")
-preprocessing_steps=("realign_fmri")
+#preprocessing_steps=("realign_fmri")
 
 #preprocessing_steps=("segment_fmri")
 #preprocessing_steps=("skull_strip_t1")
@@ -13,7 +13,6 @@ preprocessing_steps=("realign_fmri")
 #preprocessing_steps=("coregister_fmri") # this is for 
 
 #preprocessing_steps=("n4_bias_correction")
-#preprocessing_steps=("ants_norm_fmri")  ## need to work in Ants Registration here...
 
 
 ####preprocessing_steps=("spm_norm_fmri")  # replace the y_T1 with Ants output??
@@ -24,13 +23,15 @@ preprocessing_steps=("realign_fmri")
 
 
 # # # TO DO: 
-# place fieldmap stuff into a .sh and call that .sh here
 # what to do with rp_ output files in realign if runing realign and realign and unwarp multiple times
 # create option to run MVT and ANTSreg locally or batch
 # run conn_batch for art
-# consider a common script that can call all .sh incuding file_orgnaize and fieldmap_fmri    maybe a preprocessing.sh and level1.sh
 # what is a dilated segmentation??
 # find a way to cut down on file path lengths 
+# create an ANTS processing_fmri/dwi? .sh
+# calculate effective echo spacing ?? see preprocessing steps
+# slice timing adjustements (ref middle time, need to be in milliseconds)
+# grab subject info from header
 
 
 # Set the path for our custom matlab functions and scripts
@@ -56,12 +57,17 @@ for SUB in ${subjects[@]}; do
 			cd /ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/${SUB}/Processed/MRI_files/03_Fieldmaps/${DAT_Folder}/
 			
 			ml fsl
-			# Equation for how to find total read out time? ===== #Total readout time (FSL) = (MatrixSizePhase - 1) * EffectiveEchoSpacing ====  (96 - 1) * .213333 ==== .0203 seconds
+
+
+			#total read out time? = #Total readout time (FSL) = (MatrixSizePhase - 1) * EffectiveEchoSpacing =  (96 - 1) * .213333 = .0203 sec
 			echo 0 -1 0 .0203 >> acqParams.txt
 			echo 0  1 0 .0203 >> acqParams.txt
-			fslmerge -t AP_PA_merged fMRIDistMapAP.nii fMRIDistMapPA.nii
 
+
+			fslmerge -t AP_PA_merged fMRIDistMapAP.nii fMRIDistMapPA.nii
 			topup --imain=AP_PA_merged.nii --datain=acqParams.txt --fout=my_fieldmap --config=b02b0.cnf --iout=se_epi_unwarped --out=topup_results
+			
+
 			ml fsl/5.0.8
 			fslchfiletype ANALYZE my_fieldmap.nii fpm_my_fieldmap
 			gunzip *nii.gz*
@@ -90,13 +96,12 @@ for SUB in ${subjects[@]}; do
 
 			# needs to be an .img
 			if [[ $DAT_Folder == Fieldmap_imagery ]]; then
-				#cp vdm5_my_fieldmap.nii /ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/${SUB}/Processed/MRI_files/05_MotorImagery/
+				cp vdm5_my_fieldmap.nii /ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/${SUB}/Processed/MRI_files/05_MotorImagery/
 				cp vdm5_fpm_my_fieldmap.hdr /ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/${SUB}/Processed/MRI_files/05_MotorImagery/
 				cp vdm5_fpm_my_fieldmap.img /ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/${SUB}/Processed/MRI_files/05_MotorImagery/
 			fi
 			if [[ $DAT_Folder == Fieldmap_nback ]]; then
-				#cp vdm5_my_fieldmap.nii /ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/${SUB}/Processed/MRI_files/06_Nback/
-				
+				cp vdm5_my_fieldmap.nii /ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/${SUB}/Processed/MRI_files/06_Nback/
 				cp vdm5_fpm_my_fieldmap.hdr /ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/${SUB}/Processed/MRI_files/06_Nback/
 				cp vdm5_fpm_my_fieldmap.img /ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/${SUB}/Processed/MRI_files/06_Nback/
 			fi
@@ -183,24 +188,3 @@ for SUB in ${subjects[@]}; do
 		done
 	fi
 done
-
-if [[ ${preprocessing_steps[*]} =~ "ants_norm_fmri" ]]; then
-	for SUB in ${subjects[@]}; do
-		# need to grab the biascorrected.nii from the subjects of interest
-		# move them to the "processing folder" and change file name to include subjectID
-		# move .batch to "processing folder" 
-
-
-		mkdir -p /ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/ANTS_Template_Processing_Folder
-		cd /ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/${SUB}/Processed/MRI_files/02_T1/
-		cp SkullStripped_biascorrected.nii /ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/ANTS_Template_Processing_Folder
-		
-		cd /ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/ANTS_Template_Processing_Folder
-		mv -v SkullStripped_biascorrected.nii "${SUB}_SkullStripped_biascorrected.nii"		
-	done
-	cd /ufrc/rachaelseidler/tfettrow/Crunch_Code/Shell_Scripts
-	cp run_ANTS_MVT.batch /ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/ANTS_Template_Processing_Folder
-	cd /ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/ANTS_Template_Processing_Folder
-	sbatch run_ANTS_MVT.batch
-	#rm run_ANTS_MVT.batch
-fi
