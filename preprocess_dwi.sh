@@ -2,7 +2,8 @@ subjects=(CrunchPilot02)
 
 #preprocessing_steps=("rician_filter")
 #preprocessing_steps=("fieldmap_dti")
-preprocessing_steps=("eddy_correction")
+#preprocessing_steps=("eddy_correction")
+preprocessing_steps=("skull_strip")
 
 for SUB in ${subjects[@]}; do
    	#if [[ ${preprocessing_steps[*]} =~ "rician_filter" ]]; then
@@ -35,6 +36,7 @@ for SUB in ${subjects[@]}; do
 		rm slice00*.nii
 		#
 		topup --imain=AP_PA_merged_68slices.nii --datain=acqParams.txt --fout=my_fieldmap_dti --config=b02b0.cnf --iout=se_epi_unwarped_dti --out=topup_results_dti
+
 		fslmaths my_fieldmap_dti -mul 6.28 my_fieldmap_rads_dti
 		fslmaths se_epi_unwarped_dti -Tmean my_fieldmap_mask_dti
 		bet2 my_fieldmap_mask_dti my_fieldmap_mask_brain_dti
@@ -49,31 +51,44 @@ for SUB in ${subjects[@]}; do
         cd /ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/${SUB}/Processed/MRI_files/08_DWI
 		
 		ml fsl
-		
+
    		# need to remove  a slice from DWI data
-   		#fslsplit ep2ddiff5B0DT_denoised slice -z
-		## Remove slice 0000 (remove the most inferior slice). Check what this slice looks like before you delete it!
-		#rm slice0000.nii.gz
-		## Merge remaining slices
-		#fslmerge -z ep2ddiff5B0DT_denoised_68slices slice0*
+   		fslsplit ep2ddiff5B0DT_denoised slice -z
+		# Remove slice 0000 (remove the most inferior slice). Check what this slice looks like before you delete it!
+		rm slice0000.nii.gz
+		# Merge remaining slices
+		fslmerge -z ep2ddiff5B0DT_denoised_68slices slice0*
 		## We're done with the remaining inidividual slices so delete them
-		#rm slice00*.nii.gz
-		#gunzip *nii.gz*
-#
-		#cp ep2ddiff5B0DT_denoised_68slices.nii /ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/${SUB}/Processed/MRI_files/03_Fieldmaps/Fieldmap_dti
-   		#
-#
+		rm slice00*.nii.gz
+		gunzip *nii.gz*
+
 		NVOL=`fslnvols ep2ddiff5B0DT_denoised_68slices`
-		#for ((i=1; i<=${NVOL}; i+=1)); do indx="$indx 1"; done; echo $indx > index.txt
+		for ((i=1; i<=${NVOL}; i+=1)); do indx="$indx 1"; done; echo $indx > index.txt
 
-		# create matching number of slices for mask
-		# mv -v ${file} "${file:15:2}.nii"
-		#for ((i=1; i<=${NVOL}; i+=1)); do mv -v my_fieldmap_dti.nii slice${i}; done;
-
-
-		#eddy_openmp --imain=ep2ddiff5B0DT_denoised_68slices --mask=my_fieldmap_dti --acqp=acqParams.txt --index=index.txt --bvecs=ep2ddiff5B0DT.bvecs --bvals=ep2ddiff5B0DT.bvals --out=eddy_corrected_data
+		# need to adjust to same size voxels
+		#cp my_fieldmap_mask_brain_dti.nii my_fieldmap_mask_brain_dti_pixAdjust.nii
 		
-		# how might this change for multi-band acq?
+		#cp ep2ddiff5B0DT_denoised_68slices ep2ddiff5B0DT_denoised_68slices_pixAdjust.nii
+
+		#fslchpixdim ep2ddiff5B0DT_denoised_68slices_pixAdjust 2 2 2 0
+
+		fslmaths ep2ddiff5B0DT_denoised_68slices -Tmean Mean_ep2ddiff5B0DT_denoised_68slices
+
+		flirt -in my_fieldmap_mask_brain_dti.nii -ref Mean_ep2ddiff5B0DT_denoised_68slices.nii -out my_fieldmap_mask_brain_dti_pixAdjust.nii
+
+		#flirt -interp nearestneighbour -in my_fieldmap_mask_brain_dti.nii -ref Mean_ep2ddiff5B0DT_denoised_68slices.nii -applyisoxfm 4 -out my_fieldmap_mask_brain_dti_pixAdjust.nii
+
+		# flirt -in mask.nii.gz -ref data.nii.gz -out mask_rs.nii.gz
+ 		#Where mask.nii.gz is the mask you created from Atlas Tools, and data.nii.gz is your functional data.
+	
+		eddy_openmp --imain=ep2ddiff5B0DT_denoised_68slices --mask=my_fieldmap_mask_brain_dti_pixAdjust --acqp=acqParams.txt --index=index.txt --bvecs=ep2ddiff5B0DT.bvec --bvals=ep2ddiff5B0DT.bval --out=eddy_corrected_data
+
 	fi
+	if [[ ${preprocessing_steps[*]} =~ "skull_strip" ]]; then
+		cd /ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/${SUB}/Processed/MRI_files/08_DWI
+		ml fsl
+		bet2 eddy_corrected_data.nii eddy_corrected_Skullstripped.nii
+	fi
+
 
 done
