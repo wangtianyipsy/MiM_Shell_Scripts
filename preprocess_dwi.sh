@@ -24,6 +24,11 @@ for SUB in ${subjects[@]}; do
 		echo 0  1 0 .0355 >> acqParams.txt
 		echo 0  1 0 .0355 >> acqParams.txt
 		echo 0  1 0 .0355 >> acqParams.txt
+
+
+		#NVOL=`fslnvols ep2ddiff5B0DT_denoised_68slices`
+		#for ((i=1; i<=${NVOL}; i+=1)); do indx="$indx 1"; done; echo $indx > index.txt
+
 		
 		ml fsl
 		fslmerge -t AP_PA_merged ep2ddiff5B0DistMapAP.nii ep2ddiff5B0DistMapPA.nii
@@ -65,21 +70,9 @@ for SUB in ${subjects[@]}; do
 		NVOL=`fslnvols ep2ddiff5B0DT_denoised_68slices`
 		for ((i=1; i<=${NVOL}; i+=1)); do indx="$indx 1"; done; echo $indx > index.txt
 
-		# need to adjust to same size voxels
-		#cp my_fieldmap_mask_brain_dti.nii my_fieldmap_mask_brain_dti_pixAdjust.nii
-		
-		#cp ep2ddiff5B0DT_denoised_68slices ep2ddiff5B0DT_denoised_68slices_pixAdjust.nii
-
-		#fslchpixdim ep2ddiff5B0DT_denoised_68slices_pixAdjust 2 2 2 0
-
 		fslmaths ep2ddiff5B0DT_denoised_68slices -Tmean Mean_ep2ddiff5B0DT_denoised_68slices
 
 		flirt -in my_fieldmap_mask_brain_dti.nii -ref Mean_ep2ddiff5B0DT_denoised_68slices.nii -out my_fieldmap_mask_brain_dti_pixAdjust.nii
-
-		#flirt -interp nearestneighbour -in my_fieldmap_mask_brain_dti.nii -ref Mean_ep2ddiff5B0DT_denoised_68slices.nii -applyisoxfm 4 -out my_fieldmap_mask_brain_dti_pixAdjust.nii
-
-		# flirt -in mask.nii.gz -ref data.nii.gz -out mask_rs.nii.gz
- 		#Where mask.nii.gz is the mask you created from Atlas Tools, and data.nii.gz is your functional data.
 	
 		eddy_openmp --imain=ep2ddiff5B0DT_denoised_68slices --mask=my_fieldmap_mask_brain_dti_pixAdjust --acqp=acqParams.txt --index=index.txt --bvecs=ep2ddiff5B0DT.bvec --bvals=ep2ddiff5B0DT.bval --out=eddy_corrected_data
 
@@ -89,6 +82,4 @@ for SUB in ${subjects[@]}; do
 		ml fsl
 		bet2 eddy_corrected_data.nii eddy_corrected_Skullstripped.nii
 	fi
-
-
 done

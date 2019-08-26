@@ -5,9 +5,11 @@ subjects=(CrunchPilot02)
 
 #ants_processing_steps=("n4_bias_correction")
 #ants_processing_steps=("ants_create_MVT")
-ants_processing_steps=("ants_registration_Func_2_T1")
+#ants_processing_steps=("ants_registration_Func_2_T1")
 #ants_processing_steps=("ants_apply_transform_Func_2_T1")
-#ants_processing_steps=("ants_apply_transform_Func_2_MNI")
+#ants_processing_steps=("ants_apply_transform_MVT_2_MNI")
+ants_processing_steps=("ants_apply_transform_Func_2_MNI")
+
 
 # # # TO DO: 
 # create option to run MVT and ANTSreg locally or batch
@@ -97,6 +99,7 @@ for SUB in ${subjects[@]}; do
 			        --shrink-factors 8x4x2x1 \
 			        --smoothing-sigmas 3x2x1x0vox
 
+			cp ${Subject_dir}/Processed/MRI_files/${DAT_Folder}/mean_unwarpedRealigned_slicetimed_fMRI01Run1.nii ${Subject_dir}/Processed/MRI_files/${DAT_Folder}/ANTS_Processing
 		done
 	fi
 	if [[ ${ants_processing_steps[*]} =~ "ants_apply_transform_Func_2_T1" ]]; then
@@ -108,7 +111,7 @@ for SUB in ${subjects[@]}; do
 			# TO DO: Figure out what how to get these files here prior to this.
 			#cp /ufrc/rachaelseidler/tfettrow/Crunch_Code/MR_Templates/_ANTs_c0cTemplate_T1_IXI555_MNI152_GS_brain.nii ${Subject_dir}/Processed/MRI_files/${DAT_Folder}/ANTS_Processing
 			#cp ${Subject_dir}/Processed/MRI_files/${DAT_Folder}/unwarpedRealigned_slicetimed_fMRI01Run1.nii ${Subject_dir}/Processed/MRI_files/${DAT_Folder}/ANTS_Processing
-			#cp ${Subject_dir}/Processed/MRI_files/${DAT_Folder}/meanunwarpedRealigned_slicetimed_fMRI01Run1.nii ${Subject_dir}/Processed/MRI_files/${DAT_Folder}/ANTS_Processing
+			#cp ${Subject_dir}/Processed/MRI_files/${DAT_Folder}/mean_unwarpedRealigned_slicetimed_fMRI01Run1_biascorrected.nii ${Subject_dir}/Processed/MRI_files/${DAT_Folder}/ANTS_Processing
 			#cp ${Ants_dir}/MVT_to_MNI_0GenericAffine.mat ${Subject_dir}/Processed/MRI_files/${DAT_Folder}/ANTS_Processing
 			#cp ${Ants_dir}/MVT_to_MNI_1InverseWarp.nii.gz ${Subject_dir}/Processed/MRI_files/${DAT_Folder}/ANTS_Processing
 			#cp ${Ants_dir}/MVT_to_MNI_1Warp.nii.gz ${Subject_dir}/Processed/MRI_files/${DAT_Folder}/ANTS_Processing
@@ -116,16 +119,39 @@ for SUB in ${subjects[@]}; do
 			#cp ${Ants_dir}/multivariate_CrunchPilot02_SkullStripped_biascorrected01Warp.nii.gz ${Subject_dir}/Processed/MRI_files/${DAT_Folder}/ANTS_Processing
 			#cp ${Ants_dir}/multivariate_CrunchPilot02_SkullStripped_biascorrected01InverseWarp.nii.gz ${Subject_dir}/Processed/MRI_files/${DAT_Folder}/ANTS_Processing
 			#cp ${Ants_dir}/multivariate_CrunchPilot02_SkullStripped_biascorrected00GenericAffine.mat ${Subject_dir}/Processed/MRI_files/${DAT_Folder}/ANTS_Processing
-			cd ${Subject_dir}//Processed/MRI_files/${DAT_Folder}/ANTS_Processing
+			cd ${Subject_dir}/Processed/MRI_files/${DAT_Folder}/ANTS_Processing
 
-			antsApplyTransforms -d 3 -e 3 -i meanunwarpedRealigned_slicetimed_fMRI01Run1_biascorrected.nii -r SkullStripped_biascorrected.nii \
-			-n BSpline -o meanunwarpedRealigned_slicetimed_warpedToT1.nii -t [Func_to_T1_1Warp.nii] -t [Func_to_T1_0GenericAffine.mat,0] -v 
+			antsApplyTransforms -d 3 -e 3 -i mean_unwarpedRealigned_slicetimed_fMRI01Run1_biascorrected.nii -r SkullStripped_biascorrected.nii \
+			-n BSpline -o mean_unwarpedRealigned_slicetimed_biascorrected_warpedToT1.nii -t [Func_to_T1_1Warp.nii] -t [Func_to_T1_0GenericAffine.mat,0] -v 
 
-			antsApplyTransforms -d 3 -e 3 -i meanunwarpedRealigned_slicetimed_fMRI01Run1_biascorrected.nii -r SkullStripped_biascorrected.nii \
-			-n BSpline -o meanunwarpedRealigned_slicetimed_InverseWarpedToT1.nii -t [Func_to_T1_0GenericAffine.mat,1] -t [Func_to_T1_1InverseWarp.nii] -v 
+			antsApplyTransforms -d 3 -e 3 -i mean_unwarpedRealigned_slicetimed_fMRI01Run1_biascorrected.nii -r SkullStripped_biascorrected.nii \
+			-n BSpline -o mean_unwarpedRealigned_slicetimed_biascorrected_InverseWarpedToT1.nii -t [Func_to_T1_0GenericAffine.mat,1] -t [Func_to_T1_1InverseWarp.nii] -v 
 		done
 	fi
-	if [[ ${ants_processing_steps[*]} =~ "ants_apply_transform_Func_2_MNI" ]]; then
+	if [[ ${ants_processing_steps[*]} =~ "ants_apply_transform_MVT_2_MNI" ]]; then
+		data_folder_to_analyze=(05_MotorImagery)
+		for DAT_Folder in ${data_folder_to_analyze[@]}; do
+			Subject_dir=/ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/${SUB}/
+			Ants_dir=/ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/ANTS_Template_Processing_Folder_Crunch/
+
+			# TO DO: Figure out what how to get these files here prior to this.
+			#cp /ufrc/rachaelseidler/tfettrow/Crunch_Code/MR_Templates/_ANTs_c0cTemplate_T1_IXI555_MNI152_GS_brain.nii ${Subject_dir}/Processed/MRI_files/${DAT_Folder}/ANTS_Processing
+			#cp ${Subject_dir}/Processed/MRI_files/${DAT_Folder}/unwarpedRealigned_slicetimed_fMRI01Run1.nii ${Subject_dir}/Processed/MRI_files/${DAT_Folder}/ANTS_Processing
+			#cp ${Subject_dir}/Processed/MRI_files/${DAT_Folder}/mean_unwarpedRealigned_slicetimed_fMRI01Run1_biascorrected.nii ${Subject_dir}/Processed/MRI_files/${DAT_Folder}/ANTS_Processing
+			#cp ${Ants_dir}/MVT_to_MNI_0GenericAffine.mat ${Subject_dir}/Processed/MRI_files/${DAT_Folder}/ANTS_Processing
+			#cp ${Ants_dir}/MVT_to_MNI_1InverseWarp.nii.gz ${Subject_dir}/Processed/MRI_files/${DAT_Folder}/ANTS_Processing
+			#cp ${Ants_dir}/MVT_to_MNI_1Warp.nii.gz ${Subject_dir}/Processed/MRI_files/${DAT_Folder}/ANTS_Processing
+			#cp ${Ants_dir}/MVT_to_MNI_Warped.nii.gz ${Subject_dir}/Processed/MRI_files/${DAT_Folder}/ANTS_Processing
+			#cp ${Ants_dir}/multivariate_CrunchPilot02_SkullStripped_biascorrected01Warp.nii.gz ${Subject_dir}/Processed/MRI_files/${DAT_Folder}/ANTS_Processing
+			#cp ${Ants_dir}/multivariate_CrunchPilot02_SkullStripped_biascorrected01InverseWarp.nii.gz ${Subject_dir}/Processed/MRI_files/${DAT_Folder}/ANTS_Processing
+			#cp ${Ants_dir}/multivariate_CrunchPilot02_SkullStripped_biascorrected00GenericAffine.mat ${Subject_dir}/Processed/MRI_files/${DAT_Folder}/ANTS_Processing
+			cd ${Subject_dir}/Processed/MRI_files/${DAT_Folder}/ANTS_Processing
+
+			antsApplyTransforms -d 3 -e 3 -i multivariate_template0.nii -r _ANTs_c0cTemplate_T1_IXI555_MNI152_GS_brain.nii \
+			-n BSpline -o MVT_warpedTo_MNI.nii -t [MVT_to_MNI_0GenericAffine.mat,1] -t [MVT_to_MNI_1InverseWarp.nii] -v 
+		done
+	fi
+	if [[ ${ants_processing_steps[*]} =~ "ants_apply_transform_Func_2_MNI_withMVT" ]]; then
 		data_folder_to_analyze=(05_MotorImagery)
 		for DAT_Folder in ${data_folder_to_analyze[@]}; do
 			Subject_dir=/ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/${SUB}/
@@ -135,26 +161,56 @@ for SUB in ${subjects[@]}; do
 			#cp ${Subject_dir}/Processed/MRI_files/${DAT_Folder}/unwarpedRealigned_slicetimed_fMRI01Run1.nii ${Subject_dir}/Processed/MRI_files/${DAT_Folder}/ANTS_Processing
 			#cp ${Subject_dir}/Processed/MRI_files/${DAT_Folder}/meanunwarpedRealigned_slicetimed_fMRI01Run1.nii ${Subject_dir}/Processed/MRI_files/${DAT_Folder}/ANTS_Processing
 			cp ${Ants_dir}/MVT_to_MNI_0GenericAffine.mat ${Subject_dir}/Processed/MRI_files/${DAT_Folder}/ANTS_Processing
-			cp ${Ants_dir}/MVT_to_MNI_1InverseWarp.nii.gz ${Subject_dir}/Processed/MRI_files/${DAT_Folder}/ANTS_Processing
-			cp ${Ants_dir}/MVT_to_MNI_1Warp.nii.gz ${Subject_dir}/Processed/MRI_files/${DAT_Folder}/ANTS_Processing
-			cp ${Ants_dir}/MVT_to_MNI_Warped.nii.gz ${Subject_dir}/Processed/MRI_files/${DAT_Folder}/ANTS_Processing
-			cp ${Ants_dir}/multivariate_template0.nii.gz ${Subject_dir}/Processed/MRI_files/${DAT_Folder}/ANTS_Processing
-			cp ${Ants_dir}/multivariate_CrunchPilot02_SkullStripped_biascorrected01Warp.nii.gz ${Subject_dir}/Processed/MRI_files/${DAT_Folder}/ANTS_Processing
-			cp ${Ants_dir}/multivariate_CrunchPilot02_SkullStripped_biascorrected01InverseWarp.nii.gz ${Subject_dir}/Processed/MRI_files/${DAT_Folder}/ANTS_Processing
+			cp ${Ants_dir}/MVT_to_MNI_1InverseWarp.nii ${Subject_dir}/Processed/MRI_files/${DAT_Folder}/ANTS_Processing
+			cp ${Ants_dir}/MVT_to_MNI_1Warp.nii ${Subject_dir}/Processed/MRI_files/${DAT_Folder}/ANTS_Processing
+			cp ${Ants_dir}/MVT_to_MNI_Warped.nii ${Subject_dir}/Processed/MRI_files/${DAT_Folder}/ANTS_Processing
+
+			cp ${Ants_dir}/multivariate_CrunchPilot02_SkullStripped_biascorrected01Warp.nii ${Subject_dir}/Processed/MRI_files/${DAT_Folder}/ANTS_Processing
+			cp ${Ants_dir}/multivariate_CrunchPilot02_SkullStripped_biascorrected01InverseWarp.nii ${Subject_dir}/Processed/MRI_files/${DAT_Folder}/ANTS_Processing
 			cp ${Ants_dir}/multivariate_CrunchPilot02_SkullStripped_biascorrected00GenericAffine.mat ${Subject_dir}/Processed/MRI_files/${DAT_Folder}/ANTS_Processing
+			
 			cd ${Subject_dir}/Processed/MRI_files/${DAT_Folder}/ANTS_Processing
 
 			gunzip *.nii.gz*
 
 			ml gcc/5.2.0; ml ants
 			ml fsl
+				
+			antsApplyTransforms -d 3 -e 3 -i unwarpedRealigned_slicetimed_fMRI01Run1.nii -r _ANTs_c0cTemplate_T1_IXI555_MNI152_GS_brain.nii \
+			-n BSpline -o Func_warpedTo_MNI_withMVT.nii -t [MVT_to_MNI_0GenericAffine.mat,1] -t [MVT_to_MNI_1InverseWarp.nii] \
+			-t [multivariate_CrunchPilot02_SkullStripped_biascorrected00GenericAffine.mat,1] -t [multivariate_CrunchPilot02_SkullStripped_biascorrected01InverseWarp.nii]\
+			-t [Func_to_T1_0GenericAffine.mat,1] -t [Func_to_T1_1InverseWarp.nii] -v
+
+			## Func -> T1 -> MVT -> MNI
+			# Func -> T1 ... warp
+			# T1 -> MVT ... warp
+			# MVT -> MNI ... warp
+		done
+	fi
+	if [[ ${ants_processing_steps[*]} =~ "ants_apply_transform_Func_2_MNI" ]]; then
+		data_folder_to_analyze=(05_MotorImagery)
+		for DAT_Folder in ${data_folder_to_analyze[@]}; do
+			Subject_dir=/ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/${SUB}/
+			Ants_dir=/ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/ANTS_Template_Processing_Folder_Crunch
+
+			cp /ufrc/rachaelseidler/tfettrow/Crunch_Code/MR_Templates/_ANTs_c0cTemplate_T1_IXI555_MNI152_GS_brain.nii ${Subject_dir}/Processed/MRI_files/${DAT_Folder}/ANTS_Processing
+			#cp ${Subject_dir}/Processed/MRI_files/${DAT_Folder}/unwarpedRealigned_slicetimed_fMRI01Run1.nii ${Subject_dir}/Processed/MRI_files/${DAT_Folder}/ANTS_Processing
+			#cp ${Subject_dir}/Processed/MRI_files/${DAT_Folder}/meanunwarpedRealigned_slicetimed_fMRI01Run1.nii ${Subject_dir}/Processed/MRI_files/${DAT_Folder}/ANTS_Processing
+			cp ${Ants_dir}/MVT_to_MNI_0GenericAffine.mat ${Subject_dir}/Processed/MRI_files/${DAT_Folder}/ANTS_Processing
+			cp ${Ants_dir}/MVT_to_MNI_1InverseWarp.nii ${Subject_dir}/Processed/MRI_files/${DAT_Folder}/ANTS_Processing
+			cp ${Ants_dir}/MVT_to_MNI_1Warp.nii ${Subject_dir}/Processed/MRI_files/${DAT_Folder}/ANTS_Processing
+			cp ${Ants_dir}/MVT_to_MNI_Warped.nii ${Subject_dir}/Processed/MRI_files/${DAT_Folder}/ANTS_Processing
+			
+			cd ${Subject_dir}/Processed/MRI_files/${DAT_Folder}/ANTS_Processing
 
 			gunzip *.nii.gz*
+
+			ml gcc/5.2.0; ml ants
+			ml fsl
 				
-			antsApplyTransforms -d 3 -e 3 -i unwarpedRealigned_slicetimed_fMRI01Run1.nii -r _ANTs_c0cTemplate_T1_IXI555_MNI152_GS_brain_pixAdjust.nii \
-			-n BSpline -o unwarpedRealigned_slicetimed_warpedToMNI.nii.gz -t [MVT_to_MNI_1Warp_pixAdjust.nii.gz] -t [MVT_to_MNI_0GenericAffine.mat,0] \
-			-t [multivariate_CrunchPilot02_SkullStripped_biascorrected01Warp_pixAdjust.nii.gz] -t [multivariate_CrunchPilot02_SkullStripped_biascorrected00GenericAffine.mat,0] \
-			-t [Func_to_T1_1Warp_pixAdjust.nii.gz] -t [Func_to_T1_0GenericAffine.mat,0] -v 
+			antsApplyTransforms -d 3 -e 3 -i unwarpedRealigned_slicetimed_fMRI01Run1.nii -r _ANTs_c0cTemplate_T1_IXI555_MNI152_GS_brain.nii \
+			-n BSpline -o Func_warpedTo_MNI.nii -t [MVT_to_MNI_0GenericAffine.mat,1] -t [MVT_to_MNI_1InverseWarp.nii] \
+			-t [Func_to_T1_0GenericAffine.mat,1] -t [Func_to_T1_1InverseWarp.nii] -v
 
 			## Func -> T1 -> MVT -> MNI
 			# Func -> T1 ... warp
@@ -169,6 +225,7 @@ if [[ ${ants_processing_steps[*]} =~ "ants_create_MVT" ]]; then
 		# need to grab the biascorrected.nii from the subjects of interest
 		# move them to the "processing folder" and change file name to include subjectID
 		# move .batch to "processing folder" 
+		Subject_dir=/ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/${SUB}/
 		Ants_dir=/ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/ANTS_Template_Processing_Folder_Crunch_Redo
 
 		mkdir -p ${Ants_dir}
@@ -178,6 +235,12 @@ if [[ ${ants_processing_steps[*]} =~ "ants_create_MVT" ]]; then
 	done
 	cp /ufrc/rachaelseidler/tfettrow/Crunch_Code/Shell_Scripts/run_ANTS_MVT.batch ${Ants_dir}
 	sbatch run_ANTS_MVT.batch
-	cp 
-	#rm run_ANTS_MVT.batch
+	gunzip *.nii.gz*
+
+	# this will not work out
+	mkdir -p ${Subject_dir}/Processed/MRI_files/${DAT_Folder}/ANTS_Processing
+	cp ${Ants_dir}/multivariate_template0.nii ${Subject_dir}/Processed/MRI_files/${DAT_Folder}/ANTS_Processing
+	cp ${Ants_dir}/multivariate_CrunchPilot02_SkullStripped_biascorrected01Warp.nii ${Subject_dir}/Processed/MRI_files/${DAT_Folder}/ANTS_Processing
+	cp ${Ants_dir}/multivariate_CrunchPilot02_SkullStripped_biascorrected01InverseWarp.nii ${Subject_dir}/Processed/MRI_files/${DAT_Folder}/ANTS_Processing
+	cp ${Ants_dir}/multivariate_CrunchPilot02_SkullStripped_biascorrected00GenericAffine.mat ${Subject_dir}/Processed/MRI_files/${DAT_Folder}/ANTS_Processing
 fi
