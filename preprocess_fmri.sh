@@ -35,7 +35,7 @@ preprocessing_steps=("merge_fieldmap_fmri")
 # create a check in realign for vdm or no / ask user if they want a vdm
 # trash the "processed" files in RAW folder (FA, tensor, etc)
 # image center function... understand qto and sto .. nifti header info
-# how did I create the nifti fieldmap?
+
 
 # Set the path for our custom matlab functions and scripts
 export MATLABPATH=/ufrc/rachaelseidler/tfettrow/Crunch_Code/Matlab_Scripts/helper
@@ -51,50 +51,44 @@ for SUB in ${subjects[@]}; do
 		done
 	fi
    	if [[ ${preprocessing_steps[*]} =~ "merge_fieldmap_fmri" ]]; then
-   		data_folder_to_analyze=(Fieldmap_imagery Fieldmap_nback)
+   		data_folder_to_analyze=(Fieldmap_imagery)
 	   	for DAT_Folder in ${data_folder_to_analyze[@]}; do
 	   		#Fieldmap_dir=/ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/${SUB}/Processed/MRI_files/03_Fieldmaps
 			#cd ${Fieldmap_dir}/${DAT_Folder}
 			cd /ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/${SUB}/Processed/MRI_files/03_Fieldmaps/${DAT_Folder}/
 			
-			#ml fsl
+			total_readout=$(grep "TotalReadoutTime" DistMap_AP.json | tr -dc '0.00-9.00')
 
+			rm acqParams.txt
+			echo 0 -1 0 $total_readout >> acqParams.txt
+			echo 0  1 0 $total_readout >> acqParams.txt
+			
+			#for this_json_file in *.json*; do
+				
+				#total_readout=$(grep "TotalReadoutTime" ${this_json_file} | tr -dc '0.00-9.00')
+				#encoding_direction=$(grep "PhaseEncodingDirection" ${this_json_file})
 
-			#total read out time? = #Total readout time (FSL) = (MatrixSizePhase - 1) * EffectiveEchoSpacing =  (96 - 1) * .213333 = .0203 sec
-			#fslhd -x DistMap_AP.json
+				#echo ${total_readout}
+				#echo ${encoding_direction}
 
+				#if [[ ${encoding_direction} = j- ]]; then
+				#	echo "yay!"
+				#fi
+			
+				#echo 0 -1 0 ${total_readout} >> acqParams.txt
+				#echo 0  1 0 ${total_readout} >> acqParams.txt
+			#done
 
-			filename='DistMap_AP.json'
-			n=1
-			while read line; do
-			# reading each line
-			echo "Line No. $n : $line"
-			n=$((n+1))
-
-			this_line_text = $($line |grep -o '[A-Za-z]*')
-
-			if [[ ${this_line_text[*]}  == ReconMatrixPE ]]; then
-				echo "THIS IS WHAT WE NEED!!!"
-				 $line |grep -o '[0-9]*'
-			fi
-
-			done < $filename
-					
-
-			#echo 0 -1 0 .0203 >> acqParams.txt
-			#echo 0  1 0 .0203 >> acqParams.txt
-
-			#NVOL=`fslnvols ep2ddiff5B0DT_denoised_68slices`
-			#for ((i=1; i<=${NVOL}; i+=1)); do indx="$indx 1"; done; echo $indx > index.txt
-
-
-			#fslmerge -t AP_PA_merged fMRIDistMapAP.nii fMRIDistMapPA.nii
-			#topup --imain=AP_PA_merged.nii --datain=acqParams.txt --fout=my_fieldmap --config=b02b0.cnf --iout=se_epi_unwarped --out=topup_results
-	#
-#
-			#ml fsl/5.0.8
-			#fslchfiletype ANALYZE my_fieldmap.nii fpm_my_fieldmap
-			#gunzip *nii.gz*
+			ml fsl
+			rm AP_PA_merged.nii
+			rm se_epi_unwarped
+			rm topup_results
+			fslmerge -t AP_PA_merged DistMap_AP.nii DistMap_PA.nii
+			topup --imain=AP_PA_merged.nii --datain=acqParams.txt --fout=my_fieldmap --config=b02b0.cnf --iout=se_epi_unwarped --out=topup_results
+	
+			ml fsl/5.0.8
+			fslchfiletype ANALYZE my_fieldmap.nii fpm_my_fieldmap
+			gunzip *nii.gz*
 		done
 	fi
 	if [[ ${preprocessing_steps[*]} =~ "create_vdm_fmri" ]]; then
@@ -120,14 +114,14 @@ for SUB in ${subjects[@]}; do
 		done
 	fi
 
-	#if [[ ${preprocessing_steps[*]} =~ "coregister_vdm_to_fmri" ]]; then
-	#	data_folder_to_analyze=(05_MotorImagery 06_Nback)
-	#	for DAT_Folder in ${data_folder_to_analyze}[@]}; do
-	#		#cd /ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/${SUB}/Processed/MRI_files/03_Fieldmaps/${DAT_Folder}/
-	#		#matlab -nodesktop -nosplash -r "coregister_vdm_to_fmri; quit"
-	#		# need to create this ^^
-	#	done
-	#fi
+	if [[ ${preprocessing_steps[*]} =~ "coregister_vdm_to_fmri" ]]; then
+		data_folder_to_analyze=(05_MotorImagery 06_Nback)
+		for DAT_Folder in ${data_folder_to_analyze}[@]}; do
+			#cd /ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/${SUB}/Processed/MRI_files/03_Fieldmaps/${DAT_Folder}/
+			#matlab -nodesktop -nosplash -r "coregister_vdm_to_fmri; quit"
+			# need to create this ^^
+		done
+	fi
 	if [[ ${preprocessing_steps[*]} =~ "realign_fmri" ]]; then
 		data_folder_to_analyze=(05_MotorImagery 06_Nback)
 		for DAT_Folder in ${data_folder_to_analyze[@]}; do

@@ -14,16 +14,18 @@ for SUB in ${subjects[@]}; do
    		Fieldmap_dir=/ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/${SUB}/Processed/MRI_files/03_Fieldmaps
 		cd ${Fieldmap_dir}/Fieldmap_dti
 		# Equation for how to find total read out time? ===== #Total readout time (FSL) = (MatrixSizePhase - 1) * EffectiveEchoSpacing ====  (128 - 1) * 0.27999 ==== .0355 seconds
-		echo 0 -1 0 .0355 >> acqParams.txt
-		echo 0 -1 0 .0355 >> acqParams.txt
-		echo 0 -1 0 .0355 >> acqParams.txt
-		echo 0 -1 0 .0355 >> acqParams.txt
-		echo 0 -1 0 .0355 >> acqParams.txt
-		echo 0  1 0 .0355 >> acqParams.txt
-		echo 0  1 0 .0355 >> acqParams.txt
-		echo 0  1 0 .0355 >> acqParams.txt
-		echo 0  1 0 .0355 >> acqParams.txt
-		echo 0  1 0 .0355 >> acqParams.txt
+		
+		total_readout=$(grep "TotalReadoutTime" ${DistMap_AP.json} | tr -dc '0.00-9.00')
+
+		echo 0 -1 0 $total_readout >> acqParams.txt
+		echo 0 -1 0 $total_readout >> acqParams.txt
+		echo 0 -1 0 $total_readout >> acqParams.txt
+		echo 0 -1 0 $total_readout >> acqParams.txt
+		echo 0  1 0 $total_readout >> acqParams.txt
+		echo 0  1 0 $total_readout >> acqParams.txt
+		echo 0  1 0 $total_readout >> acqParams.txt
+		echo 0  1 0 $total_readout >> acqParams.txt
+		echo 0  1 0 $total_readout >> acqParams.txt
 
 
 		#NVOL=`fslnvols ep2ddiff5B0DT_denoised_68slices`
