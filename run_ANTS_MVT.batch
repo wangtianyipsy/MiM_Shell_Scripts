@@ -21,7 +21,7 @@ pwd; hostname; date
 ml gcc/5.2.0; ml ants 
 
 
-antsMultivariateTemplateConstruction.sh -d 3 -i 4 -g 0.2 -n 1 -j 4 -m 100x70x50x10 -c 0 -t GR -s CC -r 1 -o multivariate_ *.nii
+antsMultivariateTemplateConstruction.sh -d 3 -i 4 -g 0.2 -n 1 -j 4 -m 100x70x50x10 -c 0 -t GR -s CC -r 1 -o T1_2_MVT.nii
 
 outputFolder=/ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/ANTS_Template_Processing_Folder_Crunch_Batch
 MVT_Template=/ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/ANTS_Template_Processing_Folder_Crunch_Batch/multivariate_template0.nii.gz
@@ -42,17 +42,15 @@ antsRegistration --dimensionality 3 --float 0 \
         --metric MI[$MVT_Template,$MNI_Template,1,32,Regular,0.25] \
         --convergence [1000x500x250x100,1e-6,10] \
         --shrink-factors 8x4x2x1 \
-        --smoothing-sigmas 3x2x1x0vox \
-        --transform SyN[0.1,3,0] \
-        --metric CC[$MVT_Template,$MNI_Template,1,4] \
-        --convergence [100x70x50x20,1e-6,10] \
-        --shrink-factors 8x4x2x1 \
         --smoothing-sigmas 3x2x1x0vox
+        #--transform SyN[0.1,3,0] \
+        #--metric CC[$MVT_Template,$MNI_Template,1,4] \
+        #--convergence [100x70x50x20,1e-6,10] \
+        #--shrink-factors 8x4x2x1 \
+        #--smoothing-sigmas 3x2x1x0vox
 
 date
 
-
-date
 
 
 #To run this script, type the following on HiPerGator: 

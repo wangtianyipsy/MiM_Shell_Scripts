@@ -1,0 +1,41 @@
+#!/bin/bash
+#SBATCH --job-name=ANTS_ClarkPilot_TF			# Job name
+#SBATCH --mail-type=ALL               			# Mail events (NONE, BEGIN, END, FAIL, ALL)
+#SBATCH --mail-user=<tfettrow@ufl.edu>  		# Where to send mail	
+#SBATCH --ntasks=2                    			# Run on a single CPU
+#SBATCH --mem=1600mb                   	    # Memory limit
+#SBATCH --qos=rachaelseidler
+#SBATCH --time=96:00:00               			# Time limit hrs:min:sec
+#SBATCH --output=ANTS_output_%j.out    			# Standard output and error log
+#SBATCH --output=ANTS_.%A_%a.out
+#SBATCH --error=ANTS_.%A_%a.error
+
+pwd; hostname; date
+
+#To check allotments for our group: 
+#ml ufrc; showQos rachaelseidler
+# slurmInfo rachaelseidler
+
+
+
+ml gcc/5.2.0; ml ants 
+
+
+antsMultivariateTemplateConstruction.sh -d 3 -i 4 -g 0.2 -n 1 -j 4 -m 100x70x50x10 -c 0 -t GR -s CC -r 1 -o T1_2_MVT.nii
+
+
+date
+
+
+
+#To run this script, type the following on HiPerGator: 
+#sbatch *.batch 
+
+#To check its progress and for errors type: 
+#nano -open *.out
+#nano -open *.error 
+
+#To check how it's going / cancel: 
+#squeue -A rachaelseidler 
+#scancel <JOBID>
+

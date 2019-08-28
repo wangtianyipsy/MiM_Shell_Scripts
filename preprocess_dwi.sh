@@ -42,18 +42,18 @@ for SUB in ${subjects[@]}; do
 		fslmerge -z AP_PA_merged_68slices slice0*
 		rm slice00*.nii
 		#
-		topup --imain=AP_PA_merged_68slices.nii --datain=acqParams.txt --fout=my_fieldmap_dti --config=b02b0.cnf --iout=se_epi_unwarped_dti --out=topup_results_dti
+		topup --imain=AP_PA_merged_68slices.nii --datain=acqParams.txt --fout=my_fieldmap --config=b02b0.cnf --iout=se_epi_unwarped --out=topup_results
 
-		fslmaths my_fieldmap_dti -mul 6.28 my_fieldmap_rads_dti
-		fslmaths se_epi_unwarped_dti -Tmean my_fieldmap_mask_dti
-		bet2 my_fieldmap_mask_dti my_fieldmap_mask_brain_dti
+		fslmaths my_fieldmap -mul 6.28 my_fieldmap_rads
+		fslmaths se_epi_unwarped -Tmean my_fieldmap_mask
+		bet2 my_fieldmap_mask my_fieldmap_mask_brain
 		gunzip *nii.gz*
    	fi
    	if [[ ${preprocessing_steps[*]} =~ "eddy_correction" ]]; then
    		cd /ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/${SUB}/Processed/MRI_files/03_Fieldmaps/Fieldmap_dti
        
-   		cp my_fieldmap_mask_brain_dti.nii /ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/${SUB}/Processed/MRI_files/08_DWI
-		cp my_fieldmap_dti.nii /ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/${SUB}/Processed/MRI_files/08_DWI
+   		cp my_fieldmap_mask_brain.nii /ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/${SUB}/Processed/MRI_files/08_DWI
+		cp my_fieldmap.nii /ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/${SUB}/Processed/MRI_files/08_DWI
 		cp acqParams.txt /ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/${SUB}/Processed/MRI_files/08_DWI
         cd /ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/${SUB}/Processed/MRI_files/08_DWI
 		
@@ -74,9 +74,9 @@ for SUB in ${subjects[@]}; do
 
 		fslmaths ep2ddiff5B0DT_denoised_68slices -Tmean Mean_ep2ddiff5B0DT_denoised_68slices
 
-		flirt -in my_fieldmap_mask_brain_dti.nii -ref Mean_ep2ddiff5B0DT_denoised_68slices.nii -out my_fieldmap_mask_brain_dti_pixAdjust.nii
+		flirt -in my_fieldmap_mask_brain.nii -ref Mean_ep2ddiff5B0DT_denoised_68slices.nii -out my_fieldmap_mask_brain_pixAdjust.nii
 	
-		eddy_openmp --imain=ep2ddiff5B0DT_denoised_68slices --mask=my_fieldmap_mask_brain_dti_pixAdjust --acqp=acqParams.txt --index=index.txt --bvecs=ep2ddiff5B0DT.bvec --bvals=ep2ddiff5B0DT.bval --out=eddy_corrected_data
+		eddy_openmp --imain=ep2ddiff5B0DT_denoised_68slices --mask=my_fieldmap_mask_brain_pixAdjust --acqp=acqParams.txt --index=index.txt --bvecs=ep2ddiff5B0DT.bvec --bvals=ep2ddiff5B0DT.bval --out=eddy_corrected_data
 
 	fi
 	if [[ ${preprocessing_steps[*]} =~ "skull_strip" ]]; then
