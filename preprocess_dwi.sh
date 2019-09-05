@@ -21,6 +21,7 @@ for SUB in ${subjects[@]}; do
 		echo 0 -1 0 $total_readout >> acqParams.txt
 		echo 0 -1 0 $total_readout >> acqParams.txt
 		echo 0 -1 0 $total_readout >> acqParams.txt
+		echo 0 -1 0 $total_readout >> acqParams.txt
 		echo 0  1 0 $total_readout >> acqParams.txt
 		echo 0  1 0 $total_readout >> acqParams.txt
 		echo 0  1 0 $total_readout >> acqParams.txt
