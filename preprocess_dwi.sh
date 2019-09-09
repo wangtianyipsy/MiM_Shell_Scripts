@@ -17,19 +17,6 @@ for SUB in ${subjects[@]}; do
   		rm acqParams.txt
 		# Equation for how to find total read out time? ===== #Total readout time (FSL) = (MatrixSizePhase - 1) * EffectiveEchoSpacing ====  (128 - 1) * 0.27999 ==== .0355 seconds
 		
-		#total_readout=$(grep "TotalReadoutTime" ${DistMap_AP.json} | tr -dc '0.00-9.00')
-#
-		#echo 0 -1 0 $total_readout >> acqParams.txt
-		#echo 0 -1 0 $total_readout >> acqParams.txt
-		#echo 0 -1 0 $total_readout >> acqParams.txt
-		#echo 0 -1 0 $total_readout >> acqParams.txt
-		#echo 0 -1 0 $total_readout >> acqParams.txt
-		#echo 0  1 0 $total_readout >> acqParams.txt
-		#echo 0  1 0 $total_readout >> acqParams.txt
-		#echo 0  1 0 $total_readout >> acqParams.txt
-		#echo 0  1 0 $total_readout >> acqParams.txt
-		#echo 0  1 0 $total_readout >> acqParams.txt
-
 		for this_json_file in *.json*; do
 								
 			total_readout=$(grep "TotalReadoutTime" ${this_json_file} | tr -dc '0.00-9.00')
@@ -49,26 +36,25 @@ for SUB in ${subjects[@]}; do
 			done
 		done
 
-		#NVOL=`fslnvols ep2ddiff5B0DT_denoised_68slices`
-		#for ((i=1; i<=${NVOL}; i+=1)); do indx="$indx 1"; done; echo $indx > index.txt
-
+		NVOL=`fslnvols ep2ddiff5B0DT_denoised_68slices`
+		for ((i=1; i<=${NVOL}; i+=1)); do indx="$indx 1"; done; echo $indx > index.txt
+	
+		ml fsl
+		fslmerge -t AP_PA_merged ep2ddiff5B0DistMapAP.nii ep2ddiff5B0DistMapPA.nii
 		
-		#ml fsl
-		#fslmerge -t AP_PA_merged ep2ddiff5B0DistMapAP.nii ep2ddiff5B0DistMapPA.nii
+		# need to remove a slice for even #
+		fslsplit AP_PA_merged.nii slice -z
+		gunzip *nii.gz*
+		rm slice0000.nii
+		fslmerge -z AP_PA_merged_68slices slice0*
+		rm slice00*.nii
 		#
-		## need to remove a slice for even #
-		#fslsplit AP_PA_merged.nii slice -z
-		#gunzip *nii.gz*
-		#rm slice0000.nii
-		#fslmerge -z AP_PA_merged_68slices slice0*
-		#rm slice00*.nii
-		##
-		#topup --imain=AP_PA_merged_68slices.nii --datain=acqParams.txt --fout=my_fieldmap --config=b02b0.cnf --iout=se_epi_unwarped --out=topup_results
-#
-		#fslmaths my_fieldmap -mul 6.28 my_fieldmap_rads
-		#fslmaths se_epi_unwarped -Tmean my_fieldmap_mask
-		#bet2 my_fieldmap_mask my_fieldmap_mask_brain
-		#gunzip *nii.gz*
+		topup --imain=AP_PA_merged_68slices.nii --datain=acqParams.txt --fout=my_fieldmap --config=b02b0.cnf --iout=se_epi_unwarped --out=topup_results
+
+		fslmaths my_fieldmap -mul 6.28 my_fieldmap_rads
+		fslmaths se_epi_unwarped -Tmean my_fieldmap_mask
+		bet2 my_fieldmap_mask my_fieldmap_mask_brain
+		gunzip *nii.gz*
    	fi
    	if [[ ${preprocessing_steps[*]} =~ "eddy_correction" ]]; then
    		cd /ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/${SUB}/Processed/MRI_files/03_Fieldmaps/Fieldmap_dti

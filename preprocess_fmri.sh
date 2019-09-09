@@ -4,7 +4,7 @@ subjects=(CrunchPilot01_development2)
 
 #preprocessing_steps=("slicetime_fmri")
 #preprocessing_steps=("merge_distmap_fmri")
-preprocessing_steps=("create_fieldmap_fmri")
+#preprocessing_steps=("create_fieldmap_fmri")
 #preprocessing_steps=("create_vdm_fmri")
 #preprocessing_steps=("coregister_fmri_to_vdm")
 #preprocessing_steps=("realign_fmri")
@@ -25,13 +25,7 @@ preprocessing_steps=("create_fieldmap_fmri")
 
 
 # # # TO DO: 
-# find a way to cut down on file path lengths 
-# grab subject info from header
-# what to do about outliers from art?? how to remove volume?? do it automatically?? if volume removed ... onset time, file nameing ()
-# rename rp to full name of resulting file (unwarpedRealigned_slicetimed instead of only slicetimed)
-# read phase encoding direction from json
-# read number of volumes and send into matlab func (automates dealing with outlier removal and new studies)
-# reset origin of files
+
 
 
 # Set the path for our custom matlab functions and scripts
@@ -175,6 +169,17 @@ Subject_dir=/ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/
 				rm meanunwarpedRealigned_slicetimed_fMRI01_Run2.nii
 				rm meanunwarpedRealigned_coregistered2vdm_slicetimed_fMRI01_Run1.nii
 				rm meanunwarpedRealigned_coregistered2vdm_slicetimed_fMRI01_Run2.nii
+
+				if [[ $DAT_Folder == 05_MotorImagery ]]; then
+					mv rp_coregistered2vdm_slicetimed_fMRI01_Run1.txt moveparams_coregistered2vdm_slicetimed_fMRI01_Run1.txt
+					mv rp_coregistered2vdm_slicetimed_fMRI01_Run2.txt moveparams_coregistered2vdm_slicetimed_fMRI01_Run2.txt
+				fi
+				if [[ $DAT_Folder == 06_MotorImagery ]]; then
+					mv rp_coregistered2vdm_slicetimed_fMRI01_Run1.txt moveparams_coregistered2vdm_slicetimed_fMRI01_Run1.txt
+					mv rp_coregistered2vdm_slicetimed_fMRI01_Run2.txt moveparams_coregistered2vdm_slicetimed_fMRI01_Run2.txt
+					mv rp_coregistered2vdm_slicetimed_fMRI01_Run1.txt moveparams_coregistered2vdm_slicetimed_fMRI01_Run3.txt
+					mv rp_coregistered2vdm_slicetimed_fMRI01_Run2.txt moveparams_coregistered2vdm_slicetimed_fMRI01_Run4.txt
+				fi
 			fi
 		done
 	fi
