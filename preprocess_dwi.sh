@@ -1,7 +1,7 @@
 subjects=(CrunchPilot01_development2)
 
 #preprocessing_steps=("rician_filter")
-preprocessing_steps=("fieldmap_dti")
+#preprocessing_steps=("fieldmap_dti")
 #preprocessing_steps=("eddy_correction")
 #preprocessing_steps=("skull_strip")
 

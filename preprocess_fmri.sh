@@ -14,7 +14,7 @@ subjects=(CrunchPilot01_development2)
 #preprocessing_steps=("segment_fmri")
 #preprocessing_steps=("skull_strip_t1")
 
-#preprocessing_steps=("coregister_T1_to_fmri") # this is for 
+preprocessing_steps=("coregister_fmri_to_T1") # this is for 
 
 #preprocessing_steps=("art_fmri") # implement in conn
 
@@ -25,6 +25,9 @@ subjects=(CrunchPilot01_development2)
 
 
 # # # TO DO: 
+# setup some code, maybe in file_organize to read dicom header info to compare parameters (slice order acq, total readout time, phase encoding) to json file
+# rename the raw files to standard names.. dependent on the folder.. create some setup parameters to modify raw_file_dir and new_file_name
+
 
 
 
@@ -177,8 +180,8 @@ Subject_dir=/ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/
 				if [[ $DAT_Folder == 06_MotorImagery ]]; then
 					mv rp_coregistered2vdm_slicetimed_fMRI01_Run1.txt moveparams_coregistered2vdm_slicetimed_fMRI01_Run1.txt
 					mv rp_coregistered2vdm_slicetimed_fMRI01_Run2.txt moveparams_coregistered2vdm_slicetimed_fMRI01_Run2.txt
-					mv rp_coregistered2vdm_slicetimed_fMRI01_Run1.txt moveparams_coregistered2vdm_slicetimed_fMRI01_Run3.txt
-					mv rp_coregistered2vdm_slicetimed_fMRI01_Run2.txt moveparams_coregistered2vdm_slicetimed_fMRI01_Run4.txt
+					mv rp_coregistered2vdm_slicetimed_fMRI01_Run3.txt moveparams_coregistered2vdm_slicetimed_fMRI01_Run3.txt
+					mv rp_coregistered2vdm_slicetimed_fMRI01_Run4.txt moveparams_coregistered2vdm_slicetimed_fMRI01_Run4.txt
 				fi
 			fi
 		done
@@ -217,26 +220,21 @@ Subject_dir=/ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/
 		done
 	fi
 
-	if [[ ${preprocessing_steps[*]} =~ "coregister_T1_to_fmri" ]]; then
-		data_folder_to_analyze=(05_MotorImagery 06_Nback)
+	if [[ ${preprocessing_steps[*]} =~ "coregister_fmri_to_T1" ]]; then
+		data_folder_to_analyze=(05_MotorImagery)
 		for DAT_Folder in ${data_folder_to_analyze[@]}; do
 			# need to grab T1 and place into DAT_Folder
-			cp ${Subject_dir}/Processed/MRI_files/02_T1/T1.nii ${Subject_dir}/Processed/MRI_files/${DAT_Folder}/
+			cp ${Subject_dir}/Processed/MRI_files/02_T1/SkullStripped_biascorrected.nii ${Subject_dir}/Processed/MRI_files/${DAT_Folder}/
 
 			cd ${Subject_dir}/Processed/MRI_files/${DAT_Folder}/
 
-			if [[ $DAT_Folder == 05_MotorImagery ]]; then
-				ml fsl
-				rm Mean_unwarpedRealigned_slicetimed_fMRI01_Run1.nii
-				rm Mean_unwarpedRealigned_slicetimed_fMRI01_Run2.nii
-				fslmaths unwarpedRealigned_slicetimed_fMRI01_Run1.nii -Tmean Mean_unwarpedRealigned_slicetimed_fMRI01_Run1.nii
-				fslmaths unwarpedRealigned_slicetimed_fMRI01_Run2.nii -Tmean Mean_unwarpedRealigned_slicetimed_fMRI01_Run2.nii
-				gunzip *.nii.gz*
-			fi
-
 			ml matlab
-			matlab -nodesktop -nosplash -r "try; coregister_fmri; catch; end; quit"
-			rm T1.nii
+			matlab -nodesktop -nosplash -r "try; coregister_fmri_to_t1; catch; end; quit"
+			if [[ $DAT_Folder == 05_MotorImagery ]]; then
+				cp coregistered2t1_unwarpedRealigned_coregistered2vdm_slicetimed_fMRI01_Run1.nii ${Subject_dir}/Processed/MRI_files/${DAT_Folder}/ANTS_Processing
+				cp coregistered2t1_unwarpedRealigned_coregistered2vdm_slicetimed_fMRI01_Run2.nii ${Subject_dir}/Processed/MRI_files/${DAT_Folder}/ANTS_Processing
+			fi
+			rm SkullStripped_biascorrected.nii
 		done
 	fi
 	
