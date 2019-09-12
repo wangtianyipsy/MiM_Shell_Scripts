@@ -273,7 +273,7 @@ for SUB in ${subjects[@]}; do
 	rm *.nii
 	rm *.json
 	#dcm2nii -a n -i y -r n -x n ${Subject_dir}/Raw/MRI_files/FMRI02_RUN3_0031
-	dcm2niix -ba n ${Subject_dir}/Raw/MRI_files/FMRI02_RUN2_0029
+	dcm2niix -ba n ${Subject_dir}/Raw/MRI_files/FMRI02_RUN3_0031
 
 	for nii_file in *.nii*; do
 		mv -v ${nii_file} "${nii_file:17:11}.nii"
