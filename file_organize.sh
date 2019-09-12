@@ -2,7 +2,8 @@ subjects=(CrunchPilot01_development2)
 
 #####################################################################################
 ml mricrogl
-
+ml gcc/5.2.0
+ml pigz
 for SUB in ${subjects[@]}; do
 
 	Subject_dir=/ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/${SUB}
