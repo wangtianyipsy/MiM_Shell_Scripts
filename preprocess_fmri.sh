@@ -27,7 +27,7 @@ preprocessing_steps=("coregister_fmri_to_T1") # this is for
 # # # TO DO: 
 # setup some code, maybe in file_organize to read dicom header info to compare parameters (slice order acq, total readout time, phase encoding) to json file
 # rename the raw files to standard names.. dependent on the folder.. create some setup parameters to modify raw_file_dir and new_file_name
-
+# create throw errors in different situations: 1) if file_info.csv not created 2) ...
 
 
 
