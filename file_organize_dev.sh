@@ -37,5 +37,6 @@ for SUB in ${subjects[@]}; do
 			mv -v ${json_file} $this_processed_file_name.json
 			cp $this_processed_file_name.json "${Subject_dir}/Processed/MRI_files/$this_processed_folder_name";
 		done
+		cd $Subject_dir
 	done
 done
