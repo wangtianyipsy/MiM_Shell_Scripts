@@ -15,15 +15,18 @@ for SUB in ${subjects[@]}; do
 	number_of_folders_to_extract=$(cat ${SUB}_file_information.csv | wc -l)
 	for (( this_folder_row=1; this_folder_row<=${number_of_folders_to_extract}; this_folder_row++ )); do
 		this_raw_folder_name=$(cat ${SUB}_file_information.csv | sed -n ${this_folder_row}p | cut -d ',' -f1)
-		this_processed_folder_name=$(cat ${SUB}_file_information.csv | sed -n ${this_folder_row}p  | cut -d ',' -f2)
+		this_processed_folder_name=$(cat ${SUB}_file_information.csv | sed -n ${this_folder_row}p | cut -d ',' -f2)
 		this_processed_file_name=$(cat ${SUB}_file_information.csv | sed -n ${this_folder_row}p | cut -d ',' -f3)
 
 		mkdir -p "${Subject_dir}/Processed/MRI_files/${this_processed_folder_name}"
 	
 		cd ${Subject_dir}/Raw/MRI_files/$this_raw_folder_name
-		rm *.nii.gz*
-		rm *.nii
-		rm *.json
+		if [ -e *.nii ]; then 
+			rm *.nii.gz*
+			rm *.nii*
+			rm *.json*
+		fi 
+		
 	
 		dcm2niix -ba n ${Subject_dir}/Raw/MRI_files/$this_raw_folder_name
 	
