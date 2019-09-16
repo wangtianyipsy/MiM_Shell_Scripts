@@ -15,7 +15,7 @@ echo "T1_MPRAGE_SAG_ISO_8MM_0006", "02_T1", "T1" >> ${subject}_file_information.
 echo "FMRI-DISTMAP_AP_0015", "03_Fieldmaps/Fiedmap_imagery", "DistMap_AP" >> ${subject}_file_information.csv
 echo "FMRI-DISTMAP_PA_0011", "03_Fieldmaps/Fiedmap_imagery", "DistMap_PA" >> ${subject}_file_information.csv
 echo "FMRI-DISTMAP_AP_0025", "03_Fieldmaps/Fiedmap_nback", "DistMap_AP" >> ${subject}_file_information.csv
-echo "FMRI-DISTMAP_PA_0021", "03_Fieldmaps/Fiedmap_imagery", "DistMap_PA" >> ${subject}_file_information.csv
+echo "FMRI-DISTMAP_PA_0021", "03_Fieldmaps/Fiedmap_nback", "DistMap_PA" >> ${subject}_file_information.csv
 echo "EP2D_DIFF_5B0_DISTMAP_AP_0043", "03_Fieldmaps/Fiedmap_dti", "DistMap_AP" >> ${subject}_file_information.csv
 echo "EP2D_DIFF_5B0_DISTMAP_PA_FLIPPED_0045", "03_Fieldmaps/Fiedmap_dti", "DistMap_PA" >> ${subject}_file_information.csv
 echo "RESTSTATE-FMRI_8MIN_0009", "04_rsfMRI", "RestingState" >> ${subject}_file_information.csv
