@@ -79,6 +79,7 @@ for SUB in ${subjects[@]}; do
 			ml matlab
 			matlab -nodesktop -nosplash -r "try; slicetime_fmri; catch; end; quit"
 		done
+		echo "This step took $SECONDS seconds to execute"
 	fi
    	if [[ ${preprocessing_steps[*]} =~ "merge_distmap_fmri" ]]; then
    		data_folder_to_analyze=($fmri_fieldmap_processed_folder_names)
@@ -107,6 +108,17 @@ for SUB in ${subjects[@]}; do
 			ml fsl
 			fslmerge -t AP_PA_merged.nii DistMap_AP.nii DistMap_PA.nii
 
+			this_file_header_info=$(fslhd AP_PA_merged.nii )
+			this_file_number_of_slices=$(echo $this_file_header_info | grep -o dim3.* | tr -s ' ' | cut -d ' ' -f 2)
+
+			if [ $((this_file_number_of_slices%2)) -ne 0 ]; then
+				fslsplit AP_PA_merged.nii slice -z
+				gunzip *nii.gz*
+				rm slice0000.nii
+				fslmerge -z AP_PA_merged slice0*
+				rm slice00*.nii
+			fi
+
 			fslmaths AP_PA_merged.nii -Tmean Mean_AP_PA_merged.nii
 			gunzip *nii.gz*
 
@@ -114,6 +126,7 @@ for SUB in ${subjects[@]}; do
 			(( this_loop_index++ ))
 			
 		done
+		echo "This step took $SECONDS seconds to execute"
 	fi
 
 	if [[ ${preprocessing_steps[*]} =~ "create_fieldmap_fmri" ]]; then
@@ -121,8 +134,12 @@ for SUB in ${subjects[@]}; do
 	   	for this_fieldmap_folder in ${data_folder_to_analyze[@]}; do
 	   		cd "${Subject_dir}/Processed/MRI_files/${this_fieldmap_folder}/"
 	   		# just cleaning up in case this is being rerun
-	   		rm my_fieldmap.nii
-  			rm acqParams.txt
+	   		if [ -e my_fieldmap.nii ]; then 
+	   			rm my_fieldmap.nii
+	   		fi
+	   		if [ -e acqParams.nii ]; then 
+	   			rm acqParams.nii
+	   		fi
 
 			# assuming only the DistMaps have .jsons in this folder
 			for this_json_file in *.json*; do
@@ -146,12 +163,16 @@ for SUB in ${subjects[@]}; do
 
 			ml fsl
 			topup --imain=AP_PA_merged.nii --datain=acqParams.txt --fout=my_fieldmap_nifti --config=b02b0.cnf --iout=se_epi_unwarped --out=topup_results
-	
+		
+			fslmaths se_epi_unwarped -Tmean my_fieldmap_mag
+
+
 			ml fsl/5.0.8
 			fslchfiletype ANALYZE my_fieldmap_nifti.nii my_fieldmap
 
 			gunzip *nii.gz*
 		done
+		"This step took $SECONDS seconds to execute"
 	fi
 
 	if [[ ${preprocessing_steps[*]} =~ "create_vdm_fmri" ]]; then
@@ -159,6 +180,7 @@ for SUB in ${subjects[@]}; do
 		data_folder_to_copy_to=($fmri_processed_folder_names)
    		this_loop_index=0
 	   	for this_fieldmap_folder in ${data_folder_to_analyze[@]}; do
+
    			cp ${Code_dir}/Matlab_Scripts/helper/Ugrant_defaults.m ${Subject_dir}/Processed/MRI_files/${this_fieldmap_folder}/
 			cd ${Subject_dir}/Processed/MRI_files/${this_fieldmap_folder}/ 
 
@@ -173,6 +195,7 @@ for SUB in ${subjects[@]}; do
 
 			rm Ugrant_defaults.m
 		done
+		"This step took $SECONDS seconds to execute"
 	fi
 
 	if [[ ${preprocessing_steps[*]} =~ "coregister_fmri_to_MeanFM" ]]; then
@@ -184,6 +207,7 @@ for SUB in ${subjects[@]}; do
 			matlab -nodesktop -nosplash -r "try; coregister_fmri_to_MeanFM; catch; end; quit"
 			
 		done
+		"This step took $SECONDS seconds to execute"
 	fi
 
 	if [[ ${preprocessing_steps[*]} =~ "realign_fmri" ]]; then
@@ -193,6 +217,7 @@ for SUB in ${subjects[@]}; do
 			ml matlab
 			matlab -nodesktop -nosplash -r "try; realign_fmri; catch; end; quit"
 		done
+		"This step took $SECONDS seconds to execute"
 	fi
 
 	if [[ ${preprocessing_steps[*]} =~ "realign_unwarp_fmri" ]]; then
@@ -202,6 +227,7 @@ for SUB in ${subjects[@]}; do
 			ml matlab
 			matlab -nodesktop -nosplash -r "try; realign_unwarp_fmri; catch; end; quit"
 		done
+		"This step took $SECONDS seconds to execute"
 	fi
 
 	if [[ ${preprocessing_steps[*]} =~ "apply_vdm_fmri" ]]; then
@@ -211,6 +237,7 @@ for SUB in ${subjects[@]}; do
 			ml matlab
 			matlab -nodesktop -nosplash -r "try; apply_vdm; catch; end; quit"
 		done
+		"This step took $SECONDS seconds to execute"
 	fi
 
 	if [[ ${preprocessing_steps[*]} =~ "segment_fmri" ]]; then
@@ -222,6 +249,7 @@ for SUB in ${subjects[@]}; do
 			matlab -nodesktop -nosplash -r "try; segment_fmri; catch; end; quit"
 			rm TPM.nii
 		done
+		"This step took $SECONDS seconds to execute"
 	fi
 
 	if [[ ${preprocessing_steps[*]} =~ "skull_strip_t1" ]]; then
@@ -231,6 +259,7 @@ for SUB in ${subjects[@]}; do
 			ml matlab
 			matlab -nodesktop -nosplash -r "try; skull_strip_t1; catch; end; quit"
 		done
+		"This step took $SECONDS seconds to execute"
 	fi
 
 	if [[ ${preprocessing_steps[*]} =~ "coregister_fmri_to_T1" ]]; then
@@ -244,8 +273,9 @@ for SUB in ${subjects[@]}; do
 			ml matlab
 			matlab -nodesktop -nosplash -r "try; coregister_fmri_to_t1; catch; end; quit"
 	
-			rm SkullStripped_biascorrected.nii
+			rm SkullStripped_T1.nii
 		done
+		"This step took $SECONDS seconds to execute"
 	fi
 	
 	if [[ ${preprocessing_steps[*]} =~ "art_fmri" ]]; then
@@ -263,6 +293,7 @@ for SUB in ${subjects[@]}; do
 			rm -rf Conn_Art_Folder_Stuff
 			
 		done
+		"This step took $SECONDS seconds to execute"
 	fi
 
 	#if [[ ${preprocessing_steps[*]} =~ "spm_norm_fmri" ]]; then

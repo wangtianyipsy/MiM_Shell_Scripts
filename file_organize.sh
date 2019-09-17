@@ -15,11 +15,12 @@ convertDICOM(){
 
 	cd ${Subject_dir}/Raw/MRI_files/$this_raw_folder_name
 	if [ -e *.nii ]; then 
-		rm *.nii.gz*
 		rm *.nii*
 		rm *.json*
 	fi 
-	
+	if [ -e *.nii.gz ]; then 
+		rm *.nii.gz*
+	fi
 	dcm2niix -ba n ${Subject_dir}/Raw/MRI_files/$this_raw_folder_name
 
 	for nii_file in *.nii*; do
