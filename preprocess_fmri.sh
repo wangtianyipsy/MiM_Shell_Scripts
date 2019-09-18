@@ -168,7 +168,7 @@ for SUB in ${subjects[@]}; do
 
 
 			ml fsl/5.0.8
-			fslchfiletype ANALYZE my_fieldmap_nifti.nii my_fieldmap
+			fslchfiletype ANALYZE my_fieldmap_nifti.nii fpm_my_fieldmap
 
 			gunzip *nii.gz*
 		done
