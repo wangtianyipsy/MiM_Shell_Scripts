@@ -1,5 +1,5 @@
-
-subjects=(CrunchPilot01_development1)
+subjects=$1
+#subjects=(CrunchPilot01_development1)
 #subjects=(ClarkPilot_01)
 
 #preprocessing_steps=("slicetime_fmri")
