@@ -247,15 +247,6 @@ for SUB in ${subjects[@]}; do
 		"This step took $SECONDS seconds to execute"
 	fi
 
-	if [[ ${ants_processing_steps[*]} =~ "bias_correction" ]]; then
-		data_folder_to_analyze=($t1_processed_folder_names)
-		for this_t1_folder in ${data_folder_to_analyze[@]}; do
-			cd ${Subject_dir}/Processed/MRI_files/${this_t1_folder}/
-			ml fsl
-			N4BiasFieldCorrection -i T1.nii -o biascorrected_T1.nii
-		done
-	fi
-
 	if [[ ${preprocessing_steps[*]} =~ "segment_fmri" ]]; then
 		data_folder_to_analyze=($t1_processed_folder_names)
 		for this_t1_folder in ${data_folder_to_analyze[@]}; do
