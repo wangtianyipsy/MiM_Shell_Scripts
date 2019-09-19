@@ -1,8 +1,8 @@
-subjects=$1
-#subjects=(CrunchPilot01_development1)
+
+subjects=(CrunchPilot01_development1)
 #subjects=(ClarkPilot_01)
 
-#preprocessing_steps=("slicetime_fmri")
+preprocessing_steps=("slicetime_fmri")
 #preprocessing_steps=("merge_distmap_fmri")
 #preprocessing_steps=("create_fieldmap_fmri")
 #preprocessing_steps=("create_vdm_fmri")
@@ -11,12 +11,13 @@ subjects=$1
 #preprocessing_steps=("realign_unwarp_fmri")
 #preprocessing_steps=("apply_vdm_fmri")
 
+#preprocessing_steps=("bias_correction")
 #preprocessing_steps=("segment_fmri")
 #preprocessing_steps=("skull_strip_t1")
 
 #preprocessing_steps=("coregister_fmri_to_T1") # this is for 
 
-preprocessing_steps=("art_fmri") # implement in conn
+#preprocessing_steps=("art_fmri") # implement in conn
 
 
 # in progress.. 
@@ -30,6 +31,9 @@ preprocessing_steps=("art_fmri") # implement in conn
 # create throw errors in different situations: 1) if file_info.csv not created 2) ...
 # remove means after realign and unwarp
 # move coregistered2t1_unwarpedRealigned_coregistered2vdm_slicetimed_fMRI01_Run1,2,3,.. to ANTS processing folder 
+# remove if slice_timed exists remove.. or determine a way to prevent matlab slice_timing from finding slice_timed_*
+# try removing all default values from Ugrant_defaults.m
+# automate population of XX_defaults.m 
 
 # Set the path for our custom matlab functions and scripts
 Code_dir=/ufrc/rachaelseidler/tfettrow/Crunch_Code
@@ -76,6 +80,9 @@ for SUB in ${subjects[@]}; do
 		for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
 			cd "${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/"
 			
+			if [ -e slicetimed_*.nii ]; then 
+				rm slicetimed_*.nii
+			fi
 			ml matlab
 			matlab -nodesktop -nosplash -r "try; slicetime_fmri; catch; end; quit"
 		done
@@ -238,6 +245,15 @@ for SUB in ${subjects[@]}; do
 			matlab -nodesktop -nosplash -r "try; apply_vdm; catch; end; quit"
 		done
 		"This step took $SECONDS seconds to execute"
+	fi
+
+	if [[ ${ants_processing_steps[*]} =~ "bias_correction" ]]; then
+		data_folder_to_analyze=($t1_processed_folder_names)
+		for this_t1_folder in ${data_folder_to_analyze[@]}; do
+			cd ${Subject_dir}/Processed/MRI_files/${this_t1_folder}/
+			ml fsl
+			N4BiasFieldCorrection -i T1.nii -o biascorrected_T1.nii
+		done
 	fi
 
 	if [[ ${preprocessing_steps[*]} =~ "segment_fmri" ]]; then
