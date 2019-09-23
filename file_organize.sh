@@ -1,5 +1,5 @@
 
-subjects=(CrunchPilot01_development1)
+subjects=(2003)
 
 #####################################################################################
 ml mricrogl
@@ -8,9 +8,13 @@ ml pigz
 
 
 convertDICOM(){
-	this_raw_folder_name=$(cat ${SUB}_file_information.csv | sed -n ${this_folder_row}p | cut -d ',' -f1)
-	this_processed_folder_name=$(cat ${SUB}_file_information.csv | sed -n ${this_folder_row}p | cut -d ',' -f2)
-	this_processed_file_name=$(cat ${SUB}_file_information.csv | sed -n ${this_folder_row}p | cut -d ',' -f3)
+
+	this_raw_folder_name=$(cat file_settings.txt | sed -n ${this_folder_row}p | cut -d ',' -f1)
+	this_processed_folder_name=$(cat file_settings.txt | sed -n ${this_folder_row}p | cut -d ',' -f2)
+	this_processed_file_name=$(cat file_settings.txt | sed -n ${this_folder_row}p | cut -d ',' -f3)
+
+
+
 	mkdir -p "${Subject_dir}/Processed/MRI_files/${this_processed_folder_name}"
 
 	cd ${Subject_dir}/Raw/MRI_files/$this_raw_folder_name
@@ -42,9 +46,18 @@ for SUB in ${subjects[@]}; do
 
 	cd $Subject_dir
 	
-	number_of_folders_to_extract=$(cat ${SUB}_file_information.csv | wc -l)
+	lines_to_ignore=$(awk '/#/{print NR}' file_settings.txt)
+
+	number_of_folders_to_extract=$(cat file_settings.txt | wc -l )
+
+
 	for (( this_folder_row=1; this_folder_row<=${number_of_folders_to_extract}; this_folder_row++ )); do
-		convertDICOM $SUB $this_folder_row &
+
+		if [[ ${lines_to_ignore[*]} =~ $this_folder_row ]]; then
+			echo # just a filler for now because unable to get inverse of if statement to work properly..
+		else
+			convertDICOM $SUB $this_folder_row &
+		fi
 	done
 	wait
 done
