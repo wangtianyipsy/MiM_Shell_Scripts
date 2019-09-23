@@ -2,27 +2,31 @@
 subjects=(CrunchPilot01_development1)
 #subjects=(ClarkPilot_01)
 
-preprocessing_steps=("slicetime_fmri")
+#preprocessing_steps=("slicetime_fmri")
 #preprocessing_steps=("merge_distmap_fmri")
 #preprocessing_steps=("create_fieldmap_fmri")
 #preprocessing_steps=("create_vdm_fmri")
 #preprocessing_steps=("coregister_fmri_to_MeanFM")
-#preprocessing_steps=("realign_fmri")
+
 #preprocessing_steps=("realign_unwarp_fmri")
+
+#preprocessing_steps=("realign_fmri")
 #preprocessing_steps=("apply_vdm_fmri")
 
-#preprocessing_steps=("bias_correction")
 #preprocessing_steps=("segment_fmri")
 #preprocessing_steps=("skull_strip_t1")
 
-#preprocessing_steps=("coregister_fmri_to_T1") # this is for 
+#preprocessing_steps=("art_fmri") 
 
-#preprocessing_steps=("art_fmri") # implement in conn
+#preprocessing_steps=("coregister_t1_to_fmri") # what is this used for? if moving t1 to fmri then do we have a t1 for each run mean? does not make sense...
+#preprocessing_steps=("spm_norm_fmri")  
 
+#preprocessing_steps=("smooth_fmri")  # how to decide which norms to smooth?? look for both??
+
+
+preprocessing_steps=("segment_fmri" "skull_strip_t1" "spm_norm_fmri" "smooth_fmri") #  "segment_fmri" "skull_strip_t1" "spm_norm_fmri" "smooth_fmri"
 
 # in progress.. 
-####preprocessing_steps=("spm_norm_fmri")  # replace the y_T1 with Ants output??
-####preprocessing_steps=("smooth_fmri")  # how to decide which norms to smooth?? look for both??
 
 
 
@@ -34,6 +38,9 @@ preprocessing_steps=("slicetime_fmri")
 # remove if slice_timed exists remove.. or determine a way to prevent matlab slice_timing from finding slice_timed_*
 # try removing all default values from Ugrant_defaults.m
 # automate population of XX_defaults.m 
+# error system: error=1 if [ $error != 0 ]; then
+# rename m_T1 to biascorrected
+# create log (step run, time taken..)
 
 # Set the path for our custom matlab functions and scripts
 Code_dir=/ufrc/rachaelseidler/tfettrow/Crunch_Code
@@ -46,31 +53,72 @@ for SUB in ${subjects[@]}; do
 	Subject_dir=/ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/${SUB}
 	cd "${Subject_dir}"
 
-	fmri_line_numbers_in_file_info=$(awk '/functional_run/{print NR}' ${SUB}_file_information.csv)
+	lines_to_ignore=$(awk '/#/{print NR}' file_settings.txt)
+
+	fmri_line_numbers_in_file_info=$(awk '/functional_run/{print NR}' file_settings.txt)
+	fmri_fieldmap_line_numbers_in_file_info=$(awk '/fmri_fieldmap/{print NR}' file_settings.txt)
+	t1_line_numbers_in_file_info=$(awk '/t1/{print NR}' file_settings.txt)
+
+	fmri_line_numbers_to_process=$fmri_line_numbers_in_file_info
+	fieldmap_line_numbers_to_process=$fmri_fieldmap_line_numbers_in_file_info
+	t1_line_numbers_to_process=$t1_line_numbers_in_file_info
+
+	this_index_fmri=0
+	this_index_fieldmap=0
+	this_index_t1=0
+	for item_to_ignore in ${lines_to_ignore[@]}; do
+		for item_to_check in ${fmri_line_numbers_in_file_info[@]}; do
+  			if [[ $item_to_check == $item_to_ignore ]]; then 
+  				remove_this_item_fmri[$this_index_fmri]=$item_to_ignore
+  				(( this_index_fmri++ ))
+  			fi
+  		done
+  		for item_to_check in ${fieldmap_line_numbers_to_process[@]}; do
+  			if [[ $item_to_check == $item_to_ignore ]]; then 
+  				remove_this_item_fieldmap[$this_index_fieldmap]=$item_to_ignore
+  				(( this_index_fieldmap++ ))
+  			fi
+  		done
+  		for item_to_check in ${t1_line_numbers_to_process[@]}; do
+  			if [[ $item_to_check == $item_to_ignore ]]; then 
+  				remove_this_item_t1[$this_index_t1]=$item_to_ignore
+  				(( this_index_t1++ ))
+  			fi
+  		done
+	done
+
+	for item_to_remove_fmri in ${remove_this_item_fmri[@]}; do
+		fmri_line_numbers_to_process=$(echo ${fmri_line_numbers_to_process[@]/$remove_this_item_fmri})
+	done
+	for item_to_remove_fieldmap in ${remove_this_item_fieldmap[@]}; do
+		fieldmap_line_numbers_to_process=$(echo ${fieldmap_line_numbers_to_process[@]/$item_to_remove_fieldmap})
+	done
+	for item_to_remove_t1 in ${remove_this_item_t1[@]}; do
+		t1_line_numbers_to_process=$(echo ${t1_line_numbers_to_process[@]/$item_to_remove_t1})
+	done
+
+
 	this_index=0
-	for this_line_number in ${fmri_line_numbers_in_file_info[@]}; do
-		fmri_processed_folder_name_array[$this_index]=$(cat ${SUB}_file_information.csv | sed -n ${this_line_number}p | cut -d ',' -f2)
+	for this_line_number in ${fmri_line_numbers_to_process[@]}; do
+		fmri_processed_folder_name_array[$this_index]=$(cat file_settings.txt | sed -n ${this_line_number}p | cut -d ',' -f2)
 		(( this_index++ ))
 	done
-	fmri_processed_folder_names=$(echo "${fmri_processed_folder_name_array[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' ')
-
-	fmri_fieldmap_line_numbers_in_file_info=$(awk '/fmri_fieldmap/{print NR}' ${SUB}_file_information.csv)
+	
 	this_index=0
 	for this_line_number in ${fmri_fieldmap_line_numbers_in_file_info[@]}; do
-		fmri_fieldmap_processed_folder_name_array[$this_index]=$(cat ${SUB}_file_information.csv | sed -n ${this_line_number}p | cut -d ',' -f2)
+		fmri_fieldmap_processed_folder_name_array[$this_index]=$(cat file_settings.txt | sed -n ${this_line_number}p | cut -d ',' -f2)
 		(( this_index++ ))
 	done
-	fmri_fieldmap_processed_folder_names=$(echo "${fmri_fieldmap_processed_folder_name_array[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' ')
-
-
-	t1_line_numbers_in_file_info=$(awk '/t1/{print NR}' ${SUB}_file_information.csv)
+	
 	this_index=0
 	for this_line_number in ${t1_line_numbers_in_file_info[@]}; do
-		t1_processed_folder_name_array[$this_index]=$(cat ${SUB}_file_information.csv | sed -n ${this_line_number}p | cut -d ',' -f2)
+		t1_processed_folder_name_array[$this_index]=$(cat file_settings.txt | sed -n ${this_line_number}p | cut -d ',' -f2)
 		(( this_index++ ))
 	done
+	
+	fmri_processed_folder_names=$(echo "${fmri_processed_folder_name_array[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' ')
+	fmri_fieldmap_processed_folder_names=$(echo "${fmri_fieldmap_processed_folder_name_array[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' ')
 	t1_processed_folder_names=$(echo "${t1_processed_folder_name_array[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' ')
-
 
 
 
@@ -88,6 +136,7 @@ for SUB in ${subjects[@]}; do
 		done
 		echo "This step took $SECONDS seconds to execute"
 	fi
+
    	if [[ ${preprocessing_steps[*]} =~ "merge_distmap_fmri" ]]; then
    		data_folder_to_analyze=($fmri_fieldmap_processed_folder_names)
    		data_folder_to_copy_to=($fmri_processed_folder_names)
@@ -141,13 +190,15 @@ for SUB in ${subjects[@]}; do
 	   	for this_fieldmap_folder in ${data_folder_to_analyze[@]}; do
 	   		cd "${Subject_dir}/Processed/MRI_files/${this_fieldmap_folder}/"
 	   		# just cleaning up in case this is being rerun
-	   		if [ -e my_fieldmap.nii ]; then 
-	   			rm my_fieldmap.nii
+	   		if [ -e my_fieldmap_nifti.nii ]; then 
+	   			rm my_fieldmap_nifti.nii
 	   		fi
-	   		if [ -e acqParams.nii ]; then 
-	   			rm acqParams.nii
+	   		if [ -e acqParams.txt ]; then 
+	   			rm acqParams.txt
 	   		fi
-
+	   		if [ -e my_fieldmap_mag.nii ]; then 
+				rm my_fieldmap_mag.nii
+			fi
 			# assuming only the DistMaps have .jsons in this folder
 			for this_json_file in *.json*; do
 									
@@ -166,11 +217,21 @@ for SUB in ${subjects[@]}; do
 						echo 0 1 0 ${total_readout} >> acqParams.txt
 					fi
 				done
+				for (( this_volume=1; this_volume<=$this_file_number_of_volumes; this_volume++ )); do
+					if [[ $encoding_direction =~ j- ]]; then
+						echo 0 1 0 ${total_readout} >> acqParams_inverted.txt
+					else
+						echo 0 -1 0 ${total_readout} >> acqParams_inverted.txt
+					fi
+				done
 			done
 
 			ml fsl
-			topup --imain=AP_PA_merged.nii --datain=acqParams.txt --fout=my_fieldmap_nifti --config=b02b0.cnf --iout=se_epi_unwarped --out=topup_results
+
+			topup --imain=AP_PA_merged.nii --datain=acqParams_inverted.txt --fout=my_fieldmap_nifti_inverted --config=b02b0.cnf --iout=se_epi_unwarped_inverted --out=topup_results
 		
+			topup --imain=AP_PA_merged.nii --datain=acqParams.txt --fout=my_fieldmap_nifti --config=b02b0.cnf --iout=se_epi_unwarped --out=topup_results
+
 			fslmaths se_epi_unwarped -Tmean my_fieldmap_mag
 
 
@@ -217,22 +278,22 @@ for SUB in ${subjects[@]}; do
 		"This step took $SECONDS seconds to execute"
 	fi
 
-	if [[ ${preprocessing_steps[*]} =~ "realign_fmri" ]]; then
-		data_folder_to_analyze=($fmri_processed_folder_names)
-		for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
-			cd "${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/"
-			ml matlab
-			matlab -nodesktop -nosplash -r "try; realign_fmri; catch; end; quit"
-		done
-		"This step took $SECONDS seconds to execute"
-	fi
-
 	if [[ ${preprocessing_steps[*]} =~ "realign_unwarp_fmri" ]]; then
 		data_folder_to_analyze=($fmri_processed_folder_names)
 		for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
 			cd "${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/"
 			ml matlab
 			matlab -nodesktop -nosplash -r "try; realign_unwarp_fmri; catch; end; quit"
+		done
+		"This step took $SECONDS seconds to execute"
+	fi
+
+	if [[ ${preprocessing_steps[*]} =~ "realign_fmri" ]]; then
+		data_folder_to_analyze=($fmri_processed_folder_names)
+		for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
+			cd "${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/"
+			ml matlab
+			matlab -nodesktop -nosplash -r "try; realign_fmri; catch; end; quit"
 		done
 		"This step took $SECONDS seconds to execute"
 	fi
@@ -269,22 +330,48 @@ for SUB in ${subjects[@]}; do
 		"This step took $SECONDS seconds to execute"
 	fi
 
-	if [[ ${preprocessing_steps[*]} =~ "coregister_fmri_to_T1" ]]; then
+	if [[ ${preprocessing_steps[*]} =~ "coregister_t1_to_fmri" ]]; then  # the processing folder needs switched
+		
+    	echo "error: do not coregister t1 to fmri right now... does not make sense to TF"
+		
+		#data_folder_to_analyze=($t1_processed_folder_names)
+		#data_folder_to_copy_from=($fmri_processed_folder_names)
+		#for this_t1_folder in ${data_folder_to_analyze[@]}; do
+		#	cd ${Subject_dir}/Processed/MRI_files/${data_folder_to_copy_from}/SkullStripped_T1.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/
+			
+		
+		#	cd ${Subject_dir}/Processed/MRI_files/${this_t1_folder}/
+
+		#	ml matlab
+		#	matlab -nodesktop -nosplash -r "try; coregister_t1_to_fmri; catch; end; quit"
+
+		#	rm SkullStripped_T1.nii
+		#done
+		#"This step took $SECONDS seconds to execute"
+	fi
+
+	if [[ ${preprocessing_steps[*]} =~ "spm_norm_fmri" ]]; then
 		data_folder_to_analyze=($fmri_processed_folder_names)
 		data_folder_to_copy_from=($t1_processed_folder_names)
-
 		for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
-			cp "${Subject_dir}/Processed/MRI_files/${data_folder_to_copy_from}/SkullStripped_T1.nii" "${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/"
-			cd "${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/"
+			cd ${Subject_dir}/Processed/MRI_files/${data_folder_to_copy_from}
+			cp mT1.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/
+			cp ${Code_dir}/MR_Templates/_ANTs_c0cTemplate_T1_IXI555_MNI152_GS_brain.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/
+			cp ${Code_dir}/MR_Templates/TPM.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/
 
+			cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/
+			mv -v _ANTs_c0cTemplate_T1_IXI555_MNI152_GS_brain.nii this_template.nii
+			# m_T1 is the bias_field corrected T1 
+
+			cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/
 			ml matlab
-			matlab -nodesktop -nosplash -r "try; coregister_fmri_to_t1; catch; end; quit"
-	
-			rm SkullStripped_T1.nii
+			matlab -nodesktop -nosplash -r "try; spm_norm_fmri; catch; end; quit"
+			
+			rm mT1.nii
+			rm this_template.nii
 		done
-		"This step took $SECONDS seconds to execute"
 	fi
-	
+
 	if [[ ${preprocessing_steps[*]} =~ "art_fmri" ]]; then
 		data_folder_to_analyze=($fmri_processed_folder_names)
 		data_folder_to_copy_from=($t1_processed_folder_names)
@@ -303,27 +390,14 @@ for SUB in ${subjects[@]}; do
 		"This step took $SECONDS seconds to execute"
 	fi
 
-	#if [[ ${preprocessing_steps[*]} =~ "spm_norm_fmri" ]]; then
-	#	data_folder_to_analyze=($fmri_processed_folder_names)
-	#	data_folder_to_copy_from=($t1_processed_folder_names)
-   	#	this_loop_index=0
-	#	for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
-	#		cd /ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/${SUB}/Processed/MRI_files/02_T1
-	#		cp y_T1.nii /ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/${SUB}/Processed/MRI_files/${this_functional_run_folder}/
-	#		cd /ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/${SUB}/Processed/MRI_files/${this_functional_run_folder}/
-	#		ml matlab
-	#		matlab -nodesktop -nosplash -r "try; spm_norm_fmri; catch; end; quit"
-	#		rm y_T1.nii
-	#	done
-	#fi
 
-	#if [[ ${preprocessing_steps[*]} =~ "smooth_fmri" ]]; then
-	#	data_folder_to_analyze=($fmri_processed_folder_names)
-	#	for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
-	#		cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/
-	#		ml matlab
-	#		matlab -nodesktop -nosplash -r "try; smooth_fmri; catch; end; quit"
-	#	done
-	#fi
+	if [[ ${preprocessing_steps[*]} =~ "smooth_fmri" ]]; then
+		data_folder_to_analyze=($fmri_processed_folder_names)
+		for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
+			cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/
+			ml matlab
+			matlab -nodesktop -nosplash -r "try; smooth_fmri; catch; end; quit"
+		done
+	fi
 
 done
