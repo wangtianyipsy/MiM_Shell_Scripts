@@ -105,13 +105,13 @@ for SUB in ${subjects[@]}; do
 	done
 	
 	this_index=0
-	for this_line_number in ${fmri_fieldmap_line_numbers_in_file_info[@]}; do
+	for this_line_number in ${fieldmap_line_numbers_to_process[@]}; do
 		fmri_fieldmap_processed_folder_name_array[$this_index]=$(cat file_settings.txt | sed -n ${this_line_number}p | cut -d ',' -f2)
 		(( this_index++ ))
 	done
 	
 	this_index=0
-	for this_line_number in ${t1_line_numbers_in_file_info[@]}; do
+	for this_line_number in ${t1_line_numbers_to_process[@]}; do
 		t1_processed_folder_name_array[$this_index]=$(cat file_settings.txt | sed -n ${this_line_number}p | cut -d ',' -f2)
 		(( this_index++ ))
 	done
@@ -119,6 +119,9 @@ for SUB in ${subjects[@]}; do
 	fmri_processed_folder_names=$(echo "${fmri_processed_folder_name_array[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' ')
 	fmri_fieldmap_processed_folder_names=$(echo "${fmri_fieldmap_processed_folder_name_array[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' ')
 	t1_processed_folder_names=$(echo "${t1_processed_folder_name_array[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' ')
+
+
+
 
 
 
@@ -217,23 +220,13 @@ for SUB in ${subjects[@]}; do
 						echo 0 1 0 ${total_readout} >> acqParams.txt
 					fi
 				done
-				for (( this_volume=1; this_volume<=$this_file_number_of_volumes; this_volume++ )); do
-					if [[ $encoding_direction =~ j- ]]; then
-						echo 0 1 0 ${total_readout} >> acqParams_inverted.txt
-					else
-						echo 0 -1 0 ${total_readout} >> acqParams_inverted.txt
-					fi
-				done
 			done
 
 			ml fsl
 
-			topup --imain=AP_PA_merged.nii --datain=acqParams_inverted.txt --fout=my_fieldmap_nifti_inverted --config=b02b0.cnf --iout=se_epi_unwarped_inverted --out=topup_results
-		
 			topup --imain=AP_PA_merged.nii --datain=acqParams.txt --fout=my_fieldmap_nifti --config=b02b0.cnf --iout=se_epi_unwarped --out=topup_results
 
 			fslmaths se_epi_unwarped -Tmean my_fieldmap_mag
-
 
 			ml fsl/5.0.8
 			fslchfiletype ANALYZE my_fieldmap_nifti.nii fpm_my_fieldmap
@@ -246,22 +239,46 @@ for SUB in ${subjects[@]}; do
 	if [[ ${preprocessing_steps[*]} =~ "create_vdm_fmri" ]]; then
 		data_folder_to_analyze=($fmri_fieldmap_processed_folder_names)
 		data_folder_to_copy_to=($fmri_processed_folder_names)
+		data_folder_to_gather_info_from=($fmri_processed_folder_names)
    		this_loop_index=0
 	   	for this_fieldmap_folder in ${data_folder_to_analyze[@]}; do
+			cp ${Code_dir}/Matlab_Scripts/helper/vdm_defaults.m ${Subject_dir}/Processed/MRI_files/${this_fieldmap_folder}/
+			cd ${Subject_dir}/Processed/MRI_files/${this_fieldmap_folder}/
+			
+			read_out=$(cat vdm_defaults.m)
 
-   			cp ${Code_dir}/Matlab_Scripts/helper/Ugrant_defaults.m ${Subject_dir}/Processed/MRI_files/${this_fieldmap_folder}/
-			cd ${Subject_dir}/Processed/MRI_files/${this_fieldmap_folder}/ 
+			array[0]=$(echo $read_out | awk -F";" '{print $1}')
+			array[1]=$(echo $read_out | awk -F";" '{print $2}')
+			array[2]=$(echo $read_out | awk -F";" '{print $3}')
+			array[3]=$(echo $read_out | awk -F";" '{print $4}')
+			array[4]=$(echo $read_out | awk -F";" '{print $5}')
+				
+   			cd ${Subject_dir}/Processed/MRI_files/${data_folder_to_gather_info_from[$this_loop_index]}
 
-			ml matlab
-			matlab -nodesktop -nosplash -r "try; create_vdm_img; catch; end; quit"
-			matlab -nodesktop -nosplash -r "try; create_vdm_nifti; catch; end; quit"
-
-			# needs to be an .img in case you want to try and use it...
-			cp vdm5_my_fieldmap.hdr "${Subject_dir}/Processed/MRI_files/${data_folder_to_copy_to[$this_loop_index]}"
-			cp vdm5_my_fieldmap.img "${Subject_dir}/Processed/MRI_files/${data_folder_to_copy_to[$this_loop_index]}"
-			(( this_loop_index++ ))
-
-			rm Ugrant_defaults.m
+   			for this_functional_run_file in *.json; do 
+   				total_readout=$(grep "TotalReadoutTime" ${this_functional_run_file} | tr -dc '0.00-9.00')
+				encoding_direction=$(grep "PhaseEncodingDirection" ${this_functional_run_file} | cut -d: -f 2 | head -1 | tr -d '"' |  tr -d ',')
+				if [[ $encoding_direction =~ j- ]]; then
+					array[2]="pm_def.K_SPACE_TRAVERSAL_BLIP_DIR = 0;"
+				else
+					array[2]="pm_def.K_SPACE_TRAVERSAL_BLIP_DIR = 1;"
+				fi
+  			break; done
+  			#array[0] is fine 
+			array[1]="pm_def.EPI_BASED_FIELDMAPS = 0;"
+  			array[3]="pm_def.TOTAL_EPI_READOUT_TIME = $total_readout;"
+  			array[4]="pm_def.DO_JACOBIAN_MODULATION = 0;"
+			
+			cd ${Subject_dir}/Processed/MRI_files/${this_fieldmap_folder}/
+  			rm vdm_defaults.m
+  			 			
+  			echo ${array[0]} >> vdm_defaults.m
+  			echo ${array[1]} >> vdm_defaults.m
+  			echo ${array[2]} >> vdm_defaults.m
+  			echo ${array[3]} >> vdm_defaults.m
+  			echo ${array[4]} >> vdm_defaults.m
+  		
+			rm vdm_defaults.m
 		done
 		"This step took $SECONDS seconds to execute"
 	fi
@@ -270,10 +287,8 @@ for SUB in ${subjects[@]}; do
 		data_folder_to_analyze=($fmri_processed_folder_names)
 		for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
 			cd "${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/"
-			pwd
 			ml matlab
 			matlab -nodesktop -nosplash -r "try; coregister_fmri_to_MeanFM; catch; end; quit"
-			
 		done
 		"This step took $SECONDS seconds to execute"
 	fi
@@ -328,26 +343,6 @@ for SUB in ${subjects[@]}; do
 			matlab -nodesktop -nosplash -r "try; skull_strip_t1; catch; end; quit"
 		done
 		"This step took $SECONDS seconds to execute"
-	fi
-
-	if [[ ${preprocessing_steps[*]} =~ "coregister_t1_to_fmri" ]]; then  # the processing folder needs switched
-		
-    	echo "error: do not coregister t1 to fmri right now... does not make sense to TF"
-		
-		#data_folder_to_analyze=($t1_processed_folder_names)
-		#data_folder_to_copy_from=($fmri_processed_folder_names)
-		#for this_t1_folder in ${data_folder_to_analyze[@]}; do
-		#	cd ${Subject_dir}/Processed/MRI_files/${data_folder_to_copy_from}/SkullStripped_T1.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/
-			
-		
-		#	cd ${Subject_dir}/Processed/MRI_files/${this_t1_folder}/
-
-		#	ml matlab
-		#	matlab -nodesktop -nosplash -r "try; coregister_t1_to_fmri; catch; end; quit"
-
-		#	rm SkullStripped_T1.nii
-		#done
-		#"This step took $SECONDS seconds to execute"
 	fi
 
 	if [[ ${preprocessing_steps[*]} =~ "spm_norm_fmri" ]]; then
