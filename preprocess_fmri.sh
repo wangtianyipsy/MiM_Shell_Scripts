@@ -88,7 +88,7 @@ for SUB in ${subjects[@]}; do
 	done
 
 	for item_to_remove_fmri in ${remove_this_item_fmri[@]}; do
-		fmri_line_numbers_to_process=$(echo ${fmri_line_numbers_to_process[@]/$remove_this_item_fmri})
+		fmri_line_numbers_to_process=$(echo ${fmri_line_numbers_to_process[@]/$item_to_remove_fmri})
 	done
 	for item_to_remove_fieldmap in ${remove_this_item_fieldmap[@]}; do
 		fieldmap_line_numbers_to_process=$(echo ${fieldmap_line_numbers_to_process[@]/$item_to_remove_fieldmap})
