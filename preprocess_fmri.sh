@@ -2,37 +2,50 @@
 subjects=(CrunchPilot01_development1)
 #subjects=(ClarkPilot_01)
 
+####### slice time ##############################
 #preprocessing_steps=("slicetime_fmri")
+##################################################
+
+################ Fieldmap Stuff m#############################
 #preprocessing_steps=("merge_distmap_fmri")
 #preprocessing_steps=("create_fieldmap_fmri")
 #preprocessing_steps=("create_vdm_fmri")
 #preprocessing_steps=("coregister_fmri_to_MeanFM")
+###############################################################
 
+############ DO Realign_unwarp ############
 #preprocessing_steps=("realign_unwarp_fmri")
+################################################################
 
-#preprocessing_steps=("realign_fmri")
-#preprocessing_steps=("apply_vdm_fmri")
+############# coregister T1 to Mean (before segmenting T1 to put in same space as functional runs) ###########################
+#preprocessing_steps=("coregister_t1_to_MeanFM")
+################################################################
 
+############## Segment and Skull Strip ##########################
 #preprocessing_steps=("segment_fmri")
-#preprocessing_steps=("skull_strip_t1")
+#preprocessing_steps=("segment_fmri" "skull_strip_t1")
+################################################################
 
+############## run artifact regression? tool ######################
 #preprocessing_steps=("art_fmri") 
+##################################################################
 
-#preprocessing_steps=("coregister_t1_to_fmri") # what is this used for? if moving t1 to fmri then do we have a t1 for each run mean? does not make sense...
-#preprocessing_steps=("spm_norm_fmri")  
+############## normalize fmri ###################################
+preprocessing_steps=("spm_norm_fmri")  
+#################################################################
 
-#preprocessing_steps=("smooth_fmri")  # how to decide which norms to smooth?? look for both??
+############## smooth all fmri ########################################
+#preprocessing_steps=("smooth_fmri")  
+##################################################################
 
+#preprocessing_steps=("segment_fmri" "skull_strip_t1" "spm_norm_fmri" "smooth_fmri") #  "segment_fmri" "skull_strip_t1" "spm_norm_fmri" "smooth_fmri"
 
-preprocessing_steps=("segment_fmri" "skull_strip_t1" "spm_norm_fmri" "smooth_fmri") #  "segment_fmri" "skull_strip_t1" "spm_norm_fmri" "smooth_fmri"
-
-# in progress.. 
 
 
 
 # # # TO DO: 
 # setup some code, maybe in file_organize to read dicom header info to compare parameters (slice order acq, total readout time, phase encoding) to json file
-# create throw errors in different situations: 1) if file_info.csv not created 2) ...
+# create throw errors in different situations: 1) if file_settings.txt not created 2) ...
 # remove means after realign and unwarp
 # move coregistered2t1_unwarpedRealigned_coregistered2vdm_slicetimed_fMRI01_Run1,2,3,.. to ANTS processing folder 
 # remove if slice_timed exists remove.. or determine a way to prevent matlab slice_timing from finding slice_timed_*
@@ -303,25 +316,22 @@ for SUB in ${subjects[@]}; do
 		"This step took $SECONDS seconds to execute"
 	fi
 
-	if [[ ${preprocessing_steps[*]} =~ "realign_fmri" ]]; then
-		data_folder_to_analyze=($fmri_processed_folder_names)
-		for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
-			cd "${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/"
-			ml matlab
-			matlab -nodesktop -nosplash -r "try; realign_fmri; catch; end; quit"
-		done
-		"This step took $SECONDS seconds to execute"
-	fi
+	if [[ ${preprocessing_steps[*]} =~ "coregister_t1_to_MeanFM" ]]; then 
+        
+        data_folder_to_analyze=($t1_processed_folder_names)
+        data_folder_to_copy_from=($fmri_fieldmap_processed_folder_names)
+        for this_t1_folder in ${data_folder_to_analyze[@]}; do
 
-	if [[ ${preprocessing_steps[*]} =~ "apply_vdm_fmri" ]]; then
-		data_folder_to_analyze=($fmri_processed_folder_names)
-		for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
-			cd "${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/"
-			ml matlab
-			matlab -nodesktop -nosplash -r "try; apply_vdm; catch; end; quit"
-		done
-		"This step took $SECONDS seconds to execute"
-	fi
+        	cp ${Subject_dir}/Processed/MRI_files/${data_folder_to_copy_from}/Mean_AP_PA_merged.nii ${Subject_dir}/Processed/MRI_files/${this_t1_folder}/
+            
+            cd ${Subject_dir}/Processed/MRI_files/${this_t1_folder}/
+            
+            ml matlab
+            matlab -nodesktop -nosplash -r "try; coregister_t1_to_MeanFM; catch; end; quit"
+        done
+        "This step took $SECONDS seconds to execute"
+    fi
+
 
 	if [[ ${preprocessing_steps[*]} =~ "segment_fmri" ]]; then
 		data_folder_to_analyze=($t1_processed_folder_names)
@@ -351,6 +361,7 @@ for SUB in ${subjects[@]}; do
 		for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
 			cd ${Subject_dir}/Processed/MRI_files/${data_folder_to_copy_from}
 			cp mT1.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/
+
 			cp ${Code_dir}/MR_Templates/_ANTs_c0cTemplate_T1_IXI555_MNI152_GS_brain.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/
 			cp ${Code_dir}/MR_Templates/TPM.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/
 
