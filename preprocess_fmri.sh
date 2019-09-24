@@ -30,8 +30,9 @@ subjects=(CrunchPilot01_development1)
 #preprocessing_steps=("art_fmri") 
 ##################################################################
 
-############## normalize fmri ###################################
-preprocessing_steps=("spm_norm_fmri")  
+############## spm normalize stuff ###################################
+#preprocessing_steps=("spm_norm_fmri")  
+#preprocessing_steps=("spm_norm_t1")  
 #################################################################
 
 ############## smooth all fmri ########################################
@@ -49,8 +50,6 @@ preprocessing_steps=("spm_norm_fmri")
 # remove means after realign and unwarp
 # move coregistered2t1_unwarpedRealigned_coregistered2vdm_slicetimed_fMRI01_Run1,2,3,.. to ANTS processing folder 
 # remove if slice_timed exists remove.. or determine a way to prevent matlab slice_timing from finding slice_timed_*
-# try removing all default values from Ugrant_defaults.m
-# automate population of XX_defaults.m 
 # error system: error=1 if [ $error != 0 ]; then
 # rename m_T1 to biascorrected
 # create log (step run, time taken..)
@@ -290,6 +289,17 @@ for SUB in ${subjects[@]}; do
   			echo ${array[2]} >> vdm_defaults.m
   			echo ${array[3]} >> vdm_defaults.m
   			echo ${array[4]} >> vdm_defaults.m
+
+            ml matlab
+            matlab -nodesktop -nosplash -r "try; create_vdm_img; catch; end; quit"
+            matlab -nodesktop -nosplash -r "try; create_vdm_nifti; catch; end; quit"
+
+            # needs to be an .img in case you want to try and use it...
+            cp vdm5_my_fieldmap.hdr "${Subject_dir}/Processed/MRI_files/${data_folder_to_copy_to[$this_loop_index]}"
+            cp vdm5_my_fieldmap.img "${Subject_dir}/Processed/MRI_files/${data_folder_to_copy_to[$this_loop_index]}"
+            (( this_loop_index++ ))
+
+            rm Ugrant_defaults.m
   		
 			rm vdm_defaults.m
 		done
@@ -359,25 +369,24 @@ for SUB in ${subjects[@]}; do
 		data_folder_to_analyze=($fmri_processed_folder_names)
 		data_folder_to_copy_from=($t1_processed_folder_names)
 		for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
-			cd ${Subject_dir}/Processed/MRI_files/${data_folder_to_copy_from}
-			cp mT1.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/
-
-			cp ${Code_dir}/MR_Templates/_ANTs_c0cTemplate_T1_IXI555_MNI152_GS_brain.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/
-			cp ${Code_dir}/MR_Templates/TPM.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/
-
+			cp ${Subject_dir}/Processed/MRI_files/${data_folder_to_copy_from}/y_T1.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/
+			# y_t1 is deformation field
+			
 			cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/
-			mv -v _ANTs_c0cTemplate_T1_IXI555_MNI152_GS_brain.nii this_template.nii
-			# m_T1 is the bias_field corrected T1 
-
-			cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/
+			
 			ml matlab
 			matlab -nodesktop -nosplash -r "try; spm_norm_fmri; catch; end; quit"
-			
-			rm mT1.nii
-			rm this_template.nii
 		done
 	fi
-
+	if [[ ${preprocessing_steps[*]} =~ "spm_norm_t1" ]]; then
+		data_folder_to_analyze=($t1_processed_folder_names)
+		for this_t1_folder in ${data_folder_to_analyze[@]}; do
+			cd ${Subject_dir}/Processed/MRI_files/${this_t1_folder}/
+			
+			ml matlab
+			matlab -nodesktop -nosplash -r "try; spm_norm_t1; catch; end; quit"
+		done
+	fi
 	if [[ ${preprocessing_steps[*]} =~ "art_fmri" ]]; then
 		data_folder_to_analyze=($fmri_processed_folder_names)
 		data_folder_to_copy_from=($t1_processed_folder_names)
@@ -395,7 +404,6 @@ for SUB in ${subjects[@]}; do
 		done
 		"This step took $SECONDS seconds to execute"
 	fi
-
 
 	if [[ ${preprocessing_steps[*]} =~ "smooth_fmri" ]]; then
 		data_folder_to_analyze=($fmri_processed_folder_names)
