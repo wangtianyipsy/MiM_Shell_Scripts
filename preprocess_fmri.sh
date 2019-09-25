@@ -64,6 +64,9 @@ export MATLABPATH=${Code_dir}/Matlab_Scripts/helper
 for SUB in ${subjects[@]}; do
 	Subject_dir=/ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/${SUB}
 	cd "${Subject_dir}"
+	if [ -e preprocessing_log.txt ]; then 
+		rm preprocessing_log.txt
+	fi
 
 	lines_to_ignore=$(awk '/#/{print NR}' file_settings.txt)
 
@@ -134,9 +137,6 @@ for SUB in ${subjects[@]}; do
 
 
 
-
-
-
 	if [[ ${preprocessing_steps[*]} =~ "slicetime_fmri" ]]; then
 		data_folder_to_analyze=($fmri_processed_folder_names)
 		#cd $Subject_dir/Processed/MRI_files
@@ -150,12 +150,14 @@ for SUB in ${subjects[@]}; do
 			matlab -nodesktop -nosplash -r "try; slicetime_fmri; catch; end; quit"
 		done
 		echo "This step took $SECONDS seconds to execute"
+		cd "${Subject_dir}"
+		echo "Slice Time: $SECONDS sec" >> preprocessing_log.txt
+		SECONDS=0
 	fi
 
    	if [[ ${preprocessing_steps[*]} =~ "merge_distmap_fmri" ]]; then
    		data_folder_to_analyze=($fmri_fieldmap_processed_folder_names)
    		data_folder_to_copy_to=($fmri_processed_folder_names)
-   		this_loop_index=0
 	   	for this_fieldmap_folder in ${data_folder_to_analyze[@]}; do
 			cd "${Subject_dir}/Processed/MRI_files/${this_fieldmap_folder}/"
 			
@@ -193,11 +195,15 @@ for SUB in ${subjects[@]}; do
 			fslmaths AP_PA_merged.nii -Tmean Mean_AP_PA_merged.nii
 			gunzip *nii.gz*
 
-			cp Mean_AP_PA_merged.nii "${Subject_dir}/Processed/MRI_files/${data_folder_to_copy_to[$this_loop_index]}"
-			(( this_loop_index++ ))
-			
+			for this_fmri_folder in ${fmri_processed_folder_names};do 
+				cp Mean_AP_PA_merged.nii "${Subject_dir}/Processed/MRI_files/${this_fmri_folder}"
+			done
+
 		done
 		echo "This step took $SECONDS seconds to execute"
+		cd "${Subject_dir}"
+		echo "Merging Fieldmaps: $SECONDS sec" >> preprocessing_log.txt
+		SECONDS=0
 	fi
 
 	if [[ ${preprocessing_steps[*]} =~ "create_fieldmap_fmri" ]]; then
@@ -246,6 +252,9 @@ for SUB in ${subjects[@]}; do
 			gunzip *nii.gz*
 		done
 		"This step took $SECONDS seconds to execute"
+		cd "${Subject_dir}"
+		echo "Fieldmap Creation: $SECONDS sec" >> preprocessing_log.txt
+		SECONDS=0
 	fi
 
 	if [[ ${preprocessing_steps[*]} =~ "create_vdm_fmri" ]]; then
@@ -299,11 +308,12 @@ for SUB in ${subjects[@]}; do
             cp vdm5_my_fieldmap.img "${Subject_dir}/Processed/MRI_files/${data_folder_to_copy_to[$this_loop_index]}"
             (( this_loop_index++ ))
 
-            rm Ugrant_defaults.m
-  		
 			rm vdm_defaults.m
 		done
 		"This step took $SECONDS seconds to execute"
+		cd "${Subject_dir}"
+		echo "Create VDM: $SECONDS sec" >> preprocessing_log.txt
+		SECONDS=0
 	fi
 
 	if [[ ${preprocessing_steps[*]} =~ "coregister_fmri_to_MeanFM" ]]; then
@@ -314,6 +324,9 @@ for SUB in ${subjects[@]}; do
 			matlab -nodesktop -nosplash -r "try; coregister_fmri_to_MeanFM; catch; end; quit"
 		done
 		"This step took $SECONDS seconds to execute"
+		cd "${Subject_dir}"
+		echo "Coregiser fmri to Mean FM: $SECONDS sec" >> preprocessing_log.txt
+		SECONDS=0
 	fi
 
 	if [[ ${preprocessing_steps[*]} =~ "realign_unwarp_fmri" ]]; then
@@ -324,6 +337,9 @@ for SUB in ${subjects[@]}; do
 			matlab -nodesktop -nosplash -r "try; realign_unwarp_fmri; catch; end; quit"
 		done
 		"This step took $SECONDS seconds to execute"
+		cd "${Subject_dir}"
+		echo "Realign and Unwarp: $SECONDS sec" >> preprocessing_log.txt
+		SECONDS=0
 	fi
 
 	if [[ ${preprocessing_steps[*]} =~ "coregister_t1_to_MeanFM" ]]; then 
@@ -340,19 +356,25 @@ for SUB in ${subjects[@]}; do
             matlab -nodesktop -nosplash -r "try; coregister_t1_to_MeanFM; catch; end; quit"
         done
         "This step took $SECONDS seconds to execute"
+        cd "${Subject_dir}"
+		echo "Coregiser t1 to Mean FM: $SECONDS sec" >> preprocessing_log.txt
+		SECONDS=0
     fi
 
 
-	if [[ ${preprocessing_steps[*]} =~ "segment_fmri" ]]; then
+	if [[ ${preprocessing_steps[*]} =~ "segment_t1" ]]; then
 		data_folder_to_analyze=($t1_processed_folder_names)
 		for this_t1_folder in ${data_folder_to_analyze[@]}; do
 			cp ${Code_dir}/MR_Templates/TPM.nii ${Subject_dir}/Processed/MRI_files/${this_t1_folder}/
 			cd ${Subject_dir}/Processed/MRI_files/${this_t1_folder}/
 			ml matlab
-			matlab -nodesktop -nosplash -r "try; segment_fmri; catch; end; quit"
+			matlab -nodesktop -nosplash -r "try; segment_t1; catch; end; quit"
 			rm TPM.nii
 		done
 		"This step took $SECONDS seconds to execute"
+		cd "${Subject_dir}"
+		echo "Segment T1: $SECONDS sec" >> preprocessing_log.txt
+		SECONDS=0
 	fi
 
 	if [[ ${preprocessing_steps[*]} =~ "skull_strip_t1" ]]; then
@@ -363,6 +385,9 @@ for SUB in ${subjects[@]}; do
 			matlab -nodesktop -nosplash -r "try; skull_strip_t1; catch; end; quit"
 		done
 		"This step took $SECONDS seconds to execute"
+		cd "${Subject_dir}"
+		echo "Skull Strip T1: $SECONDS sec" >> preprocessing_log.txt
+		SECONDS=0
 	fi
 
 	if [[ ${preprocessing_steps[*]} =~ "spm_norm_fmri" ]]; then
@@ -377,7 +402,12 @@ for SUB in ${subjects[@]}; do
 			ml matlab
 			matlab -nodesktop -nosplash -r "try; spm_norm_fmri; catch; end; quit"
 		done
+		"This step took $SECONDS seconds to execute"
+		cd "${Subject_dir}"
+		echo "fMRI Normalization: $SECONDS sec" >> preprocessing_log.txt
+		SECONDS=0
 	fi
+
 	if [[ ${preprocessing_steps[*]} =~ "spm_norm_t1" ]]; then
 		data_folder_to_analyze=($t1_processed_folder_names)
 		for this_t1_folder in ${data_folder_to_analyze[@]}; do
@@ -386,7 +416,12 @@ for SUB in ${subjects[@]}; do
 			ml matlab
 			matlab -nodesktop -nosplash -r "try; spm_norm_t1; catch; end; quit"
 		done
+		"This step took $SECONDS seconds to execute"
+		cd "${Subject_dir}"
+		echo "T1 Normalization: $SECONDS sec" >> preprocessing_log.txt
+		SECONDS=0
 	fi
+
 	if [[ ${preprocessing_steps[*]} =~ "art_fmri" ]]; then
 		data_folder_to_analyze=($fmri_processed_folder_names)
 		data_folder_to_copy_from=($t1_processed_folder_names)
@@ -403,6 +438,9 @@ for SUB in ${subjects[@]}; do
 			
 		done
 		"This step took $SECONDS seconds to execute"
+		cd "${Subject_dir}"
+		echo "Artifact Regression Tool: $SECONDS sec" >> preprocessing_log.txt
+		SECONDS=0
 	fi
 
 	if [[ ${preprocessing_steps[*]} =~ "smooth_fmri" ]]; then
@@ -411,7 +449,24 @@ for SUB in ${subjects[@]}; do
 			cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/
 			ml matlab
 			matlab -nodesktop -nosplash -r "try; smooth_fmri; catch; end; quit"
+
 		done
+		"This step took $SECONDS seconds to execute"
+		cd "${Subject_dir}"
+		echo "Smoothing: $SECONDS sec" >> preprocessing_log.txt
+		SECONDS=0
 	fi
 
+	if [[ ${preprocessing_steps[*]} =~ "smooth_t1" ]]; then
+		data_folder_to_analyze=($t1_processed_folder_names)
+		for this_t1_folder in ${data_folder_to_analyze[@]}; do
+			cd ${Subject_dir}/Processed/MRI_files/${this_t1_folder}/
+			ml matlab
+			matlab -nodesktop -nosplash -r "try; smooth_t1; catch; end; quit"
+		done
+		"This step took $SECONDS seconds to execute"
+		cd "${Subject_dir}"
+		echo "Smoothing: $SECONDS sec" >> preprocessing_log.txt
+		SECONDS=0
+	fi
 done
