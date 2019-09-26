@@ -46,13 +46,12 @@ for SUB in ${subjects[@]}; do
 
 	cd $Subject_dir
 	
-	lines_to_ignore=$(awk '/#/{print NR}' file_settings.txt)
+	lines_to_ignore=$(awk '/#|" "/{print NR}' file_settings.txt)
 
-	number_of_folders_to_extract=$(cat file_settings.txt | wc -l )
-
+	number_of_folders_to_extract=$(awk 'END{print NR}' file_settings.txt)
 
 	for (( this_folder_row=1; this_folder_row<=${number_of_folders_to_extract}; this_folder_row++ )); do
-
+			echo $this_folder_row
 		if [[ ${lines_to_ignore[*]} =~ $this_folder_row ]]; then
 			echo # just a filler for now because unable to get inverse of if statement to work properly..
 		else
