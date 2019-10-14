@@ -11,9 +11,10 @@ subjects=(CrunchPilot01_development1)
 #preprocessing_steps=("create_fieldmap_fmri")
 #preprocessing_steps=("create_vdm_fmri")
 #preprocessing_steps=("coregister_fmri_to_MeanFM")
+
 ###############################################################
 
-############ DO Realign_unwarp ############
+############ DO Realign_unwarp #############
 #preprocessing_steps=("realign_unwarp_fmri")
 ################################################################
 
@@ -35,7 +36,7 @@ subjects=(CrunchPilot01_development1)
 #################################################################
 
 ############## smooth all fmri ########################################
-preprocessing_steps=("smooth_fmri")  
+#preprocessing_steps=("smooth_fmri")  
 #preprocessing_steps=("smooth_t1")
 ##################################################################
 
@@ -43,20 +44,24 @@ preprocessing_steps=("smooth_fmri")
 #preprocessing_steps=("skull_strip_t1")  # when do we want to skull stip?
 ######################################################################333
 
-
-#preprocessing_steps=("segment_t1" "skull_strip_t1" "spm_norm_fmri" "smooth_fmri") #  "segment_t1" "skull_strip_t1" "spm_norm_fmri" "smooth_fmri"
-
-
+#preprocessing_steps=("coregister_t1_to_MeanFM" "segment_t1" "spm_norm_fmri" "smooth_fmri")
+#preprocessing_steps=("slicetime_fmri" "merge_distmap_fmri" "create_fieldmap_fmri" "create_vdm_fmri" "coregister_fmri_to_MeanFM" "realign_unwarp_fmri" "art_fmri") #  "segment_t1" "skull_strip_t1" "spm_norm_fmri" "smooth_fmri"
 
 
 # # # TO DO: 
 # setup some code, maybe in file_organize to read dicom header info to compare parameters (slice order acq, total readout time, phase encoding) to json file
 # create throw errors in different situations: 1) if file_settings.txt not created 2) ...
-# move coregistered2t1_unwarpedRealigned_coregistered2vdm_slicetimed_fMRI01_Run1,2,3,.. to ANTS processing folder 
-# remove if slice_timed exists remove.. or determine a way to prevent matlab slice_timing from finding slice_timed_*
+# grab age and sex info from somewhere
 # error system: error=1 if [ $error != 0 ]; then
-# rename m_T1 to biascorrected
 # ignore empty lines when reading file_settings.. some reason really difficult..
+
+# create Results file for SPM betas and contrasts
+
+# removing outliers TO DO: (probably needs to be a combo of fsl (split) and matlab (art) )
+# 1) provide input of volumes to remove for .. which run (how does the code know??)
+# 2) use fslsplit to remove the volumes specified
+# 3) rerurn art for new rp file
+# 4) 
 
 # Set the path for our custom matlab functions and scripts
 Code_dir=/ufrc/rachaelseidler/tfettrow/Crunch_Code
@@ -68,9 +73,6 @@ export MATLABPATH=${Code_dir}/Matlab_Scripts/helper
 for SUB in ${subjects[@]}; do
 	Subject_dir=/ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/${SUB}
 	cd "${Subject_dir}"
-	if [ -e preprocessing_log.txt ]; then 
-		rm preprocessing_log.txt
-	fi
 
 	lines_to_ignore=$(awk '/#/{print NR}' file_settings.txt)
 
@@ -161,6 +163,7 @@ for SUB in ${subjects[@]}; do
    	if [[ ${preprocessing_steps[*]} =~ "merge_distmap_fmri" ]]; then
    		data_folder_to_analyze=($fmri_fieldmap_processed_folder_names)
    		data_folder_to_copy_to=($fmri_processed_folder_names)
+   		this_loop_index=0
 	   	for this_fieldmap_folder in ${data_folder_to_analyze[@]}; do
 			cd "${Subject_dir}/Processed/MRI_files/${this_fieldmap_folder}/"
 			
@@ -180,7 +183,7 @@ for SUB in ${subjects[@]}; do
 			if [ -e topup_results_movpar.txt ]; then 
 				rm topup_results_movpar.txt
 			fi
-			
+		
 			ml fsl
 			fslmerge -t AP_PA_merged.nii DistMap_AP.nii DistMap_PA.nii
 
@@ -198,10 +201,9 @@ for SUB in ${subjects[@]}; do
 			fslmaths AP_PA_merged.nii -Tmean Mean_AP_PA_merged.nii
 			gunzip *nii.gz*
 
-			for this_fmri_folder in ${fmri_processed_folder_names};do 
-				cp Mean_AP_PA_merged.nii "${Subject_dir}/Processed/MRI_files/${this_fmri_folder}"
-			done
-
+			cp Mean_AP_PA_merged.nii "${Subject_dir}/Processed/MRI_files/${data_folder_to_copy_to[$this_loop_index]}"
+			(( this_loop_index++ ))
+			
 		done
 		echo "This step took $SECONDS seconds to execute"
 		cd "${Subject_dir}"
@@ -280,7 +282,7 @@ for SUB in ${subjects[@]}; do
    			cd ${Subject_dir}/Processed/MRI_files/${data_folder_to_gather_info_from[$this_loop_index]}
 
    			for this_functional_run_file in *.json; do 
-   				total_readout=$(grep "TotalReadoutTime" ${this_functional_run_file} | tr -dc '0.00-9.00')
+   				total_readout_sec=$(grep "TotalReadoutTime" ${this_functional_run_file} | tr -dc '0.00-9.00')
 				encoding_direction=$(grep "PhaseEncodingDirection" ${this_functional_run_file} | cut -d: -f 2 | head -1 | tr -d '"' |  tr -d ',')
 				if [[ $encoding_direction =~ j- ]]; then
 					array[2]="pm_def.K_SPACE_TRAVERSAL_BLIP_DIR = 0;"
@@ -289,8 +291,13 @@ for SUB in ${subjects[@]}; do
 				fi
   			break; done
   			#array[0] is fine 
+  			#d1d2=$(echo "$d1 + $d2" | bc)
+  			#total_readout_ms=$(( 1000*$total_readout_sec ))
+  			total_readout_ms=$(echo "1000 * $total_readout_sec" | bc )
+  			
+  			echo $total_readout_ms
 			array[1]="pm_def.EPI_BASED_FIELDMAPS = 0;"
-  			array[3]="pm_def.TOTAL_EPI_READOUT_TIME = $total_readout;"
+  			array[3]="pm_def.TOTAL_EPI_READOUT_TIME = $total_readout_ms;"
   			array[4]="pm_def.DO_JACOBIAN_MODULATION = 0;"
 			
 			cd ${Subject_dir}/Processed/MRI_files/${this_fieldmap_folder}/
@@ -307,11 +314,10 @@ for SUB in ${subjects[@]}; do
             matlab -nodesktop -nosplash -r "try; create_vdm_nifti; catch; end; quit"
 
             # needs to be an .img in case you want to try and use it...
-            cp vdm5_my_fieldmap.hdr "${Subject_dir}/Processed/MRI_files/${data_folder_to_copy_to[$this_loop_index]}"
-            cp vdm5_my_fieldmap.img "${Subject_dir}/Processed/MRI_files/${data_folder_to_copy_to[$this_loop_index]}"
+            cp vdm5_fpm_my_fieldmap.hdr ${Subject_dir}/Processed/MRI_files/${data_folder_to_copy_to[$this_loop_index]}
+            cp vdm5_fpm_my_fieldmap.img ${Subject_dir}/Processed/MRI_files/${data_folder_to_copy_to[$this_loop_index]}
             (( this_loop_index++ ))
 
-			rm vdm_defaults.m
 		done
 		"This step took $SECONDS seconds to execute"
 		cd "${Subject_dir}"
@@ -364,6 +370,16 @@ for SUB in ${subjects[@]}; do
 			cp ${Subject_dir}/Processed/MRI_files/${data_folder_to_copy_from}/T1.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/
 			cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/
 		
+			for this_rp_file in rp_*.txt; do
+				if ! [[ $this_rp_file =~ "unwarpedRealigned" ]]; then
+					this_filename_1=$(echo $this_rp_file | cut -d'_' -f1)
+					this_filename_2=$(echo $this_rp_file | cut -d'_' -f2)
+					this_filename_3=$(echo $this_rp_file | cut -d'_' -f3)
+					this_filename_4=$(echo $this_rp_file | cut -d'_' -f4)
+					mv -v $this_rp_file ${this_filename_1}_unwarpedRealigned_${this_filename_2}_${this_filename_3}_${this_filename_4}
+				fi
+			done
+
 			for this_functional_file in unwarpedRealigned*.nii; do
 				ml matlab
 				matlab -nodesktop -nosplash -r "try; art_fmri('$this_functional_file'); catch; end; quit"
