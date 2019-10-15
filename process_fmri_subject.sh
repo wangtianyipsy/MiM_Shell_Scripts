@@ -23,10 +23,12 @@ subjects=(CrunchPilot01)
 #preprocessing_steps=("art_fmri") 
 ##################################################################
 
-preprocessing_steps=("remove_outlier_volumes")
+############## outlier removal ######################
+#preprocessing_steps=("remove_outlier_volumes")
+##################################################################
 
 ############# coregister T1 to Mean Func or MeanFM (TF is using MeanFM) ###########################
-#preprocessing_steps=("coregister_t1_to_MeanFM" "segment_t1")
+#preprocessing_steps=("coregister_t1_to_MeanFM")
 ################################################################
 
 ############## Segment ##########################
@@ -34,13 +36,17 @@ preprocessing_steps=("remove_outlier_volumes")
 ################################################################
 
 ############## spm normalize stuff ###################################
-#preprocessing_steps=("spm_norm_fmri")  
+preprocessing_steps=("spm_norm_fmri" "smooth_fmri")
 #preprocessing_steps=("spm_norm_t1")  
 #################################################################
 
 ############## smooth all fmri ########################################
 #preprocessing_steps=("smooth_fmri")  
 #preprocessing_steps=("smooth_t1")
+##################################################################
+
+############## level one stats ########################################
+#preprocessing_steps=("level_one_stats")
 ##################################################################
 
 ##################### skull strip ########################################
@@ -401,110 +407,123 @@ for SUB in ${subjects[@]}; do
 		SECONDS=0
 	fi
 
-if [[ ${preprocessing_steps[*]} =~ "remove_outlier_volumes" ]]; then
-	lines_to_ignore=$(awk '/#/{print NR}' outlier_removal_settings.txt)
-	
-	line_numbers_in_file_info=$(awk 'END{print NR}' outlier_removal_settings.txt)
-
-	line_numbers_to_process=$line_numbers_in_file_info
-
-	this_index_fmri=0
-	for item_to_ignore in ${lines_to_ignore[@]}; do
-		for item_to_check in ${fmri_line_numbers_in_file_info[@]}; do
-  			if [[ $item_to_check == $item_to_ignore ]]; then 
-  				remove_this_item[$this_index_fmri]=$item_to_ignore
-  				(( this_index_fmri++ ))
-  			fi
-  		done
-	done
-
-	for item_to_remove_fmri in ${remove_this_item_fmri[@]}; do
-		line_numbers_to_process=$(echo ${line_numbers_to_process[@]/$remove_this_item})
-	done
-	
-	this_index=0
-	for this_line_number in ${line_numbers_to_process[@]}; do
-		# the processed folder name is one index to the left here compared to file_settings.txt.. consider a standard method of determining this..
-		processed_folder_name_array[$this_index]=$(cat outlier_removal_settings.txt | sed -n ${this_line_number}p | cut -d ',' -f1)
-		run_number_array[$this_index]=$(cat outlier_removal_settings.txt | sed -n ${this_line_number}p | cut -d ',' -f2)
-		first_index_array[$this_index]=$(cat outlier_removal_settings.txt | sed -n ${this_line_number}p | cut -d ',' -f3)
-		last_index_array[$this_index]=$(cat outlier_removal_settings.txt | sed -n ${this_line_number}p | cut -d ',' -f4)
-		(( this_index++ ))
-	done
-	
-	processed_folder_names=$(echo "${processed_folder_name_array[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' ')
-
-	for this_functional_run_folder in ${processed_folder_names[@]}; do
-		cd "${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/"
+	if [[ ${preprocessing_steps[*]} =~ "remove_outlier_volumes" ]]; then
+		lines_to_ignore=$(awk '/#/{print NR}' outlier_removal_settings.txt)
 		
-		this_runNumber=1
-		this_index=0
-		# choose the slicetimed file because we will redo coregistration and realign and unwarp 
-		for this_functional_file in slicetimed*.nii; do
-			if [[ $this_runNumber =~ ${run_number_array[$this_index]} ]]; then
-				ml fsl
-				fslsplit $this_functional_file
-				this_volume_index=0
-				for this_volume_file in vol*; do
-					if ! [[ ${first_index_array[$this_index]} =~ NA ]]; then 
-						if [[ $this_volume_index -le ${first_index_array[$this_index]} ]]; then
-							rm $this_volume_file
-
-						fi
-					fi
-					if ! [[ ${last_index_array[$this_index]} =~ NA ]]; then 
-						if [[ $this_volume_index -ge ${last_index_array[$this_index]} ]]; then
-							rm $this_volume_file
-						fi
-					fi
-					(( this_volume_index++ ))
-				done
-				rm $this_functional_file
-				fslmerge -a $this_functional_file vol*
-				rm vol*
-				gunzip *nii.gz*
-
-
-				ml matlab
-				
-				# coreg to distmap
-				#if [ -e slicetimed_*.nii ]; then 
-				#	rm slicetimed_*.nii
-				#fi
-
-				# TO DOs
-				# 1) need to remove vols from this slicetimed run
-				# 2) need to remove the unwarpedRealigned file associated with this run
-				# 3) rerun coreg to FM for this run (create "single" function)
-				# 4) rerun realign and unwarp for this run
-				# 5) rerun art
-
-				matlab -nodesktop -nosplash -r "try; realign_single('$this_functional_file'); catch; end; quit"
-			
-				for this_rp_file in rp_*.txt; do
-					if ! [[ $this_rp_file =~ "unwarpedRealigned" ]]; then
-						this_filename_1=$(echo $this_rp_file | cut -d'_' -f1)
-						this_filename_2=$(echo $this_rp_file | cut -d'_' -f2)
-						this_filename_3=$(echo $this_rp_file | cut -d'_' -f3)
-						this_filename_4=$(echo $this_rp_file | cut -d'_' -f4)
-						mv -v $this_rp_file ${this_filename_1}_unwarpedRealigned_${this_filename_2}_${this_filename_3}_${this_filename_4}
-					fi
-				done
+		line_numbers_in_file_info=$(awk 'END{print NR}' outlier_removal_settings.txt)
 	
-				matlab -nodesktop -nosplash -r "try; art_fmri('$this_functional_file'); catch; end; quit"
-			fi
-			(( this_runNumber++ ))
+		line_numbers_to_process=$line_numbers_in_file_info
+	
+		this_index_fmri=0
+		for item_to_ignore in ${lines_to_ignore[@]}; do
+			for item_to_check in ${fmri_line_numbers_in_file_info[@]}; do
+	  			if [[ $item_to_check == $item_to_ignore ]]; then 
+	  				remove_this_item[$this_index_fmri]=$item_to_ignore
+	  				(( this_index_fmri++ ))
+	  			fi
+	  		done
 		done
-	done
-	"This step took $SECONDS seconds to execute"
-	cd "${Subject_dir}"
-	echo "Outlier Removal: $SECONDS sec" >> preprocessing_log.txt
-	SECONDS=0
-fi
+	
+		for item_to_remove_fmri in ${remove_this_item_fmri[@]}; do
+			line_numbers_to_process=$(echo ${line_numbers_to_process[@]/$remove_this_item})
+		done
+		
+		this_index=0
+		for this_line_number in ${line_numbers_to_process[@]}; do
+			# the processed folder name is one index to the left here compared to file_settings.txt.. consider a standard method of determining this..
+			processed_folder_name_array[$this_index]=$(cat outlier_removal_settings.txt | sed -n ${this_line_number}p | cut -d ',' -f1)
+			run_number_array[$this_index]=$(cat outlier_removal_settings.txt | sed -n ${this_line_number}p | cut -d ',' -f2)
+			first_index_array[$this_index]=$(cat outlier_removal_settings.txt | sed -n ${this_line_number}p | cut -d ',' -f3)
+			last_index_array[$this_index]=$(cat outlier_removal_settings.txt | sed -n ${this_line_number}p | cut -d ',' -f4)
+			(( this_index++ ))
+		done
+		
+		processed_folder_names=$(echo "${processed_folder_name_array[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' ')
+	
+		for this_functional_run_folder in ${processed_folder_names[@]}; do
+			cd "${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/"
+			
+			this_runNumber=1
+			this_index=0
+			# choose the slicetimed file because we will redo coregistration and realign and unwarp 
+			for this_slicetimed_file in slicetimed*.nii; do
+				if [[ $this_runNumber =~ ${run_number_array[$this_index]} ]]; then
+					ml fsl
+	
+					# need to check the length of slicetimed run with respect to raw.. if already changed throw an error
+					this_slicetimed_file_corename=$(echo $this_slicetimed_file | cut -d. -f 1)
+					this_raw_file_name=$(echo $this_slicetimed_file | cut -d_ -f2-)
+	
+					this_slicetimed_file_info=$(fslhd $this_slicetimed_file)
+					this_slicetimed_file_number_of_volumes=$(echo $this_slicetimed_file_info | grep -o dim4.* | tr -s ' ' | cut -d ' ' -f 2)
+	
+					this_raw_file_info=$(fslhd $this_raw_file_name)
+					this_raw_file_number_of_volumes=$(echo $this_raw_file_info | grep -o dim4.* | tr -s ' ' | cut -d ' ' -f 2)
+	
+					if ! [[ $this_slicetimed_file_number_of_volumes = $this_raw_file_number_of_volumes ]]; then
+						echo "Error:" $this_slicetimed_file_corename "WAS ALREADY ADJUSTED... CONSIDER COMMENTING THIS FILE OUT IN SETTINGS FILE."
+						exit 1
+					fi
+					
+					fslsplit $this_slicetimed_file
+					this_volume_index=0
+					for this_volume_file in vol*; do
+						if ! [[ ${first_index_array[$this_index]} =~ NA ]]; then 
+							if [[ $this_volume_index -lt ${first_index_array[$this_index]} ]]; then
+								rm $this_volume_file
+							fi
+						fi
+						if ! [[ ${last_index_array[$this_index]} =~ NA ]]; then 
+							if [[ $this_volume_index -gt ${last_index_array[$this_index]} ]]; then
+								rm $this_volume_file
+							fi
+						fi
+						(( this_volume_index++ ))
+					done
+	
+					rm ${this_slicetimed_file_corename}.nii
+					rm unwarpedRealigned_${this_slicetimed_file_corename}.nii
+					rm rp_unwarpedRealigned_${this_slicetimed_file_corename}.txt
+	
+					fslmerge -a $this_slicetimed_file vol*
+					rm vol*
+					gunzip *nii.gz*
+					
+	
+					ml matlab			
+					# re-coregister slicetimed to mean_Distmap only if removing start of run (bc we coreg first volume to Distmap)
+					if ! [[ ${first_index_array[$this_index]} =~ NA ]]; then 
+						matlab -nodesktop -nosplash -r "try; coregister_fmri_to_MeanFM_single('$this_slicetimed_file'); catch; end; quit"
+					fi
+	
+					matlab -nodesktop -nosplash -r "try; realign_unwarp_single('$this_slicetimed_file'); catch; end; quit"
+				
+					for this_rp_file in rp_*.txt; do
+						if ! [[ $this_rp_file =~ "unwarpedRealigned" ]]; then
+							this_filename_1=$(echo $this_rp_file | cut -d'_' -f1)
+							this_filename_2=$(echo $this_rp_file | cut -d'_' -f2)
+							this_filename_3=$(echo $this_rp_file | cut -d'_' -f3)
+							this_filename_4=$(echo $this_rp_file | cut -d'_' -f4)
+							mv -v $this_rp_file ${this_filename_1}_unwarpedRealigned_${this_filename_2}_${this_filename_3}_${this_filename_4}
+						fi
+					done
+		
+					matlab -nodesktop -nosplash -r "try; art_fmri('unwarpedRealigned_${this_slicetimed_file}'); catch; end; quit"
+					rm T1.nii
+					rm -rf Conn_Art_Folder_Stuff
+    				rm Conn_Art_Folder_Stuff.mat
+    				rm art_mask.hdr
+    				rm art_mask.img
 
-
-
-
+				fi
+				(( this_runNumber++ ))
+			done
+		done
+		"This step took $SECONDS seconds to execute"
+		cd "${Subject_dir}"
+		echo "Outlier Removal: $SECONDS sec" >> preprocessing_log.txt
+		SECONDS=0
+	fi
 
 	if [[ ${preprocessing_steps[*]} =~ "coregister_t1_to_MeanFM" ]]; then 
         
