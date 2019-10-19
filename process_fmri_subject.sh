@@ -70,7 +70,10 @@ preprocessing_steps=("spm_norm_fmri" "smooth_fmri")
 # 1) provide input of volumes to remove for .. which run (how does the code know??)
 # 2) use fslsplit to remove the volumes specified
 # 3) rerurn art for new rp file
-# 4) 
+# 4) do something like this for  % remove initial white space
+         #while ~isempty(this_line) && (this_line(1) == ' ' || double(this_line(1)) == 9)
+         #    this_line(1) = [];
+         #end
 
 # Set the path for our custom matlab functions and scripts
 Code_dir=/ufrc/rachaelseidler/tfettrow/Crunch_Code
@@ -461,7 +464,7 @@ for SUB in ${subjects[@]}; do
 					this_raw_file_number_of_volumes=$(echo $this_raw_file_info | grep -o dim4.* | tr -s ' ' | cut -d ' ' -f 2)
 	
 					if ! [[ $this_slicetimed_file_number_of_volumes = $this_raw_file_number_of_volumes ]]; then
-						echo "Error:" $this_slicetimed_file_corename "WAS ALREADY ADJUSTED... CONSIDER COMMENTING THIS FILE OUT IN SETTINGS FILE."
+						echo "Error:" $this_slicetimed_file_corename "WAS ALREADY ADJUSTED!!!"
 						exit 1
 					fi
 					
