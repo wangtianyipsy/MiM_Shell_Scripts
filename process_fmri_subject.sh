@@ -590,17 +590,17 @@ for SUB in ${subjects[@]}; do
 
 	if [[ ${preprocessing_steps[*]} =~ "coregister_t1_to_MeanFM" ]]; then 
         
-        data_folder_to_analyze=($t1_processed_folder_names)
-        for this_t1_folder in ${data_folder_to_analyze[@]}; do
-            for this_fieldmap_folder in ${fmri_fieldmap_processed_folder_names[@]}; do
-            	mkdir -p "${Subject_dir}/Processed/MRI_files/${this_t1_folder}/Coregistered2_$this_fieldmap_folder"
-            	cp "${Subject_dir}/Processed/MRI_files/${this_t1_folder}/T1.nii" "${Subject_dir}/Processed/MRI_files/${this_t1_folder}/Coregistered2_$this_fieldmap_folder"
-            	cp "${Subject_dir}/Processed/MRI_files/${this_fieldmap_folder}/Mean_AP_PA_merged.nii" "${Subject_dir}/Processed/MRI_files/${this_t1_folder}/Coregistered2_$this_fieldmap_folder"
-            	cd "${Subject_dir}/Processed/MRI_files/${this_t1_folder}/Coregistered2_$this_fieldmap_folder"
-            	ml matlab
-            	matlab -nodesktop -nosplash -r "try; coregister_t1_to_MeanFM; catch; end; quit"
-            done
+        this_t1_folder=($t1_processed_folder_names)
+  
+        for this_fieldmap_folder in ${fmri_fieldmap_processed_folder_names[@]}; do
+        	mkdir -p "${Subject_dir}/Processed/MRI_files/${this_t1_folder}/Coregistered2_$this_fieldmap_folder"
+        	cp "${Subject_dir}/Processed/MRI_files/${this_t1_folder}/T1.nii" "${Subject_dir}/Processed/MRI_files/${this_t1_folder}/Coregistered2_$this_fieldmap_folder"
+        	cp "${Subject_dir}/Processed/MRI_files/${this_fieldmap_folder}/Mean_AP_PA_merged.nii" "${Subject_dir}/Processed/MRI_files/${this_t1_folder}/Coregistered2_$this_fieldmap_folder"
+        	cd "${Subject_dir}/Processed/MRI_files/${this_t1_folder}/Coregistered2_$this_fieldmap_folder"
+        	ml matlab
+        	matlab -nodesktop -nosplash -r "try; coregister_t1_to_MeanFM; catch; end; quit"
         done
+
         "This step took $SECONDS seconds to execute"
         cd "${Subject_dir}"
 		echo "Coregiser t1 to Mean FM: $SECONDS sec" >> preprocessing_log.txt
@@ -608,19 +608,11 @@ for SUB in ${subjects[@]}; do
     fi
 
 	if [[ ${preprocessing_steps[*]} =~ "segment_t1" ]]; then
-		data_folder_to_analyze=($t1_processed_folder_names)
-		for this_t1_folder in ${data_folder_to_analyze[@]}; do
-			cd ${Subject_dir}/Processed/MRI_files/${this_t1_folder}/
-			
-			folders_in_dir=$(ls -d -- */*)
-			if [ -z "$folders_in_dir" ];then
-				cp ${Code_dir}/MR_Templates/TPM.nii ${Subject_dir}/Processed/MRI_files/${this_t1_folder}/
-				pwd
-			else
-				cd $folders_in_dir
-				cp ${Code_dir}/MR_Templates/TPM.nii ${Subject_dir}/Processed/MRI_files/${this_t1_folder}/${folders_in_dir}
-				pwd
-			fi
+		#this needs to go into t1 folder and then for each fieldmap folder go into the t1 sub folder for that fieldmap
+		this_t1_folder=($t1_processed_folder_names)
+		for this_fieldmap_folder in ${fmri_fieldmap_processed_folder_names[@]}; do
+			cp ${Code_dir}/MR_Templates/TPM.nii ${Subject_dir}/Processed/MRI_files/${this_t1_folder}/Coregistered2_$this_fieldmap_folder
+			cd ${Subject_dir}/Processed/MRI_files/${this_t1_folder}/Coregistered2_$this_fieldmap_folder
 
 			ml matlab
 			matlab -nodesktop -nosplash -r "try; segment_t1; catch; end; quit"
@@ -635,21 +627,17 @@ for SUB in ${subjects[@]}; do
 	if [[ ${preprocessing_steps[*]} =~ "spm_norm_fmri" ]]; then
 		data_folder_to_analyze=($fmri_processed_folder_names)
 		data_folder_to_copy_from=($t1_processed_folder_names)
+		this_loop_index=0
 		for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
-			cd ${Subject_dir}/Processed/MRI_files/${data_folder_to_copy_from}/
-
-			folders_in_dir=$(ls -d -- */*)
-			if [ -z "$folders_in_dir" ];then
-				cp ${Subject_dir}/Processed/MRI_files/${data_folder_to_copy_from}/y_T1.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/
-			else
-				cd $folders_in_dir
-				cp ${Subject_dir}/Processed/MRI_files/${data_folder_to_copy_from}/${folders_in_dir}/y_T1.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/
-			fi
-
+			
+			cd ${Subject_dir}/Processed/MRI_files/${data_folder_to_copy_from}/Coregistered2_${fmri_fieldmap_processed_folder_names[$this_loop_index]}
+			
+			cp y_T1.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/
 			cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/
 			
 			ml matlab
 			matlab -nodesktop -nosplash -r "try; spm_norm_fmri; catch; end; quit"
+			(( this_loop_index++ ))
 		done
 		"This step took $SECONDS seconds to execute"
 		cd "${Subject_dir}"
@@ -658,17 +646,9 @@ for SUB in ${subjects[@]}; do
 	fi
 
 	if [[ ${preprocessing_steps[*]} =~ "spm_norm_t1" ]]; then
-		data_folder_to_analyze=($t1_processed_folder_names)
-		for this_t1_folder in ${data_folder_to_analyze[@]}; do
-			cd ${Subject_dir}/Processed/MRI_files/${this_t1_folder}/
-
-			folders_in_dir=$(ls -d -- */*)
-			if [ -z "$folders_in_dir" ];then
-				cp ${Subject_dir}/Processed/MRI_files/${this_t1_folder}/y_T1.nii ${Subject_dir}/Processed/MRI_files/${this_t1_folder}/
-			else
-				cd $folders_in_dir
-				cp ${Subject_dir}/Processed/MRI_files/${this_t1_folder}/${folders_in_dir}/y_T1.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/
-			fi
+		this_t1_folder=($t1_processed_folder_names)
+		for this_fieldmap_folder in ${fmri_fieldmap_processed_folder_names[@]}; do			
+			cd ${Subject_dir}/Processed/MRI_files/${this_t1_folder}/Coregistered2_$this_fieldmap_folder
 			
 			ml matlab
 			matlab -nodesktop -nosplash -r "try; spm_norm_t1; catch; end; quit"
@@ -685,7 +665,6 @@ for SUB in ${subjects[@]}; do
 			cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/
 			ml matlab
 			matlab -nodesktop -nosplash -r "try; smooth_fmri; catch; end; quit"
-
 		done
 		"This step took $SECONDS seconds to execute"
 		cd "${Subject_dir}"
@@ -694,9 +673,9 @@ for SUB in ${subjects[@]}; do
 	fi
 
 	if [[ ${preprocessing_steps[*]} =~ "smooth_t1" ]]; then
-		data_folder_to_analyze=($t1_processed_folder_names)
-		for this_t1_folder in ${data_folder_to_analyze[@]}; do
-			cd ${Subject_dir}/Processed/MRI_files/${this_t1_folder}/
+		this_t1_folder=($t1_processed_folder_names)
+		for this_fieldmap_folder in ${fmri_fieldmap_processed_folder_names[@]}; do			
+			cd ${Subject_dir}/Processed/MRI_files/${this_t1_folder}/Coregistered2_$this_fieldmap_folder
 			ml matlab
 			matlab -nodesktop -nosplash -r "try; smooth_t1; catch; end; quit"
 		done
@@ -715,8 +694,8 @@ for SUB in ${subjects[@]}; do
 			for this_functional_run_file in *.json; do 
 				TR_from_json=$(grep "RepetitionTime" ${this_functional_run_file} | tr -dc '0.00-9.00')
   			break; done
-  			echo $TR_from_json
-    		matlab -nodesktop -nosplash -r "try; level_one_stats('TR_from_json'); catch; end; quit"
+  			ml matlab
+    		matlab -nodesktop -nosplash -r "try; level_one_stats('$TR_from_json'); catch; end; quit"
     	done
 	fi
 
