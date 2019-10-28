@@ -16,13 +16,13 @@ subjects=(CrunchPilot01_development2)
 
 
 #only necessary if not using MVT.. otherwise T1 -> MVT -> MNI
-#ants_processing_steps=("ants_registration_T1_2_MNI")
+ants_processing_steps=("ants_registration_T1_2_MNI")
 #ants_processing_steps=("ants_apply_transform_T1_2_MNI")
 
 
 #ants_processing_steps=("ants_apply_transform_MVT_2_MNI")
 
-ants_processing_steps=("ants_apply_transform_Func_2_MNI")
+#ants_processing_steps=("ants_apply_transform_Func_2_MNI")
 
 
 # # # TO DO: 
@@ -162,20 +162,20 @@ for SUB in ${subjects[@]}; do
         	--output [$outputFolder/T1_to_MNIc0c_,$outputFolder/T1_to_MNIc0c_Warped.nii.gz] \
         	--interpolation Linear \
         	--winsorize-image-intensities [0.005,0.995] \
-        	--use-histogram-matching 0 \
-        	--initial-moving-transform [$T1_Template,$MNI_Template,1] \
+        	--use-histogram-matching 1 \
+        	--initial-moving-transform [$MNI_Template,$T1_Template,1] \
         	--transform Rigid[0.1] \
-        	--metric MI[$T1_Template,$MNI_Template,1,32,Regular,0.25] \
+        	--metric MI[$MNI_Template,$T1_Template,1,64,Regular,0.5] \
         	--convergence [1000x500x250x100,1e-6,10] \
         	--shrink-factors 8x4x2x1 \
         	--smoothing-sigmas 3x2x1x0vox \
         	--transform Affine[0.1] \
-        	--metric MI[$T1_Template,$MNI_Template,1,32,Regular,0.25] \
+        	--metric MI[$MNI_Template,$T1_Template,1,64,Regular,0.5] \
         	--convergence [1000x500x250x100,1e-6,10] \
         	--shrink-factors 8x4x2x1 \
         	--smoothing-sigmas 3x2x1x0vox \
         	--transform SyN[0.1,3,0] \
-        	--metric CC[$T1_Template,$MNI_Template,1,4] \
+        	--metric CC[$MNI_Template,$T1_Template,1,10] \
         	--convergence [100x70x50x20,1e-6,10] \
         	--shrink-factors 8x4x2x1 \
         	--smoothing-sigmas 3x2x1x0vox
