@@ -1,3 +1,13 @@
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 subjects=(CrunchPilot01_development1)
 #subjects=(ClarkPilot_01)
@@ -52,16 +62,6 @@ subjects=(CrunchPilot01_development1)
 # setup some code, maybe in file_organize to read dicom header info to compare parameters (slice order acq, total readout time, phase encoding) to json file
 # create throw errors in different situations: 1) if file_settings.txt not created 2) ...
 # grab age and sex info from somewhere
-# error system: error=1 if [ $error != 0 ]; then
-# ignore empty lines when reading file_settings.. some reason really difficult..
-
-# create Results file for SPM betas and contrasts
-
-# removing outliers TO DO: (probably needs to be a combo of fsl (split) and matlab (art) )
-# 1) provide input of volumes to remove for .. which run (how does the code know??)
-# 2) use fslsplit to remove the volumes specified
-# 3) rerurn art for new rp file
-# 4) 
 
 # Set the path for our custom matlab functions and scripts
 Code_dir=/ufrc/rachaelseidler/tfettrow/Crunch_Code

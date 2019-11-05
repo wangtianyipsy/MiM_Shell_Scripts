@@ -1,3 +1,13 @@
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 subjects=(2003)
 
@@ -52,7 +62,7 @@ for SUB in ${subjects[@]}; do
 
 	for (( this_folder_row=1; this_folder_row<=${number_of_folders_to_extract}; this_folder_row++ )); do
 		if ! [[ ${lines_to_ignore[*]} =~ $this_folder_row ]]; then
-			convertDICOM $SUB $this_folder_row &
+			convertDICOM $Subject_dir $this_folder_row &
 		fi
 	done
 	wait
