@@ -195,27 +195,22 @@ for SUB in ${subjects[@]}; do
 
 
 	for this_preprocessing_step in "${preprocessing_steps[@]}"; do
-		if [[ $this_preprocessing_step == "slicetime_fmri" ]]; then
-			run_slicetime ()
-			{ 	
-				cd "$1/Processed/MRI_files/$2/"
-				
-				if [ -e slicetimed_*.nii ]; then 
-					rm slicetimed_*.nii
-				fi
-				ml matlab
-				matlab -nodesktop -nosplash -r "try; slicetime_fmri; catch; end; quit"
-			}
-			export -f run_slicetime	
-			
-			data_folder_to_analyze=($fmri_processed_folder_names)
-			ml parallel
-  			parallel --will-cite 'run_slicetime' ::: "${Subject_dir}" ::: "${data_folder_to_analyze[@]}"
-
-			echo "This step took $SECONDS seconds to execute"
-			cd "${Subject_dir}"
-			echo "Slice Time: $SECONDS sec" >> preprocessing_log.txt
-			SECONDS=0
+		if [[ $this_preprocessing_step ==  "slicetime_fmri" ]]; then
+		    data_folder_to_analyze=($fmri_processed_folder_names)
+        	#cd $Subject_dir/Processed/MRI_files
+        	for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
+        	    cd "${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/"
+        	    
+        	    if [ -e slicetimed_*.nii ]; then 
+        	        rm slicetimed_*.nii
+        	    fi
+        	    ml matlab
+        	    matlab -nodesktop -nosplash -r "try; slicetime_fmri; catch; end; quit"
+        	done
+        	echo This step took $SECONDS seconds to execute
+        	cd "${Subject_dir}"
+        	echo "Slice Time: $SECONDS sec" >> preprocessing_log.txt
+        	SECONDS=0
 		fi
 	
    		if [[ $this_preprocessing_step == "merge_distmap_fmri" ]]; then
@@ -263,7 +258,7 @@ for SUB in ${subjects[@]}; do
 				(( this_loop_index++ ))
 				
 			done
-			echo "This step took $SECONDS seconds to execute"
+			echo This step took $SECONDS seconds to execute
 			cd "${Subject_dir}"
 			echo "Merging Fieldmaps: $SECONDS sec" >> preprocessing_log.txt
 			SECONDS=0
@@ -314,7 +309,7 @@ for SUB in ${subjects[@]}; do
 	
 				gunzip *nii.gz*
 			done
-			"This step took $SECONDS seconds to execute"
+			echo This step took $SECONDS seconds to execute
 			cd "${Subject_dir}"
 			echo "Fieldmap Creation: $SECONDS sec" >> preprocessing_log.txt
 			SECONDS=0
@@ -377,7 +372,7 @@ for SUB in ${subjects[@]}; do
     	        (( this_loop_index++ ))
 	
 			done
-			"This step took $SECONDS seconds to execute"
+			echo This step took $SECONDS seconds to execute
 			cd "${Subject_dir}"
 			echo "Create VDM: $SECONDS sec" >> preprocessing_log.txt
 			SECONDS=0
@@ -414,7 +409,7 @@ for SUB in ${subjects[@]}; do
 					fi
 				done
 			done
-			"This step took $SECONDS seconds to execute"
+			echo This step took $SECONDS seconds to execute
 			cd "${Subject_dir}"
 			echo "Realign and Unwarp: $SECONDS sec" >> preprocessing_log.txt
 			SECONDS=0
@@ -449,7 +444,7 @@ for SUB in ${subjects[@]}; do
     				rm art_mask.img
 				done
 			done
-			"This step took $SECONDS seconds to execute"
+			echo This step took $SECONDS seconds to execute
 			cd "${Subject_dir}"
 			echo "Artifact Regression Tool: $SECONDS sec" >> preprocessing_log.txt
 			SECONDS=0
@@ -547,7 +542,7 @@ for SUB in ${subjects[@]}; do
 				fi
 				cd "${Subject_dir}"
 			done
-			"This step took $SECONDS seconds to execute"
+			echo This step took $SECONDS seconds to execute
 			cd "${Subject_dir}"
 			echo "Outlier Removal: $SECONDS sec" >> preprocessing_log.txt
 			SECONDS=0
@@ -565,7 +560,7 @@ for SUB in ${subjects[@]}; do
     	    	matlab -nodesktop -nosplash -r "try; coregister_t1_to_MeanFM; catch; end; quit"
     	    done
 	
-    	    "This step took $SECONDS seconds to execute"
+    	    echo This step took $SECONDS seconds to execute
     	    cd "${Subject_dir}"
 			echo "Coregiser t1 to Mean FM: $SECONDS sec" >> preprocessing_log.txt
 			SECONDS=0
@@ -582,7 +577,7 @@ for SUB in ${subjects[@]}; do
 				matlab -nodesktop -nosplash -r "try; segment_t1; catch; end; quit"
 				rm TPM.nii
 			done
-			"This step took $SECONDS seconds to execute"
+			echo This step took $SECONDS seconds to execute
 			cd "${Subject_dir}"
 			echo "Segment T1: $SECONDS sec" >> preprocessing_log.txt
 			SECONDS=0
@@ -603,7 +598,7 @@ for SUB in ${subjects[@]}; do
 				matlab -nodesktop -nosplash -r "try; spm_norm_fmri; catch; end; quit"
 				(( this_loop_index++ ))
 			done
-			"This step took $SECONDS seconds to execute"
+			echo This step took $SECONDS seconds to execute
 			cd "${Subject_dir}"
 			echo "fMRI Normalization: $SECONDS sec" >> preprocessing_log.txt
 			SECONDS=0
@@ -617,7 +612,7 @@ for SUB in ${subjects[@]}; do
 				ml matlab
 				matlab -nodesktop -nosplash -r "try; spm_norm_t1; catch; end; quit"
 			done
-			"This step took $SECONDS seconds to execute"
+			echo This step took $SECONDS seconds to execute
 			cd "${Subject_dir}"
 			echo "T1 Normalization: $SECONDS sec" >> preprocessing_log.txt
 			SECONDS=0
@@ -630,7 +625,7 @@ for SUB in ${subjects[@]}; do
 				ml matlab
 				matlab -nodesktop -nosplash -r "try; smooth_fmri; catch; end; quit"
 			done
-			"This step took $SECONDS seconds to execute"
+			echo This step took $SECONDS seconds to execute
 			cd "${Subject_dir}"
 			echo "Smoothing: $SECONDS sec" >> preprocessing_log.txt
 			SECONDS=0
@@ -645,9 +640,9 @@ for SUB in ${subjects[@]}; do
 					TR_from_json=$(grep "RepetitionTime" ${this_functional_run_file} | tr -dc '0.00-9.00')
   				break; done
   				ml matlab
-    			matlab -nodesktop -nosplash -r "try; level_one_stats('$TR_from_json'); catch; end; quit"
+    			matlab -nodesktop -nosplash -r "try; level_one_stats(1, '$TR_from_json'); catch; end; quit"
     		done
-    		"This step took $SECONDS seconds to execute"
+    		echo This step took $SECONDS seconds to execute
     		cd "${Subject_dir}"
 			echo "Smoothing: $SECONDS sec" >> preprocessing_log.txt
 			SECONDS=0
@@ -661,7 +656,7 @@ for SUB in ${subjects[@]}; do
 			matlab -nodesktop -nosplash -r "try; segment_t1; catch; end; quit"
 			matlab -nodesktop -nosplash -r "try; skull_strip_t1; catch; end; quit"
 	
-			"This step took $SECONDS seconds to execute"
+			echo This step took $SECONDS seconds to execute
 			cd "${Subject_dir}"
 			echo "Skull Strip T1: $SECONDS sec" >> preprocessing_log.txt
 			SECONDS=0
@@ -669,99 +664,94 @@ for SUB in ${subjects[@]}; do
 
 
 		if [[ $this_preprocessing_step == "n4_bias_correction" ]]; then
-			n4biascorrect ()
-			{ 	
-				N4BiasFieldCorrection -i $1 -o biascorrected_$1
-				#echo biascorrected_$1
-			}
-			export -f n4biascorrect	
-
 			this_t1_folder=($t1_processed_folder_names)
 			cd ${Subject_dir}/Processed/MRI_files/${this_t1_folder}/
 			ml gcc/5.2.0; ml ants
-			ml parallel
-			#parallel --will-cite N4BiasFieldCorrection -i {} -o biascorrected_{} ::: SkullStripped_T1.nii
-			#n4biascorrect $this_file_to_biascorrect &
-
+			N4BiasFieldCorrection -i SkullStripped_T1.nii -o biascorrected_SkullStripped_T1.nii
+			
 			data_folder_to_analyze=($fmri_processed_folder_names)
 			for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
 				mkdir -p ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
-				cp ${Subject_dir}/Processed/MRI_files/${this_t1_folder}/SkullStripped_T1.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
+				cp ${Subject_dir}/Processed/MRI_files/${this_t1_folder}/biascorrected_SkullStripped_T1.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
 				cp ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/meanunwarpedRealigned*.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
 				cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
 				# for each run in this functional folder, bias correct and place in ANTS folder
-				this_file_to_biascorrect[0]=SkullStripped_T1.nii
-				#this index is here only because including skullstripped in parallel.. probably can get around this
-				index=0;
+
 				for this_func_file in meanunwarpedRealigned*.nii; do 
-					if [[ $index =~ 0 ]]; then
-						this_file_to_biascorrect[1]=$this_func_file
-					fi
-					if [[ $index =~ 1 ]]; then
-						this_file_to_biascorrect[2]=$this_func_file
-					fi
-					(( index++ ))
+					N4BiasFieldCorrection -i $this_func_file -o biascorrected_$this_func_file
 				done
-				parallel --will-cite 'n4biascorrect' ::: "${this_file_to_biascorrect[@]}" 
 			done
-			"This step took $SECONDS seconds to execute"
+			echo This step took $SECONDS seconds to execute
+			cd "${Subject_dir}"
+			echo "Bias Corrected: $SECONDS sec" >> preprocessing_log.txt
+			SECONDS=0
 		fi
 	
 		
 
 		if [[ $this_preprocessing_step == "ants_registration_Func_2_T1" ]]; then
-			antsreg(){
-						Mean_Func=$1
-						T1_Template=biascorrected_SkullStripped_T1.nii
-					
-						this_core_file_name=$(echo $1 | cut -d. -f 1)
-						echo $this_core_file_name
-						# moving low res func to high res T1
-						antsRegistration --dimensionality 3 --float 0 \
-					     --output [warpToT1Params_${this_core_file_name},warpToT1Estimate_${this_core_file_name}.nii] \
-					     --interpolation Linear \
-					     --winsorize-image-intensities [0.005,0.995] \
-					     --use-histogram-matching 0 \
-					     --initial-moving-transform [$T1_Template,$Mean_Func,1] \
-					     --transform Rigid[0.1] \
-					     --metric MI[$T1_Template,$Mean_Func,1,32,Regular,0.25] \
-					     --convergence [1000x500x250x100,1e-6,10] \
-					     --shrink-factors 8x4x2x1 \
-					     --smoothing-sigmas 3x2x1x0vox
-					}
-			export -f antsreg	
-
 			data_folder_to_analyze=($fmri_processed_folder_names)
 			for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
 				cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
 				
 				ml gcc/5.2.0
 				ml ants
-				ml parallel
-				parallel --will-cite 'antsreg' ::: biascorrected_mean*.nii
+
+				if [ -e warpToT1Params_*.nii ]; then 
+        	        rm warpToT1Params_*.nii
+        	        rm warpToT1Params_*.mat
+        	        rm warpToT1Estimate_*.nii
+        	    fi
+				
+				for this_mean_file in biascorrected_mean*.nii; do
+					T1_Template=biascorrected_SkullStripped_T1.nii
+					Mean_Func=$this_mean_file
+
+					this_core_file_name=$(echo $this_mean_file | cut -d. -f 1)
+					echo 'registering' $Mean_Func 'to' $T1_Template
+					# moving low res func to high res T1
+					antsRegistration --dimensionality 3 --float 0 \
+					    --output [warpToT1Params_${this_core_file_name},warpToT1Estimate_${this_core_file_name}.nii] \
+					    --interpolation Linear \
+					    --winsorize-image-intensities [0.005,0.995] \
+					    --use-histogram-matching 0 \
+					    --initial-moving-transform [$T1_Template,$Mean_Func,1] \
+					    --transform Rigid[0.1] \
+					    --metric MI[$T1_Template,$Mean_Func,1,32,Regular,0.25] \
+					    --convergence [1000x500x250x100,1e-6,10] \
+					    --shrink-factors 8x4x2x1 \
+					    --smoothing-sigmas 3x2x1x0vox
+					 done
 			done
-			"This step took $SECONDS seconds to execute"
+			echo This step took $SECONDS seconds to execute
+			cd "${Subject_dir}"
+			echo "ANTS reg functional to T1: $SECONDS sec" >> preprocessing_log.txt
+			SECONDS=0
 		fi
 	
 		if [[ $this_preprocessing_step == "ants_apply_transform_Func_2_T1" ]]; then
-			transformFunc2T1(){
-				this_core_file_name=$(echo $1 | cut -d. -f 1)
-				#ml gcc/5.2.0
-				#ml ants
-				antsApplyTransforms -d 3 -e 3 -i ${this_core_file_name}.nii -r biascorrected_SkullStripped_T1.nii \
-				-n BSpline -o warpedToT1_${this_core_file_name}.nii -t [warpToT1Params_${this_core_file_name}0GenericAffine.mat,0] -v 
-				}
-			export -f transformFunc2T1	
-
 			data_folder_to_analyze=($fmri_processed_folder_names)
 			for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
 				cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
 				ml gcc/5.2.0
 				ml ants
-				ml parallel
-				parallel --will-cite 'transformFunc2T1' ::: biascorrected_meanunwarpedRealigned*.nii
+
+				if [ -e warpedToT1_*.nii ]; then 
+        	        rm warpedToT1_*.nii
+        	    fi
+
+				for this_mean_file in biascorrected_mean*.nii; do
+					this_core_file_name=$(echo $this_mean_file | cut -d. -f 1)
+					#ml gcc/5.2.0
+					#ml ants
+					antsApplyTransforms -d 3 -e 3 -i ${this_core_file_name}.nii -r biascorrected_SkullStripped_T1.nii \
+					-n BSpline -o warpedToT1_${this_core_file_name}.nii -t [warpToT1Params_${this_core_file_name}0GenericAffine.mat,0] -v 
+				done
 			done
-			echo "This script took $SECONDS seconds to execute"
+			echo This step took $SECONDS seconds to execute
+			cd "${Subject_dir}"
+			echo "ANTS reg functional to T1: $SECONDS sec" >> preprocessing_log.txt
+			SECONDS=0
 		fi
 	
 		if [[ $this_preprocessing_step == "ants_registration_T1_2_MNI" ]]; then
@@ -770,6 +760,12 @@ for SUB in ${subjects[@]}; do
 				# Create folders
 				cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
 	
+				if [ -e warpToMNIParams_*.nii ]; then 
+        	        rm warpToMNIParams_*.nii
+        	        rm warpToMNIParams_*.mat
+        	        rm warpToMNIEstimate_*.nii
+        	    fi
+
 				ml gcc/5.2.0
 				ml ants
 	
@@ -779,6 +775,8 @@ for SUB in ${subjects[@]}; do
 				#MNI_Template=/ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/spm12/canonical/avg152T1.nii				
 
 				this_core_file_name=biascorrected_SkullStripped_T1
+
+				echo 'registering' $T1_Template 'to' $MNI_Template
 	
 				antsRegistration --dimensionality 3 --float 0 \
         		--output [$outputFolder/warpToMNIParams_${this_core_file_name},$outputFolder/warpToMNIEstimate_${this_core_file_name}.nii] \
@@ -802,6 +800,10 @@ for SUB in ${subjects[@]}; do
         		--shrink-factors 8x4x2x1 \
         		--smoothing-sigmas 3x2x1x0vox
         	done
+        	echo This step took $SECONDS seconds to execute
+        	cd "${Subject_dir}"
+			echo "ANTS reg T1 to MNI: $SECONDS sec" >> preprocessing_log.txt
+			SECONDS=0
 		fi
 	
 		if [[ $this_preprocessing_step == "ants_apply_transform_T1_2_MNI" ]]; then
@@ -811,6 +813,9 @@ for SUB in ${subjects[@]}; do
 				cp /ufrc/rachaelseidler/tfettrow/Crunch_Code/MR_Templates/ANTs_c0Template_T1_IXI555_MNI152_GS_brain.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
 				#cp /ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/spm12/canonical/avg152T1.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
 								
+				if [ -e warpedToMNI_biascorrected*.nii ]; then 
+        	        rm warpedToMNI_*.nii
+        	    fi
 
 				ml gcc/5.2.0
 				ml ants
@@ -821,14 +826,19 @@ for SUB in ${subjects[@]}; do
 				-n BSpline -o warpedToMNI_${this_core_file_name}.nii -t [warpToMNIParams_${this_core_file_name}1Warp.nii.gz] -t [warpToMNIParams_${this_core_file_name}0GenericAffine.mat,0] -v
 				#-t [warpToMNIParams_${this_core_file_name}0GenericAffine.mat,1]  [warpToMNIParams_${this_core_file_name}1InverseWarp.nii.gz] -v
 			done
+			echo This step took $SECONDS seconds to execute
+			cd "${Subject_dir}"
+			echo "ANTS apply T1 to MNI: $SECONDS sec" >> preprocessing_log.txt
+			SECONDS=0
 		fi
 	
 		if [[ $this_preprocessing_step == "ants_apply_transform_Func_2_MNI" ]]; then
 			data_folder_to_analyze=($fmri_processed_folder_names)
 			for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
 				cp ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/unwarpedRealigned*.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
+				cp /ufrc/rachaelseidler/tfettrow/Crunch_Code/MR_Templates/ANTs_c0Template_T1_IXI555_MNI152_GS_brain.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
 				cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
-	
+
 				for this_file_to_warp in unwarpedRealigned*.nii; do 
 					ml fsl
 					this_file_header_info=$(fslhd $this_file_to_warp)
@@ -866,6 +876,10 @@ for SUB in ${subjects[@]}; do
 					gunzip *.nii.gz*
 				done
 			done
+			echo This step took $SECONDS seconds to execute
+			cd "${Subject_dir}"
+			echo "ANTS apply functional to MNI: $SECONDS sec" >> preprocessing_log.txt
+			SECONDS=0
 		fi
 	
 		if [[ $this_preprocessing_step == "smooth_fmri_ants" ]]; then
@@ -875,9 +889,9 @@ for SUB in ${subjects[@]}; do
 				ml matlab
 				matlab -nodesktop -nosplash -r "try; smooth_fmri_ants; catch; end; quit"
 			done
-			"This step took $SECONDS seconds to execute"
+			echo This step took $SECONDS seconds to execute
 			cd "${Subject_dir}"
-			echo "Smoothing: $SECONDS sec" >> preprocessing_log.txt
+			echo "Smoothing ANTS files: $SECONDS sec" >> preprocessing_log.txt
 			SECONDS=0
 		fi
 	
@@ -893,8 +907,20 @@ for SUB in ${subjects[@]}; do
 					TR_from_json=$(grep "RepetitionTime" ${this_functional_run_file} | tr -dc '0.00-9.00')
   				break; done
   				ml matlab
-    			matlab -nodesktop -nosplash -r "try; level_one_stats('$TR_from_json'); catch; end; quit"
+    			matlab -nodesktop -nosplash -r "try; level_one_stats(1, '$TR_from_json'); catch; end; quit"
     		done
+    		echo This step took $SECONDS seconds to execute
+    		cd "${Subject_dir}"
+			echo "Level One ANTS: $SECONDS sec" >> preprocessing_log.txt
+			SECONDS=0
+		fi
+		if [[ $this_preprocessing_step == "cat12StructuralAnalysis" ]]; then
+
+			this_t1_folder=($t1_processed_folder_names)
+			cp ${Code_dir}/MR_Templates/Template_*.nii ${Subject_dir}/Processed/MRI_files/${this_t1_folder}
+			cd ${Subject_dir}/Processed/MRI_files/${this_t1_folder}
+			ml matlab
+			matlab -nodesktop -nosplash -r "try; cat12StructuralAnalysis; catch; end; quit"
 		fi
 	done
 done
