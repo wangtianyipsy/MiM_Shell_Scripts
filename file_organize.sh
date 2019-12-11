@@ -46,13 +46,24 @@ convertDICOM(){
 		mv -v ${json_file} $this_processed_file_name.json
 		cp $this_processed_file_name.json "${Subject_dir}/Processed/MRI_files/$this_processed_folder_name";
 	done
+
+	if [ -e *.bval ]; then
+		for bval_file in *.bval*; do
+			mv -v ${bval_file} $this_processed_file_name.bval
+			cp $this_processed_file_name.bval "${Subject_dir}/Processed/MRI_files/$this_processed_folder_name";
+		done
+		for bvec_file in *.bvec*; do
+			mv -v ${bvec_file} $this_processed_file_name.bvec
+			cp $this_processed_file_name.bvec "${Subject_dir}/Processed/MRI_files/$this_processed_folder_name";
+		done
+	fi
 	cd $Subject_dir
 }
 
 
 for SUB in ${subjects[@]}; do
 
-	Subject_dir=/ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/${SUB}
+	Subject_dir=/ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/MiM_Data/${SUB}
 
 	cd $Subject_dir
 	
