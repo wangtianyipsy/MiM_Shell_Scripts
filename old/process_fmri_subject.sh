@@ -9,10 +9,28 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+argument_counter=0
+step_counter=0
+for this_argument in "$@"
+do
+	if	[[ $argument_counter == 0 ]]; then
+    	subject=$this_argument
+	else
+		preprocessing_steps="$this_argument"
+		#echo processing step: $this_argument
+	fi
+	
+
+#echo $preprocessing_steps
+
+
+#subject=$1
+#preprocessing_steps=$2
+
 #subjects=(1002)
 #subjects=(1004)
 #subjects=(1011)
-subjects=(2015)
+#subjects=(2015)
 #subjects=(2018)
 # 1011 2015 2018
 #subjects=(CrunchPilot01)
@@ -53,7 +71,7 @@ subjects=(2015)
 ################################################################
 
 ############## spm normalize stuff ###################################
-preprocessing_steps=("spm_norm_fmri" "smooth_fmri")
+#preprocessing_steps=("spm_norm_fmri" "smooth_fmri")
 #preprocessing_steps=("spm_norm_t1")  
 #################################################################
 
@@ -70,18 +88,14 @@ preprocessing_steps=("spm_norm_fmri" "smooth_fmri")
 #preprocessing_steps=("n4_bias_correction")
 #preprocessing_steps=("ants_registration_Func_2_T1")
 #preprocessing_steps=("ants_apply_transform_Func_2_T1")
-#preprocessing_steps=("ants_registration_Func_2_T1" "ants_apply_transform_Func_2_T1")
 #preprocessing_steps=("ants_registration_T1_2_MNI")
-preprocessing_steps=("ants_apply_transform_T1_2_MNI" "ants_apply_transform_Func_2_MNI")
+#preprocessing_steps=("ants_apply_transform_T1_2_MNI")
 #preprocessing_steps=("ants_apply_transform_Func_2_MNI")
 #################################################################
 
 ############## level one stats ########################################
 #preprocessing_steps=("level_one_stats")
 ##################################################################
-
-
-
 #preprocessing_steps=("coregister_t1_to_MeanFM" "segment_t1" "spm_norm_fmri" "smooth_fmri")
 #preprocessing_steps=("slicetime_fmri" "merge_distmap_fmri" "create_fieldmap_fmri" "create_vdm_fmri" "coregister_fmri_to_MeanFM" "realign_unwarp_fmri" "art_fmri") #  "segment_t1" "skull_strip_t1" "spm_norm_fmri" "smooth_fmri"
 #preprocessing_steps=("realign_unwarp_fmri" "art_fmri" "remove_outlier_volumes")
@@ -89,41 +103,20 @@ preprocessing_steps=("ants_apply_transform_T1_2_MNI" "ants_apply_transform_Func_
 # # # TO DO: 
 # setup some code, maybe in file_organize to read dicom header info to compare parameters (slice order acq, total readout time, phase encoding) to json file
 # create throw errors in different situations: 1) if file_settings.txt not created 2) ...
-# grab age and sex info from somewhere
-# error system: error=1 if [ $error != 0 ]; then
-# ignore empty lines when reading file_settings.. some reason really difficult..
 
-# create Results file for SPM betas and contrasts
-
-# removing outliers TO DO: (probably needs to be a combo of fsl (split) and matlab (art) )
-# 1) do something like this for  % remove initial white space
-         #while ~isempty(this_line) && (this_line(1) == ' ' || double(this_line(1)) == 9)
-         #    this_line(1) = [];
-         #end
-# 2) # setup some code, maybe in file_organize to read dicom header info to compare parameters (slice order acq, total readout time, phase encoding) to json file
-# create throw errors in different situations: 1) if file_settings.txt not created 2) ...
-# grab age and sex info from somewhere
 # create option to run MVT and ANTSreg locally or batch
 # what is a dilated segmentation??
-# implement 06_Nback
-# implement multiple runs
 # shorten file paths (create groupAnts_dir and subjectAnts_dir)
-# Func -> T1 -> MVT -> MNI  
-# adjust MVT file output name to Sub_T1_to_MVT
-# move them to the "processing folder" and change file name to include subjectI
-# move .batch to "processing folder" 
 # module load everything at top
 
 
 # Set the path for our custom matlab functions and scripts
 Code_dir=/ufrc/rachaelseidler/tfettrow/Crunch_Code
 
-
 export MATLABPATH=${Code_dir}/Matlab_Scripts/helper
 
-
-for SUB in ${subjects[@]}; do
-	Subject_dir=/ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/MiM_Data/${SUB}
+#for SUB in ${subjects[@]}; do
+	Subject_dir=/ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/MiM_Data/${subject}
 	cd "${Subject_dir}"
 
 	lines_to_ignore=$(awk '/#/{print NR}' file_settings.txt)
@@ -267,15 +260,16 @@ for SUB in ${subjects[@]}; do
 		if [[ $this_preprocessing_step == "create_fieldmap_fmri" ]]; then
    			data_folder_to_analyze=($fmri_fieldmap_processed_folder_names)
 		   	for this_fieldmap_folder in ${data_folder_to_analyze[@]}; do
+		   		echo creating fieldmap...
 		   		cd "${Subject_dir}/Processed/MRI_files/${this_fieldmap_folder}/"
 		   		# just cleaning up in case this is being rerun
 		   		if [ -e my_fieldmap_nifti.nii ]; then 
 		   			rm my_fieldmap_nifti.nii
 		   		fi
-		   		if [ -e acqParams.txt ]; then 
+		   		if [ -e acqParams.txt ]; then
 		   			rm acqParams.txt
 		   		fi
-		   		if [ -e my_fieldmap_mag.nii ]; then 
+		   		if [ -e my_fieldmap_mag.nii ]; then
 					rm my_fieldmap_mag.nii
 				fi
 				# assuming only the DistMaps have .jsons in this folder
@@ -742,8 +736,6 @@ for SUB in ${subjects[@]}; do
 
 				for this_mean_file in biascorrected_mean*.nii; do
 					this_core_file_name=$(echo $this_mean_file | cut -d. -f 1)
-					#ml gcc/5.2.0
-					#ml ants
 					antsApplyTransforms -d 3 -e 3 -i ${this_core_file_name}.nii -r biascorrected_SkullStripped_T1.nii \
 					-n BSpline -o warpedToT1_${this_core_file_name}.nii -t [warpToT1Params_${this_core_file_name}0GenericAffine.mat,0] -v 
 				done
@@ -757,7 +749,6 @@ for SUB in ${subjects[@]}; do
 		if [[ $this_preprocessing_step == "ants_registration_T1_2_MNI" ]]; then
 			data_folder_to_analyze=($fmri_processed_folder_names)
 			for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
-				# Create folders
 				cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
 	
 				if [ -e warpToMNIParams_*.nii ]; then 
@@ -772,7 +763,6 @@ for SUB in ${subjects[@]}; do
 				outputFolder=${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
 				T1_Template=${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/biascorrected_SkullStripped_T1.nii
 				MNI_Template=/ufrc/rachaelseidler/tfettrow/Crunch_Code/MR_Templates/ANTs_c0Template_T1_IXI555_MNI152_GS_brain.nii
-				#MNI_Template=/ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/spm12/canonical/avg152T1.nii				
 
 				this_core_file_name=biascorrected_SkullStripped_T1
 
@@ -811,7 +801,6 @@ for SUB in ${subjects[@]}; do
 			for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
 				cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
 				cp /ufrc/rachaelseidler/tfettrow/Crunch_Code/MR_Templates/ANTs_c0Template_T1_IXI555_MNI152_GS_brain.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
-				#cp /ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/spm12/canonical/avg152T1.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
 								
 				if [ -e warpedToMNI_biascorrected*.nii ]; then 
         	        rm warpedToMNI_*.nii
@@ -824,7 +813,6 @@ for SUB in ${subjects[@]}; do
 	
 				antsApplyTransforms -d 3 -e 3 -i ${this_core_file_name}.nii -r ANTs_c0Template_T1_IXI555_MNI152_GS_brain.nii \
 				-n BSpline -o warpedToMNI_${this_core_file_name}.nii -t [warpToMNIParams_${this_core_file_name}1Warp.nii.gz] -t [warpToMNIParams_${this_core_file_name}0GenericAffine.mat,0] -v
-				#-t [warpToMNIParams_${this_core_file_name}0GenericAffine.mat,1]  [warpToMNIParams_${this_core_file_name}1InverseWarp.nii.gz] -v
 			done
 			echo This step took $SECONDS seconds to execute
 			cd "${Subject_dir}"
@@ -851,7 +839,6 @@ for SUB in ${subjects[@]}; do
 					gunzip *.nii.gz*
 	
 					for (( this_volume=0; this_volume<=$this_file_number_of_volumes-1; this_volume++ )); do
-						#echo $this_volume
 						if [ $this_volume -lt 10 ]; then
 							this_volume_file=vol000$this_volume.nii
 						fi
@@ -862,13 +849,10 @@ for SUB in ${subjects[@]}; do
 							this_volume_file=vol0$this_volume.nii
 						fi
 	
-						# need the warpParams biascorrected_T1
-						# need the warpParams fmri
 						ml gcc/5.2.0; ml ants
 						antsApplyTransforms -d 3 -e 3 -i $this_volume_file -r ANTs_c0Template_T1_IXI555_MNI152_GS_brain.nii \
 						-o warpedToMNI_$this_volume_file -t [warpToT1Params_biascorrected_mean${this_func_core_file_name}0GenericAffine.mat,0] \
 						-t [warpToMNIParams_${this_T1_core_file_name}1Warp.nii] -t [warpToMNIParams_${this_T1_core_file_name}0GenericAffine.mat,0] -v
-						#[T1_to_MNIc0c_0GenericAffine.mat,1] -v
 					done
 					rm vol0*
 					fslmerge -t warpedToMNI_$this_file_to_warp warpedToMNI_vol0* 		 # type of transformation _ registration type (L= linear, A = Affine, S = syn) _ flow field applied (i = inverse, A = affine.mat, W = warp) 
@@ -923,4 +907,8 @@ for SUB in ${subjects[@]}; do
 			matlab -nodesktop -nosplash -r "try; cat12StructuralAnalysis; catch; end; quit"
 		fi
 	done
+
+	(( step_counter++ ))
+	(( argument_counter++ ))		
 done
+#done
