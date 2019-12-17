@@ -9,7 +9,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-subjects=(2002)
+
+subject=$1
+
+#subjects=(2002)
 
 
 Code_dir=/ufrc/rachaelseidler/tfettrow/Crunch_Code
@@ -19,11 +22,7 @@ export MATLABPATH=${Code_dir}/Matlab_Scripts/helper
 
 ml matlab
 
-
-for SUB in ${subjects[@]}; do
-
-	Subject_dir=/ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/MiM_Data/${SUB}
-	cd ${Subject_dir}/Raw/MRI_files/T1_MPRAGE_SAG_ISO_8MM_0006
-	matlab -nodesktop -nosplash -r "try; save_subject_info; catch; end; quit"
-	echo $SUB info saved took $SECONDS seconds to execute
-done
+Subject_dir=/ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/MiM_Data/${subject}
+cd ${Subject_dir}/Raw/MRI_files/T1_MPRAGE_SAG_ISO_8MM_0006
+matlab -nodesktop -nosplash -r "try; save_subject_info; catch; end; quit"
+echo $SUB info saved took $SECONDS seconds to execute

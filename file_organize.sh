@@ -9,7 +9,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-subjects=(2003)
+subject=$1
 
 #####################################################################################
 ml mricrogl
@@ -61,21 +61,15 @@ convertDICOM(){
 }
 
 
-for SUB in ${subjects[@]}; do
+Subject_dir=/ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/MiM_Data/${subject}
+cd $Subject_dir
 
-	Subject_dir=/ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/MiM_Data/${SUB}
-
-	cd $Subject_dir
-	
-	lines_to_ignore=$(awk '/#/{print NR}' file_settings.txt)
-
-	number_of_folders_to_extract=$(awk 'END{print NR}' file_settings.txt)
-
-	for (( this_folder_row=1; this_folder_row<=${number_of_folders_to_extract}; this_folder_row++ )); do
-		if ! [[ ${lines_to_ignore[*]} =~ $this_folder_row ]]; then
-			convertDICOM $Subject_dir $this_folder_row &
-		fi
-	done
-	wait
+lines_to_ignore=$(awk '/#/{print NR}' file_settings.txt)
+number_of_folders_to_extract=$(awk 'END{print NR}' file_settings.txt)
+for (( this_folder_row=1; this_folder_row<=${number_of_folders_to_extract}; this_folder_row++ )); do
+	if ! [[ ${lines_to_ignore[*]} =~ $this_folder_row ]]; then
+		convertDICOM $Subject_dir $this_folder_row &
+	fi
 done
+wait
 echo "This script took $SECONDS seconds to execute"
