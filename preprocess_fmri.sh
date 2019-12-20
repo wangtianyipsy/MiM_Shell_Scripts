@@ -17,7 +17,6 @@ do
     	subject=$this_argument
 	else
 		preprocessing_steps="$this_argument"
-		#echo processing step: $this_argument
 	fi
 	
 	# Set the path for our custom matlab functions and scripts
@@ -111,11 +110,11 @@ do
         	done
         	echo This step took $SECONDS seconds to execute
         	cd "${Subject_dir}"
-        	echo "Slice Time: $SECONDS sec" >> preprocessing_log.txt
+        	echo "slicetime_fmri: $SECONDS sec" >> preprocessing_log.txt
         	SECONDS=0
 		fi
 	
-   		if [[ $this_preprocessing_step == "merge_distmap_fmri" ]]; then
+   		if [[ $this_preprocessing_step == "create_fieldmap_fmri" ]]; then
    			data_folder_to_analyze=($fmri_fieldmap_processed_folder_names)
    			data_folder_to_copy_to=($fmri_processed_folder_names)
    			this_loop_index=0
@@ -160,19 +159,15 @@ do
 				(( this_loop_index++ ))
 				
 			done
-			echo This step took $SECONDS seconds to execute
-			cd "${Subject_dir}"
-			echo "Merging Fieldmaps: $SECONDS sec" >> preprocessing_log.txt
-			SECONDS=0
-		fi
+		
 	
-		if [[ $this_preprocessing_step == "create_fieldmap_fmri" ]]; then
+		
    			data_folder_to_analyze=($fmri_fieldmap_processed_folder_names)
 		   	for this_fieldmap_folder in ${data_folder_to_analyze[@]}; do
 		   		echo creating fieldmap...
 		   		cd "${Subject_dir}/Processed/MRI_files/${this_fieldmap_folder}/"
 		   		# just cleaning up in case this is being rerun
-		   		if [ -e my_fieldmap_nifti.nii ]; then 
+		   		if [ -e my_fieldmap_nifti.nii ]; then
 		   			rm my_fieldmap_nifti.nii
 		   		fi
 		   		if [ -e acqParams.txt ]; then
@@ -181,12 +176,15 @@ do
 		   		if [ -e my_fieldmap_mag.nii ]; then
 					rm my_fieldmap_mag.nii
 				fi
+				
+				# just a dummy value to check whether ecoding direction is same between distmaps
+				previous_encoding_direction=k
 				# assuming only the DistMaps have .jsons in this folder
 				for this_json_file in *.json*; do
 										
 					total_readout=$(grep "TotalReadoutTime" ${this_json_file} | tr -dc '0.00-9.00')
 					encoding_direction=$(grep "PhaseEncodingDirection" ${this_json_file} | cut -d: -f 2 | head -1 | tr -d '"' |  tr -d ',')
-					
+
 					this_file_name=$(echo $this_json_file | cut -d. -f 1)
 					ml fsl
 					this_file_header_info=$(fslhd $this_file_name.nii)
@@ -198,27 +196,26 @@ do
 						else
 							echo 0 1 0 ${total_readout} >> acqParams.txt
 						fi
+						if [[ $encoding_direction == $previous_encoding_direction ]]; then
+							echo WARNING: the phase encoding directions appear to be the same between distmaps!!!
+						fi
 					done
+					previous_encoding_direction=$encoding_direction
 				done
 	
-				ml fsl
-	
-				topup --imain=AP_PA_merged.nii --datain=acqParams.txt --fout=my_fieldmap_nifti --config=b02b0.cnf --iout=se_epi_unwarped --out=topup_results
-	
-				fslmaths se_epi_unwarped -Tmean my_fieldmap_mag
-	
-				ml fsl/5.0.8
-				fslchfiletype ANALYZE my_fieldmap_nifti.nii fpm_my_fieldmap
-	
-				gunzip *nii.gz*
+			ml fsl
+
+			topup --imain=AP_PA_merged.nii --datain=acqParams.txt --fout=my_fieldmap_nifti --config=b02b0.cnf --iout=se_epi_unwarped --out=topup_results
+
+			fslmaths se_epi_unwarped -Tmean my_fieldmap_mag
+
+			ml fsl/5.0.8
+			fslchfiletype ANALYZE my_fieldmap_nifti.nii fpm_my_fieldmap
+
+			gunzip *nii.gz*
 			done
-			echo This step took $SECONDS seconds to execute
-			cd "${Subject_dir}"
-			echo "Fieldmap Creation: $SECONDS sec" >> preprocessing_log.txt
-			SECONDS=0
-		fi
 	
-		if [[ $this_preprocessing_step == "create_vdm_fmri" ]]; then
+
 			data_folder_to_analyze=($fmri_fieldmap_processed_folder_names)
 			data_folder_to_copy_to=($fmri_processed_folder_names)
 			data_folder_to_gather_info_from=($fmri_processed_folder_names)
@@ -246,9 +243,7 @@ do
 						array[2]="pm_def.K_SPACE_TRAVERSAL_BLIP_DIR = 1;"
 					fi
   				break; done
-  				#array[0] is fine 
-  				#d1d2=$(echo "$d1 + $d2" | bc)
-  				#total_readout_ms=$(( 1000*$total_readout_sec ))
+  		
   				total_readout_ms=$(echo "1000 * $total_readout_sec" | bc )
   				
   				echo $total_readout_ms
