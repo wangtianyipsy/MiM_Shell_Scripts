@@ -9,39 +9,26 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#subjects=('1002,1004,1010,1011')
-#subjects=('1002')
-#subjects=('2002,2015,2018,2021')
-#subjects=('2002,2017,2018,2012,2025,2020,2026,2023,2022,2007')
-#subjects=('2002')
+# this script requires arguments 
 
-#group_name=(youngAdult)
-#group_name=(oldAdult)
+# example >> estimate_betas_by_condition.sh '1002,1004' youngAdult 05_MotorImagery collect_intensity_from_network_rois
 
-#fmri_processed_folder_names=('05_MotorImagery')
-#fmri_processed_folder_names=('06_Nback')
+# things to be aware of with this script: 
+# 1) only run one step at a time
+# 2) only run one population at a time
+# 3) only run one task (MotorImagery or Nback) at a time
 
-####### find roi locations ##############################
-################################################################3
-# no longer available... create new script
-#roi_analysis_steps=("level_two_stats_withinGroup")
-#roi_analysis_steps=("level_two_stats_betweenGroup")
-################################################################
+# potential steps:
+#convert_manually_entered_roi_to_voxel_coordinates
+#create_roi_sphere_for_maually_entered_roi
+#collect_manually_entered_rois
 
-#roi_analysis_steps=("convert_manually_entered_roi_to_voxel_coordinates")
-#roi_analysis_steps=("create_roi_sphere_for_maually_entered_rois")
-#roi_analysis_steps=("collect_manually_entered_rois")
+#convert_to_mni_for_significant_clusters
+#extract_intensity_from_significant_clusters
+#collect_roi_from_significant_clusters
 
-# TO DO: NEED A WAY TO AUTOMATE SAVING ROI TABLE
-# TO DO: work in save_significant_clusters.m
-#roi_analysis_steps=("convert_to_mni_for_significant_clusters")
-#roi_analysis_steps=("extract_intensity_from_significant_clusters")
-#roi_analysis_steps=("collect_roi_from_significant_clusters")
-	
-
-	
-#roi_analysis_steps=("extract_intensity_from_existing_rois")
-#roi_analysis_steps=("collect_intensity_from_existing_rois")
+#extract_intensity_from_network_rois
+#collect_intensity_from_network_rois
 
 ##################################################
 
@@ -214,6 +201,12 @@ for this_roi_analysis_step in "${roi_analysis_steps[@]}"; do
 	fi
 
 	if [[ $this_roi_analysis_step == "convert_to_mni_for_significant_clusters" ]]; then
+		####### find roi locations ##############################
+		################################################################3
+		# no longer available... create new script
+		#roi_analysis_steps=("level_two_stats_withinGroup")
+		#roi_analysis_steps=("level_two_stats_betweenGroup")
+		################################################################
 		for this_functional_run_folder in ${fmri_processed_folder_names[@]}; do
 			ml matlab
 			cd $Study_dir/withinGroup_Results/MRI_files/${this_functional_run_folder}/${group_name}
