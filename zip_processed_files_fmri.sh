@@ -50,15 +50,15 @@ for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
 	wait
 	
 	#shopt -s extglob
-	#rm !(art_*|ARTscreenshot*|Condition_Onsets*|smoothed*)
+	#rm !(art_*|ARTscreenshot*|Condition_Onsets*|smoothed*|*.zip|warpedToMNI_biascorrected*|*.json)
 	#wait
 ################################################################
 	cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
 
-	zip ants_processed_files.zip *	
+	zip ants_processed_files.zip *
 	wait
 
-	#rm !(art_*|Condition_Onsets*|smoothed*)
+	#rm !(art_*|ARTscreenshot*|Condition_Onsets*|smoothed*|*.zip|warpedToMNI_biascorrected*|fMRI_Run*|*.json|ANTs_*)
 	#shopt -u extglob
 
 done
