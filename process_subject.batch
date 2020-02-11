@@ -1,30 +1,25 @@
 #!/bin/bash
-#SBATCH --job-name=2023						    # Job name
-#SBATCH --mail-type=ALL               			# Mail events (NONE, BEGIN, END, FAIL, ALL)
+#SBATCH --job-name=WFU_OA_ROIs							# Job name
+#SBATCH --mail-type=END,FAIL          			# Mail events (NONE, BEGIN, END, FAIL, ALL)
 #SBATCH --mail-user=<tfettrow@ufl.edu>  		# Where to send mail	
-#SBATCH --ntasks=1                    			# Run on a single CPU
-#SBATCH --mem=12000mb                   	    # Memory limit
+#SBATCH --ntasks=1                    			# Run a single task
+#SBATCH --mem=4000mb	                   	    # Memory limit
 #SBATCH --qos=rachaelseidler
 #SBATCH --time=96:00:00               			# Time limit hrs:min:sec
-#SBATCH --output=ANTS_output_%j.out    			# Standard output and error log
-#SBATCH --output=ANTS_.%A_%a.out
-#SBATCH --error=ANTS_.%A_%a.error
-
+#output=serial_test_%j.log 	 	  				# Standard output and error log
 
 pwd; hostname; date
 
 cd /ufrc/rachaelseidler/tfettrow/Crunch_Code/
 
-subject=2023
+#subject=1013
 
-echo Processing: $subject...
-
+#echo Processing: $subject...
 #./Shell_Scripts/file_organize.sh $subject
-
 #./Shell_Scripts/save_subject_info.sh $subject
+#./Shell_Scripts/zip_raw_files.sh $subject
 
-./Shell_Scripts/preprocess_fmri.sh $subject level_one_stats_spm level_one_stats_ants
-
+#./Shell_Scripts/preprocess_fmri.sh $subject slicetime_fmri #create_fieldmap_fmri coregister_fmri_to_MeanFM realign_unwarp_fmri
 
 # slicetime_fmri
 # create_fieldmap_fmri
@@ -40,10 +35,25 @@ echo Processing: $subject...
 # level_one_stats_spm
 # skull_strip_t1_4_ants
 # n4_bias_correction
+# ants_norm
+# smooth_fmri_ants
+# level_one_stats_ants
+
 # ants_registration_Func_2_T1
 # ants_apply_transform_Func_2_T1
 # ants_registration_T1_2_MNI
 # ants_apply_transform_T1_2_MNI
 # ants_apply_transform_Func_2_MNI
-# smooth_fmri_ants
-# level_one_stats_ants
+
+./Shell_Scripts/estimate_betas_by_condition.sh '2002,2007,2012,2017,2018,2020,2022,2023,2025,2026' oldAdult 05_MotorImagery extract_intensity_from_WFU_rois
+#./Shell_Scripts/estimate_betas_by_condition.sh '1002,1004,1010,1011' youngAdult 05_MotorImagery extract_intensity_from_WFU_rois
+
+#'2002,2007,2012,2017,2018,2020,2022,2023,2025,2026'
+#'1002,1004,1010,1011'
+
+#./Shell_Scripts/preprocess_dwi.sh $subject rician_filter
+
+#preprocessing_steps=("rician_filter")
+#preprocessing_steps=("fieldmap_dti")
+#preprocessing_steps=("eddy_correction")
+#preprocessing_steps=("skull_strip")

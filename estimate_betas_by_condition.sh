@@ -27,6 +27,9 @@
 #extract_intensity_from_significant_clusters
 #collect_roi_from_significant_clusters
 
+#extract_intensity_from_WFU_rois
+#collect_intensity_from_WFU_rois
+
 #extract_intensity_from_network_rois
 #collect_intensity_from_network_rois
 
@@ -341,51 +344,72 @@ for this_roi_analysis_step in "${roi_analysis_steps[@]}"; do
 		for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
 			while IFS=',' read -ra subject_list; do
    				for this_subject in "${subject_list[@]}"; do
+   					echo extracting betas for $this_subject
 					# this was for premade nback rois
 					#cp $Study_dir/ROIs_Nback/roi*.nii $Study_dir/Group_Results/MRI_files/${this_functional_run_folder}/${group_name}
-					cp $Study_dir/ROIs_Lobes/roi*.nii ${Study_dir}/$this_subject/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/Level1_Results
+					cp $Study_dir/ROIs_Lobes/WFU*.nii ${Study_dir}/$this_subject/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/Level1_Results
+					cp ${Study_dir}/$this_subject/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/ANTs_c0Template_T1_IXI555_MNI152_GS_brain.nii ${Study_dir}/$this_subject/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/Level1_Results
    	   				cd ${Study_dir}/$this_subject/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/Level1_Results
    	   				#cd $Study_dir/withinGroup_Results/MRI_files/${this_functional_run_folder}/${group_name}
-	
-					if [ -e maskroi_frontal.nii ]; then
-						rm maskroi_frontal.nii
+					
+					shopt -s nullglob
+					prefix_to_delete=(mask*)
+					if [ -e "$prefix_to_delete" ]; then
+						rm mask*
 						rm meantsWFUROI_*.txt
-					fi
-					if [ -e maskroi_motor.nii ]; then
-						rm maskroi_motor.nii 
-					fi
-					if [ -e maskroi_somatosensory.nii ]; then
-						rm maskroi_somatosensory.nii 
+						rm roi_*.txt
 					fi
 
-					for this_roi_file in roi_*.nii; do
+					if [ -e brain_mask.nii ]; then
+						rm brain_mask.nii
+					fi
+
+					ml fsl
+					fslmaths ANTs_c0Template_T1_IXI555_MNI152_GS_brain.nii -bin brain_mask
+					gunzip *nii.gz
+
+					for this_roi_file in WFU*.nii; do
 						this_roi_corename=$(echo $this_roi_file | cut -d. -f 1)
-						#echo $this_roi_file
-						ml fsl
 				
 						flirt -in $this_roi_file -ref con_0001.nii -applyxfm -usesqform -out mask${this_roi_corename}
-						gunzip *nii.gz*				
+						gunzip *nii.gz*		
+
+						fslmaths mask${this_roi_corename}.nii -mas brain_mask.nii masked${this_roi_corename}.nii
+						gunzip *nii.gz*		
 					done
      				if [[ $this_functional_run_folder == "05_MotorImagery" ]]; then
-     					for this_maskroi_file in maskroi_*.nii; do
+     					if ! [ -e noNANcon_0013.nii ]; then
+							#echo does not exist
+     						#fslmaths con_0013.nii -nan noNANcon_0013
+     						fslmaths con_0013.nii -thr 0 -bin posmask_con_0013
+							fslmaths con_0013.nii -mas posmask_con_0013 maskedcon_0013.nii     						
+     						#fslmaths con_0014.nii -nan noNANcon_0014
+     						#fslmaths con_0015.nii -nan noNANcon_0015
+     						#fslmaths con_0016.nii -nan noNANcon_0016
+						fi
+
+     					for this_maskroi_file in maskedWFU*.nii; do
      						this_maskroi_corename=$(echo $this_maskroi_file | cut -d. -f 1)
-					 		fslmeants -i spmT_0013.nii -o meantsWFUROI_${this_maskroi_corename}_flat.txt -m $this_maskroi_file
-					 		fslmeants -i spmT_0014.nii -o meantsWFUROI_${this_maskroi_corename}_high.txt -m $this_maskroi_file
-					 		fslmeants -i spmT_0015.nii -o meantsWFUROI_${this_maskroi_corename}_low.txt -m $this_maskroi_file
-					 		fslmeants -i spmT_0016.nii -o meantsWFUROI_${this_maskroi_corename}_medium.txt -m $this_maskroi_file
+					 		fslmeants -i noNANcon_0013.nii -o meantsWFUROI_${this_maskroi_corename}_flat.txt -m $this_maskroi_file
+					 		fslmeants -i noNANcon_0014.nii -o meantsWFUROI_${this_maskroi_corename}_high.txt -m $this_maskroi_file
+					 		fslmeants -i noNANcon_0015.nii -o meantsWFUROI_${this_maskroi_corename}_low.txt -m $this_maskroi_file
+					 		fslmeants -i noNANcon_0016.nii -o meantsWFUROI_${this_maskroi_corename}_medium.txt -m $this_maskroi_file
 					 	done
 					fi
 					if [[ $this_functional_run_folder == "06_Nback" ]]; then
-						for this_maskroi_file in maskroi_*.nii; do
+						if ! [ -e con_0017.nii ]; then
+							#echo does not exist
+     						fslmaths con_0017.nii -nan noNANcon_0017
+     						fslmaths con_0018.nii -nan noNANcon_0018
+     						fslmaths con_0019.nii -nan noNANcon_0019
+     						fslmaths con_0020.nii -nan noNANcon_0020
+						fi
+						for this_maskroi_file in maskedWFU*.nii; do
      						this_maskroi_corename=$(echo $this_maskroi_file | cut -d. -f 1)
-							fslmeants -i spmT_0057.nii -o meantsWFUROI_${this_maskroi_corename}_long_one.txt -m $this_maskroi_file
-							fslmeants -i spmT_0058.nii -o meantsWFUROI_${this_maskroi_corename}_long_three.txt -m $this_maskroi_file
-							fslmeants -i spmT_0059.nii -o meantsWFUROI_${this_maskroi_corename}_long_two.txt -m $this_maskroi_file
-							fslmeants -i spmT_0060.nii -o meantsWFUROI_${this_maskroi_corename}_long_zero.txt -m $this_maskroi_file
-							fslmeants -i spmT_0061.nii -o meantsWFUROI_${this_maskroi_corename}_short_one.txt -m $this_maskroi_file
-							fslmeants -i spmT_0062.nii -o meantsWFUROI_${this_maskroi_corename}_short_three.txt -m $this_maskroi_file
-							fslmeants -i spmT_0063.nii -o meantsWFUROI_${this_maskroi_corename}_short_two.txt -m $this_maskroi_file
-							fslmeants -i spmT_0064.nii -o meantsWFUROI_${this_maskroi_corename}_short_zero.txt -m $this_maskroi_file
+							fslmeants -i noNANcon_0020.nii -o meantsNetworkROI_${this_maskroi_corename}_zero.txt -m $this_maskroi_file
+							fslmeants -i noNANcon_0017.nii -o meantsNetworkROI_${this_maskroi_corename}_one.txt -m $this_maskroi_file
+							fslmeants -i noNANcon_0019.nii -o meantsNetworkROI_${this_maskroi_corename}_two.txt -m $this_maskroi_file
+							fslmeants -i noNANcon_0018.nii -o meantsNetworkROI_${this_maskroi_corename}_three.txt -m $this_maskroi_file
 						done
 					fi
 				done
@@ -439,14 +463,13 @@ if [[ $this_roi_analysis_step == "extract_intensity_from_network_rois" ]]; then
 
 					if [ -e brain_mask.nii ]; then
 						rm brain_mask.nii
-
 					fi
 #
 					ml fsl
 					fslmaths ANTs_c0Template_T1_IXI555_MNI152_GS_brain.nii -bin brain_mask
 					gunzip *nii.gz
 
-					for this_roi_file in network_*.nii; do
+					for this_roi_file in network*.nii; do
 						this_roi_corename=$(echo $this_roi_file | cut -d. -f 1)
 						#echo $this_roi_file
 						ml fsl
@@ -461,23 +484,38 @@ if [[ $this_roi_analysis_step == "extract_intensity_from_network_rois" ]]; then
 
 					ml fsl
      				if [[ $this_functional_run_folder == "05_MotorImagery" ]]; then
-     					for this_maskroi_file in maskednetwork_*.nii; do
+     					if ! [ -e noNANcon_0013.nii ]; then
+							#echo does not exist
+     						fslmaths con_0013.nii -nan noNANcon_0013
+     						fslmaths con_0014.nii -nan noNANcon_0014
+     						fslmaths con_0015.nii -nan noNANcon_0015
+     						fslmaths con_0016.nii -nan noNANcon_0016
+						fi
+     					for this_maskroi_file in maskednetwork*.nii; do
+
      						this_maskroi_corename=$(echo $this_maskroi_file | cut -d. -f 1)
-					 		fslmeants -i spmT_0013.nii -o meantsNetworkROI_${this_maskroi_corename}_flat.txt -m $this_maskroi_file
-					 		fslmeants -i spmT_0014.nii -o meantsNetworkROI_${this_maskroi_corename}_high.txt -m $this_maskroi_file
-					 		fslmeants -i spmT_0015.nii -o meantsNetworkROI_${this_maskroi_corename}_low.txt -m $this_maskroi_file
-					 		fslmeants -i spmT_0016.nii -o meantsNetworkROI_${this_maskroi_corename}_medium.txt -m $this_maskroi_file
+					 		fslmeants -i noNANcon_0013.nii -o meantsNetworkROI_${this_maskroi_corename}_flat.txt -m $this_maskroi_file
+					 		fslmeants -i noNANcon_0014.nii -o meantsNetworkROI_${this_maskroi_corename}_high.txt -m $this_maskroi_file
+					 		fslmeants -i noNANcon_0015.nii -o meantsNetworkROI_${this_maskroi_corename}_low.txt -m $this_maskroi_file
+					 		fslmeants -i noNANcon_0016.nii -o meantsNetworkROI_${this_maskroi_corename}_medium.txt -m $this_maskroi_file
 					 	done
 					fi
 					if [[ $this_functional_run_folder == "06_Nback" ]]; then
-						for this_maskroi_file in maskednetwork_*.nii; do
+						if ! [ -e con_0017.nii ]; then
+							#echo does not exist
+     						fslmaths con_0017.nii -nan noNANcon_0017
+     						fslmaths con_0018.nii -nan noNANcon_0018
+     						fslmaths con_0019.nii -nan noNANcon_0019
+     						fslmaths con_0020.nii -nan noNANcon_0020
+						fi
+						for this_maskroi_file in maskednetwork*.nii; do
      						this_maskroi_corename=$(echo $this_maskroi_file | cut -d. -f 1)
      						echo $this_maskroi_corename
      						echo $this_maskroi_file
-     						fslmeants -i spmT_0020.nii -o meantsNetworkROI_${this_maskroi_corename}_zero.txt -m $this_maskroi_file
-							fslmeants -i spmT_0017.nii -o meantsNetworkROI_${this_maskroi_corename}_one.txt -m $this_maskroi_file
-							fslmeants -i spmT_0019.nii -o meantsNetworkROI_${this_maskroi_corename}_two.txt -m $this_maskroi_file
-							fslmeants -i spmT_0018.nii -o meantsNetworkROI_${this_maskroi_corename}_three.txt -m $this_maskroi_file
+     						fslmeants -i noNANcon_0020.nii -o meantsNetworkROI_${this_maskroi_corename}_zero.txt -m $this_maskroi_file
+							fslmeants -i noNANcon_0017.nii -o meantsNetworkROI_${this_maskroi_corename}_one.txt -m $this_maskroi_file
+							fslmeants -i noNANcon_0019.nii -o meantsNetworkROI_${this_maskroi_corename}_two.txt -m $this_maskroi_file
+							fslmeants -i noNANcon_0018.nii -o meantsNetworkROI_${this_maskroi_corename}_three.txt -m $this_maskroi_file
 						done
 					fi
 				done
