@@ -160,8 +160,6 @@ do
 				
 			done
 		
-	
-		
    			data_folder_to_analyze=($fmri_fieldmap_processed_folder_names)
 		   	for this_fieldmap_folder in ${data_folder_to_analyze[@]}; do
 		   		echo creating fieldmap...
@@ -203,16 +201,16 @@ do
 					previous_encoding_direction=$encoding_direction
 				done
 	
-			ml fsl
-
-			topup --imain=AP_PA_merged.nii --datain=acqParams.txt --fout=my_fieldmap_nifti --config=b02b0.cnf --iout=se_epi_unwarped --out=topup_results
-
-			fslmaths se_epi_unwarped -Tmean my_fieldmap_mag
-
-			ml fsl/5.0.8
-			fslchfiletype ANALYZE my_fieldmap_nifti.nii fpm_my_fieldmap
-
-			gunzip *nii.gz*
+				ml fsl
+	
+				topup --imain=AP_PA_merged.nii --datain=acqParams.txt --fout=my_fieldmap_nifti --config=b02b0.cnf --iout=se_epi_unwarped --out=topup_results
+	
+				fslmaths se_epi_unwarped -Tmean my_fieldmap_mag
+	
+				ml fsl/5.0.8
+				fslchfiletype ANALYZE my_fieldmap_nifti.nii fpm_my_fieldmap
+	
+				gunzip *nii.gz*
 			done
 	
 
@@ -238,7 +236,7 @@ do
    					total_readout_sec=$(grep "TotalReadoutTime" ${this_functional_run_file} | tr -dc '0.00-9.00')
 					encoding_direction=$(grep "PhaseEncodingDirection" ${this_functional_run_file} | cut -d: -f 2 | head -1 | tr -d '"' |  tr -d ',')
 					if [[ $encoding_direction =~ j- ]]; then
-						array[2]="pm_def.K_SPACE_TRAVERSAL_BLIP_DIR = 0;"
+						array[2]="pm_def.K_SPACE_TRAVERSAL_BLIP_DIR = -1;"
 					else
 						array[2]="pm_def.K_SPACE_TRAVERSAL_BLIP_DIR = 1;"
 					fi
@@ -534,11 +532,11 @@ do
 			data_folder_to_analyze=($fmri_processed_folder_names)
 			for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
 				cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}
-				for this_functional_run_file in *.json; do 
+				for this_functional_run_file in *.json; do
 					TR_from_json=$(grep "RepetitionTime" ${this_functional_run_file} | tr -dc '0.00-9.00')
   				break; done
   				ml matlab
-    			matlab -nodesktop -nosplash -r "try; level_one_stats(1, '$TR_from_json'); catch; end; quit"
+    			matlab -nodesktop -nosplash -r "try; level_one_stats(0, '$TR_from_json'); catch; end; quit"
     		done
     		echo This step took $SECONDS seconds to execute
     		cd "${Subject_dir}"
@@ -587,7 +585,7 @@ do
 	
 		
 
-		if [[ $this_preprocessing_step == "ants_registration_Func_2_T1" ]]; then
+		if [[ $this_preprocessing_step == "ants_norm_fmri" ]]; then
 			data_folder_to_analyze=($fmri_processed_folder_names)
 			for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
 				cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
@@ -621,13 +619,13 @@ do
 					    --smoothing-sigmas 3x2x1x0vox
 					 done
 			done
-			echo This step took $SECONDS seconds to execute
-			cd "${Subject_dir}"
-			echo "ANTS reg functional to T1: $SECONDS sec" >> preprocessing_log.txt
-			SECONDS=0
-		fi
+		#	echo This step took $SECONDS seconds to execute
+		#	cd "${Subject_dir}"
+		#	echo "ANTS reg functional to T1: $SECONDS sec" >> preprocessing_log.txt
+		#	SECONDS=0
+		#fi
 	
-		if [[ $this_preprocessing_step == "ants_apply_transform_Func_2_T1" ]]; then
+		#if [[ $this_preprocessing_step == "ants_apply_transform_Func_2_T1" ]]; then
 			data_folder_to_analyze=($fmri_processed_folder_names)
 			for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
 				cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
@@ -644,13 +642,13 @@ do
 					-n BSpline -o warpedToT1_${this_core_file_name}.nii -t [warpToT1Params_${this_core_file_name}0GenericAffine.mat,0] -v 
 				done
 			done
-			echo This step took $SECONDS seconds to execute
-			cd "${Subject_dir}"
-			echo "ANTS reg functional to T1: $SECONDS sec" >> preprocessing_log.txt
-			SECONDS=0
-		fi
+		#	echo This step took $SECONDS seconds to execute
+		#	cd "${Subject_dir}"
+		#	echo "ANTS reg functional to T1: $SECONDS sec" >> preprocessing_log.txt
+		#	SECONDS=0
+		#fi
 	
-		if [[ $this_preprocessing_step == "ants_registration_T1_2_MNI" ]]; then
+		#if [[ $this_preprocessing_step == "ants_registration_T1_2_MNI" ]]; then
 			data_folder_to_analyze=($fmri_processed_folder_names)
 			for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
 				cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
@@ -666,7 +664,7 @@ do
 	
 				outputFolder=${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
 				T1_Template=${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/biascorrected_SkullStripped_T1.nii
-				MNI_Template=/ufrc/rachaelseidler/tfettrow/Crunch_Code/MR_Templates/ANTs_c0Template_T1_IXI555_MNI152_GS_brain.nii
+				MNI_Template=/ufrc/rachaelseidler/tfettrow/Crunch_Code/MR_Templates/MNI_1mm.nii
 
 				this_core_file_name=biascorrected_SkullStripped_T1
 
@@ -694,17 +692,17 @@ do
         		--shrink-factors 8x4x2x1 \
         		--smoothing-sigmas 3x2x1x0vox
         	done
-        	echo This step took $SECONDS seconds to execute
-        	cd "${Subject_dir}"
-			echo "ANTS reg T1 to MNI: $SECONDS sec" >> preprocessing_log.txt
-			SECONDS=0
-		fi
+        #	echo This step took $SECONDS seconds to execute
+        #	cd "${Subject_dir}"
+		#	echo "ANTS reg T1 to MNI: $SECONDS sec" >> preprocessing_log.txt
+		#	SECONDS=0
+		#fi
 	
-		if [[ $this_preprocessing_step == "ants_apply_transform_T1_2_MNI" ]]; then
+		#if [[ $this_preprocessing_step == "ants_apply_transform_T1_2_MNI" ]]; then
 			data_folder_to_analyze=($fmri_processed_folder_names)
 			for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
 				cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
-				cp /ufrc/rachaelseidler/tfettrow/Crunch_Code/MR_Templates/ANTs_c0Template_T1_IXI555_MNI152_GS_brain.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
+				cp /ufrc/rachaelseidler/tfettrow/Crunch_Code/MR_Templates/MNI_2mm.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
 								
 				if [ -e warpedToMNI_biascorrected*.nii ]; then 
         	        rm warpedToMNI_*.nii
@@ -715,20 +713,20 @@ do
 				
 				this_core_file_name=biascorrected_SkullStripped_T1
 	
-				antsApplyTransforms -d 3 -e 3 -i ${this_core_file_name}.nii -r ANTs_c0Template_T1_IXI555_MNI152_GS_brain.nii \
+				antsApplyTransforms -d 3 -e 3 -i ${this_core_file_name}.nii -r MNI_2mm.nii \
 				-n BSpline -o warpedToMNI_${this_core_file_name}.nii -t [warpToMNIParams_${this_core_file_name}1Warp.nii.gz] -t [warpToMNIParams_${this_core_file_name}0GenericAffine.mat,0] -v
 			done
-			echo This step took $SECONDS seconds to execute
-			cd "${Subject_dir}"
-			echo "ANTS apply T1 to MNI: $SECONDS sec" >> preprocessing_log.txt
-			SECONDS=0
-		fi
+		#	echo This step took $SECONDS seconds to execute
+		#	cd "${Subject_dir}"
+		#	echo "ANTS apply T1 to MNI: $SECONDS sec" >> preprocessing_log.txt
+		#	SECONDS=0
+		#fi
 	
-		if [[ $this_preprocessing_step == "ants_apply_transform_Func_2_MNI" ]]; then
+		#if [[ $this_preprocessing_step == "ants_apply_transform_Func_2_MNI" ]]; then
 			data_folder_to_analyze=($fmri_processed_folder_names)
 			for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
 				cp ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/unwarpedRealigned*.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
-				cp /ufrc/rachaelseidler/tfettrow/Crunch_Code/MR_Templates/ANTs_c0Template_T1_IXI555_MNI152_GS_brain.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
+				cp /ufrc/rachaelseidler/tfettrow/Crunch_Code/MR_Templates/MNI_2mm.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
 				cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
 
 				for this_file_to_warp in unwarpedRealigned*.nii; do 
@@ -754,7 +752,7 @@ do
 						fi
 	
 						ml gcc/5.2.0; ml ants
-						antsApplyTransforms -d 3 -e 3 -i $this_volume_file -r ANTs_c0Template_T1_IXI555_MNI152_GS_brain.nii \
+						antsApplyTransforms -d 3 -e 3 -i $this_volume_file -r MNI_2mm.nii \
 						-o warpedToMNI_$this_volume_file -t [warpToT1Params_biascorrected_mean${this_func_core_file_name}0GenericAffine.mat,0] \
 						-t [warpToMNIParams_${this_T1_core_file_name}1Warp.nii] -t [warpToMNIParams_${this_T1_core_file_name}0GenericAffine.mat,0] -v
 					done
@@ -766,7 +764,7 @@ do
 			done
 			echo This step took $SECONDS seconds to execute
 			cd "${Subject_dir}"
-			echo "ANTS apply functional to MNI: $SECONDS sec" >> preprocessing_log.txt
+			echo "ANTS Normalization: $SECONDS sec" >> preprocessing_log.txt
 			SECONDS=0
 		fi
 	
@@ -791,27 +789,30 @@ do
 				cp ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/Condition_Onsets*.csv ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
 				cp ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/art_regression_outliers_and_movement*.mat ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
 				# grab TR from json file
-				for this_functional_run_file in *.json; do 
+				for this_functional_run_file in *.json; do
 					TR_from_json=$(grep "RepetitionTime" ${this_functional_run_file} | tr -dc '0.00-9.00')
+					echo $TR_from_json
   				break; done
   				ml matlab
-    			matlab -nodesktop -nosplash -r "try; level_one_stats(1, '$TR_from_json'); catch; end; quit"
+    			matlab -nodesktop -nosplash -r "try; level_one_stats(0, '$TR_from_json'); catch; end; quit"
     		done
     		echo This step took $SECONDS seconds to execute
     		cd "${Subject_dir}"
 			echo "Level One ANTS: $SECONDS sec" >> preprocessing_log.txt
 			SECONDS=0
 		fi
-		if [[ $this_preprocessing_step == "cat12StructuralAnalysis" ]]; then
-
-			this_t1_folder=($t1_processed_folder_names)
-			cp ${Code_dir}/MR_Templates/Template_*.nii ${Subject_dir}/Processed/MRI_files/${this_t1_folder}
-			cd ${Subject_dir}/Processed/MRI_files/${this_t1_folder}
-			ml matlab
-			matlab -nodesktop -nosplash -r "try; cat12StructuralAnalysis; catch; end; quit"
+		if [[ $this_preprocessing_step == "resize_smoothed_images" ]]; then
+			data_folder_to_analyze=($fmri_processed_folder_names)
+			ml fsl
+			for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
+				cd ${Subject_dir}/Processed/MRI_files/$this_functional_run_folder/ANTS_Normalization
+				for this_functional_file in smoothed*.nii; do
+					fslchpixdim $this_functional_file 2 2 2
+				done
+			done
 		fi
 	done
 
 	(( step_counter++ ))
-	(( argument_counter++ ))		
+	(( argument_counter++ ))
 done
