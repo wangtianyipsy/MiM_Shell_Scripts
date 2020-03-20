@@ -9,18 +9,30 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-subjects=(CrunchPilot01_development2)
+argument_counter=0
+step_counter=0
+for this_argument in "$@"
+do
+	if	[[ $argument_counter == 0 ]]; then
+    	subject=$this_argument
+	else
+		preprocessing_steps="$this_argument"
+	fi
+	
+	# Set the path for our custom matlab functions and scripts
+	Code_dir=/ufrc/rachaelseidler/tfettrow/Crunch_Code
+	
+	export MATLABPATH=${Code_dir}/Matlab_Scripts/helper
+	
+	Subject_dir=/ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/MiM_Data/${subject}
+	cd "${Subject_dir}"
 
-#preprocessing_steps=("rician_filter")
-#preprocessing_steps=("fieldmap_dti")
-#preprocessing_steps=("eddy_correction")
-#preprocessing_steps=("skull_strip")
 
-for SUB in ${subjects[@]}; do
    	#if [[ ${preprocessing_steps[*]} =~ "rician_filter" ]]; then
    		# MainDWIDenoising # # 
    		# # arguments  to automate ?? X X
    	#fi
+
    	if [[ ${preprocessing_steps[*]} =~ "fieldmap_dti" ]]; then
    		Fieldmap_dir=/ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/${SUB}/Processed/MRI_files/03_Fieldmaps
 		cd ${Fieldmap_dir}/Fieldmap_dti
