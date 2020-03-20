@@ -536,7 +536,7 @@ do
 					TR_from_json=$(grep "RepetitionTime" ${this_functional_run_file} | tr -dc '0.00-9.00')
   				break; done
   				ml matlab
-    			matlab -nodesktop -nosplash -r "try; level_one_stats(0, '$TR_from_json'); catch; end; quit"
+    			matlab -nodesktop -nosplash -r "try; level_one_stats(1, '$TR_from_json'); catch; end; quit"
     		done
     		echo This step took $SECONDS seconds to execute
     		cd "${Subject_dir}"
@@ -772,6 +772,11 @@ do
 			data_folder_to_analyze=($fmri_processed_folder_names)
 			for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
 				cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
+				shopt -s nullglob
+				prefix_to_delete=(smoothed_*.nii)
+				if [ -e "$prefix_to_delete" ]; then
+                	rm smoothed_*.nii
+            	fi
 				ml matlab
 				matlab -nodesktop -nosplash -r "try; smooth_fmri_ants; catch; end; quit"
 			done
@@ -794,22 +799,12 @@ do
 					echo $TR_from_json
   				break; done
   				ml matlab
-    			matlab -nodesktop -nosplash -r "try; level_one_stats(0, '$TR_from_json'); catch; end; quit"
+    			matlab -nodesktop -nosplash -r "try; level_one_stats(1, '$TR_from_json'); catch; end; quit"
     		done
     		echo This step took $SECONDS seconds to execute
     		cd "${Subject_dir}"
 			echo "Level One ANTS: $SECONDS sec" >> preprocessing_log.txt
 			SECONDS=0
-		fi
-		if [[ $this_preprocessing_step == "resize_smoothed_images" ]]; then
-			data_folder_to_analyze=($fmri_processed_folder_names)
-			ml fsl
-			for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
-				cd ${Subject_dir}/Processed/MRI_files/$this_functional_run_folder/ANTS_Normalization
-				for this_functional_file in smoothed*.nii; do
-					fslchpixdim $this_functional_file 2 2 2
-				done
-			done
 		fi
 	done
 
