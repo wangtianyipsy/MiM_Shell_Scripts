@@ -58,58 +58,81 @@ Code_dir=/ufrc/rachaelseidler/tfettrow/Crunch_Code
 export MATLABPATH=${Code_dir}/Matlab_Scripts/helper
 
 #for SUB in ${subjects[@]}; do
-Study_dir=/ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/MiM_Data/
+Study_dir=/ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/MiM_Data
 cd "${Study_dir}"
 
 for this_roi_analysis_step in "${roi_analysis_steps[@]}"; do
 	
 # for predetmined rois (.txt has manually entered mni coords)
 #####################################################################################################################################################
-	if [[ $this_roi_analysis_step == "convert_manually_entered_roi_to_voxel_coordinates" ]]; then
-		for this_functional_run_folder in ${fmri_processed_folder_names[@]}; do
-			if [[ $this_functional_run_folder == "05_MotorImagery" ]] ; then
-				ml matlab
-				cd $Study_dir
-				lines_to_ignore=$(awk '/#/{print NR}' MotorImagery_roi.txt)
+	 if [[ $this_roi_analysis_step == "convert_load_sensitive_voxel_coordinates" ]]; then
+	 	for this_functional_run_folder in ${fmri_processed_folder_names[@]}; do
+	 		if [[ $this_functional_run_folder == "05_MotorImagery" ]] ; then
+	 			cd ${Study_dir}/betweenGroup_Results_3Fac/MRI_files/${this_functional_run_folder}/
+	 			shopt -s nullglob
+				prefix_to_delete=(roi_*.csv)
+   				if  [ -e $prefix_to_delete ]; then 
+	      			rm roi_*.csv
+	      		fi
 
-				roi_line_numbers=$(awk 'END{print NR}' MotorImagery_roi.txt)
+				cd $Study_dir
+
+
+				lines_to_ignore=$(awk '/#/{print NR}' MotorImagery_roi_load_young.txt)
+
+				roi_line_numbers=$(awk 'END{print NR}' MotorImagery_roi_load_young.txt)
 				for (( this_row=1; this_row<=${roi_line_numbers}; this_row++ )); do
 					if ! [[ ${lines_to_ignore[*]} =~ $this_row ]]; then
-						this_roi_name=$(cat MotorImagery_roi.txt | sed -n ${this_row}p | cut -d ',' -f1)
-						this_roi_x=$(cat MotorImagery_roi.txt | sed -n ${this_row}p | cut -d ',' -f2)
-						this_roi_y=$(cat MotorImagery_roi.txt | sed -n ${this_row}p | cut -d ',' -f3)
-						this_roi_z=$(cat MotorImagery_roi.txt | sed -n ${this_row}p | cut -d ',' -f4)
-						cd ${Study_dir}/withinGroup_Results/MRI_files/${this_functional_run_folder}/${group_name}
-						matlab -nodesktop -nosplash -r "try; find_roi_voxel_coordinates '$this_roi_name' '$this_roi_x' '$this_roi_y' '${this_roi_z}'; catch; end; quit"
+						if [[ $group_name == oldAdult ]]; then 
+							this_roi_name=$(cat MotorImagery_roi_load_old.txt | sed -n ${this_row}p | cut -d ',' -f1)
+							this_roi_x=$(cat MotorImagery_roi_load_old.txt | sed -n ${this_row}p | cut -d ',' -f2)
+							this_roi_y=$(cat MotorImagery_roi_load_old.txt | sed -n ${this_row}p | cut -d ',' -f3)
+							this_roi_z=$(cat MotorImagery_roi_load_old.txt | sed -n ${this_row}p | cut -d ',' -f4)
+						fi
+						if [[ $group_name == youngAdult ]]; then 
+							this_roi_name=$(cat MotorImagery_roi_load_young.txt | sed -n ${this_row}p | cut -d ',' -f1)
+							this_roi_x=$(cat MotorImagery_roi_load_young.txt | sed -n ${this_row}p | cut -d ',' -f2)
+							this_roi_y=$(cat MotorImagery_roi_load_young.txt | sed -n ${this_row}p | cut -d ',' -f3)
+							this_roi_z=$(cat MotorImagery_roi_load_young.txt | sed -n ${this_row}p | cut -d ',' -f4)
+						fi
+						cd ${Study_dir}/betweenGroup_Results_3Fac/MRI_files/${this_functional_run_folder}/
+						
+						ml matlab
+						matlab -nodesktop -nosplash -r "try; convert_to_voxel_coordinates '$this_roi_name' '$this_roi_x' '$this_roi_y' '${this_roi_z}'; catch; end; quit"
 						cd $Study_dir
 					fi
 				done
-			fi
-			
-			if [[ $this_functional_run_folder == "06_Nback" ]] ; then
-				ml matlab
-				cd $Study_dir
-				lines_to_ignore=$(awk '/#/{print NR}' Nback_roi.txt)
-
-				roi_line_numbers=$(awk 'END{print NR}' Nback_roi.txt)
-				for (( this_folder_row=1; this_folder_row<=${roi_line_numbers}; this_folder_row++ )); do
-					if ! [[ ${lines_to_ignore[*]} =~ $this_folder_row ]]; then
-						this_roi_name=$(cat Nback_roi.txt | sed -n ${this_folder_row}p | cut -d ',' -f1)
-						this_roi_x=$(cat Nback_roi.txt | sed -n ${this_folder_row}p | cut -d ',' -f2)
-						this_roi_y=$(cat Nback_roi.txt | sed -n ${this_folder_row}p | cut -d ',' -f3)
-						this_roi_z=$(cat Nback_roi.txt | sed -n ${this_folder_row}p | cut -d ',' -f4)
-						cd ${Study_dir}/withinGroup_Results/MRI_files/${this_functional_run_folder}/${group_name}
-						matlab -nodesktop -nosplash -r "try; find_roi_voxel_coordinates '$this_roi_name' '$this_roi_x' '$this_roi_y' '${this_roi_z}'; catch; end; quit"
-						cd $Study_dir
-					fi
-				done
-			fi
-		done
+	 		fi
+	 	done
 	fi
 
-	if [[ $this_roi_analysis_step == "create_roi_sphere_for_maually_entered_rois" ]]; then
+	if [[ $this_roi_analysis_step == "create_roi_sphere_for_load_sensitive_rois" ]]; then
 		for this_functional_run_folder in ${fmri_processed_folder_names[@]}; do
-			cd $Study_dir/withinGroup_Results/MRI_files/${this_functional_run_folder}/${group_name}
+			while IFS=',' read -ra subject_list; do
+   				for this_subject in "${subject_list[@]}"; do
+   					cd ${Study_dir}/$this_subject/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/Level1_Results
+					shopt -s nullglob
+					prefix_to_delete=(*roi_results.txt)
+   					if  [ -e $prefix_to_delete ]; then 
+	      				rm *_roi_results.txt
+	      				rm brain_mask.nii
+	      				rm brain_mask.nii.gz
+	      			fi
+   				done
+			done <<< "$subjects"
+
+			
+			cd ${Code_dir}/MR_Templates
+			#if ! [ -e brain_mask.nii ]; then 
+				rm brain_mask.nii
+	      				rm brain_mask.nii.gz
+				ml fsl
+				fslmaths MNI_2mm.nii -bin brain_mask
+				gunzip *nii.gz
+				cp brain_mask.nii $Study_dir/betweenGroup_Results_3Fac/MRI_files/${this_functional_run_folder}/
+			#fi
+
+		 	cd $Study_dir/betweenGroup_Results_3Fac/MRI_files/${this_functional_run_folder}/
 			for this_roi_file in roi_*.csv; do
 				
 				this_roi_file_corename=$(echo $this_roi_file | cut -d. -f 1)
@@ -119,62 +142,66 @@ for this_roi_analysis_step in "${roi_analysis_steps[@]}"; do
 				this_roi_y=$(cat $this_roi_file | sed -n 2p | cut -d ',' -f2)
 				this_roi_z=$(cat $this_roi_file | sed -n 2p | cut -d ',' -f3)
 
-				if [ -e ManEnteredROI_${this_roi_corename}_point.nii ]; then 
-					rm ManEnteredROI_${this_roi_corename}_point.nii
-					rm ManEnteredROI_${this_roi_corename}_sphere5mm.nii
+			
+				if [ -e LoadSensitiveROI_${this_roi_corename}_point.nii ]; then 
+					rm LoadSensitiveROI_${this_roi_corename}_point.nii
+					rm LoadSensitiveROI_${this_roi_corename}_sphere5mm.nii
+					rm maskedLoadSensitiveROI_${this_roi_corename}_sphere5mm.nii
 				fi
+
+				#fslmaths MNI_2mm.nii -bin brain_mask
+				#gunzip *nii.gz
+				#cp brain_mask.nii $Study_dir/betweenGroup_Results_3Fac/MRI_files/${this_functional_run_folder}/
+
 				ml fsl
-				echo converting  ${this_roi_corename}: $this_roi_x $this_roi_y $this_roi_z to 5mm sphere ....
-				fslmaths con_0001.nii -mul 0 -add 1 -roi $this_roi_x 1 $this_roi_y 1 $this_roi_z 1 0 1 ManEnteredROI_${this_roi_corename}_point -odt float
-				fslmaths ManEnteredROI_${this_roi_corename}_point.nii -kernel sphere 5 -fmean ManEnteredROI_${this_roi_corename}_sphere5mm.nii -odt float
+				echo converting ${this_roi_corename}: $this_roi_x $this_roi_y $this_roi_z to 5mm sphere ....
+				fslmaths con_0001.nii -mul 0 -add 1 -roi $this_roi_x 1 $this_roi_y 1 $this_roi_z 1 0 1 LoadSensitiveROI_${this_roi_corename}_point -odt float
+				fslmaths LoadSensitiveROI_${this_roi_corename}_point.nii -kernel sphere 5 -fmean LoadSensitiveROI_${this_roi_corename}_sphere5mm.nii -odt float
 				gunzip *nii.gz*
+						
+				fslmaths LoadSensitiveROI_${this_roi_corename}_sphere5mm.nii -mas brain_mask.nii maskedLoadSensitiveROI_${this_roi_corename}_sphere5mm.nii
+				gunzip *nii.gz*		
 
 				while IFS=',' read -ra subject_list; do
    				    for this_subject in "${subject_list[@]}"; do
-   				    	cp ManEnteredROI_${this_roi_corename}_sphere5mm.nii ${Study_dir}/$this_subject/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/Level1_Results
+   				    	cd ${Study_dir}/$this_subject/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/Level1_Results
+   				    	if [ -e maskedLoadSensitiveROI_${this_roi_corename}_sphere5mm.nii ]; then 
+   					    	rm LoadSensitiveROI_${this_roi_corename}_sphere5mm.nii
+   				    		rm maskedLoadSensitiveROI_${this_roi_corename}_sphere5mm.nii
+   				    	fi
+
+   				    	cp $Study_dir/betweenGroup_Results_3Fac/MRI_files/${this_functional_run_folder}/maskedLoadSensitiveROI_${this_roi_corename}_sphere5mm.nii ${Study_dir}/$this_subject/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/Level1_Results
    	   					cd ${Study_dir}/$this_subject/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/Level1_Results
+	      				
 	      				echo Currently calculating average activation for $this_subject at ${this_roi_corename}
 
-   						if [[ $this_functional_run_folder == "05_MotorImagery" ]]; then
-							if [ -e noNANcon_0013.nii ]; then 
-   	    	   					rm noNANcon_00*.nii
-   	    	   					rm meants5mmManEnteredROI_${this_roi_corename}sphere_hard.txt 
-   	    	   					rm meants5mmManEnteredROI_${this_roi_corename}sphere_flat.txt 
-								rm meants5mmManEnteredROI_${this_roi_corename}sphere_high.txt 
-								rm meants5mmManEnteredROI_${this_roi_corename}sphere_low.txt
-								rm meants5mmManEnteredROI_${this_roi_corename}sphere_medium.txt
-   	    	   				fi
-						fi
-						if [[ $this_functional_run_folder == "06_Nback" ]]; then
-							if [ -e meants5mmManEnteredROI_${this_roi_corename}sphere_zero.txt ]; then 
-								rm meants5mmManEnteredROI_${this_roi_corename}sphere_zero.txt
-								rm meants5mmManEnteredROI_${this_roi_corename}sphere_one.txt
-								rm meants5mmManEnteredROI_${this_roi_corename}sphere_two.txt
-								rm meants5mmManEnteredROI_${this_roi_corename}sphere_three.txt
-   	    	   				fi
-						fi
 
      					if [[ $this_functional_run_folder == "05_MotorImagery" ]]; then
-				 			fslmeants -i spmT0013.nii -o meants5mmManEnteredROI_${this_roi_corename}sphere_flat.txt -m ManEnteredROI_${this_roi_corename}_sphere5mm.nii
-				 			fslmeants -i spmT0014.nii -o meants5mmManEnteredROI_${this_roi_corename}sphere_high.txt -m ManEnteredROI_${this_roi_corename}_sphere5mm.nii
-				 			fslmeants -i spmT0015.nii -o meants5mmManEnteredROI_${this_roi_corename}sphere_low.txt -m ManEnteredROI_${this_roi_corename}_sphere5mm.nii
-			 				fslmeants -i spmT0016.nii -o meants5mmManEnteredROI_${this_roi_corename}sphere_medium.txt -m ManEnteredROI_${this_roi_corename}_sphere5mm.nii
-						fi
-						if [[ $this_functional_run_folder == "06_Nback" ]]; then
-							fslmeants -i spmT_0020.nii -o meants5mmManEnteredROI_${this_roi_corename}sphere_zero.txt -m ManEnteredROI_${this_roi_corename}_sphere5mm.nii
-							fslmeants -i spmT_0017.nii -o meants5mmManEnteredROI_${this_roi_corename}sphere_one.txt -m ManEnteredROI_${this_roi_corename}_sphere5mm.nii
-							fslmeants -i spmT_0019.nii -o meants5mmManEnteredROI_${this_roi_corename}sphere_two.txt -m ManEnteredROI_${this_roi_corename}_sphere5mm.nii
-							fslmeants -i spmT_0018.nii -o meants5mmManEnteredROI_${this_roi_corename}sphere_three.txt -m ManEnteredROI_${this_roi_corename}_sphere5mm.nii
-									
-						fi
-						cd $Study_dir/withinGroup_Results/MRI_files/${this_functional_run_folder}/${group_name}
+				 			beta=0
+							outfile=${this_subject}_${this_roi_corename}_roi_results.txt
+							beta=$(fslmeants -i con_0001.nii -m maskedLoadSensitiveROI_${this_roi_corename}_sphere5mm.nii)
+				 			echo -e "$beta", flat, >> "$outfile"				​
+							
+				 			beta=$(fslmeants -i con_0002.nii -m maskedLoadSensitiveROI_${this_roi_corename}_sphere5mm.nii)
+				 			echo -e "$beta", low, >> "$outfile"				​
+							
+				 			beta=$(fslmeants -i con_0003.nii -m maskedLoadSensitiveROI_${this_roi_corename}_sphere5mm.nii)
+							echo -e "$beta", medium, >> "$outfile"				​
+							
+							beta=$(fslmeants -i con_0004.nii -m maskedLoadSensitiveROI_${this_roi_corename}_sphere5mm.nii)
+							echo -e "$beta", high, >> "$outfile"				​
+							
+						fi	
+						cd $Study_dir/betweenGroup_Results_3Fac/MRI_files/${this_functional_run_folder}/
 					done
  				done <<< "$subjects"
+ 									
 			done
+			
 		done
 	fi
 
-	if [[ $this_roi_analysis_step == "collect_manually_entered_rois" ]]; then
+	if [[ $this_roi_analysis_step == "collect_load_sensitive_rois" ]]; then
 		data_folder_to_analyze=($fmri_processed_folder_names)
 		for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
 			while IFS=',' read -ra subject_list; do
@@ -183,159 +210,35 @@ for this_roi_analysis_step in "${roi_analysis_steps[@]}"; do
 	      			echo Currently collecting roi results for $this_subject
 
 					# for each txt file parse variable name , read contents and place in subject_roi_results.txt
-					if [ -e ${this_subject}_roi_results.txt ]; then
-   	    	       		rm ${this_subject}_meants5mmManEnteredROI_roi_results.txt
-   	    	   		fi
-   	    	   		rm ${this_subject}_meants5mmManEnteredROI_roi_results.txt
-					for this_txt_file in meants5mmManEnteredROI_*.txt; do
+					 if [ -e ${this_subject}_roi_results.txt ]; then
+   	     	       		rm ${this_subject}_roi_results.txt
+   	     	       		rm *meants5mmLoadSensitiveROI_roi_results.txt
+   	     	   		fi
 
+
+   	    	   		#rm ${this_subject}_meants5mmLoadSensitiveROI_roi_results.txt
+					for this_txt_file in *roi_results*.txt; do
 						this_txt_file_core_name=$(echo $this_txt_file | cut -d. -f 1)
-						this_txt_file_prefix=$(echo $this_txt_file_core_name | cut -d_ -f 1)
-						this_txt_file_contents=$(cat $this_txt_file)
-						echo $this_txt_file_core_name, $this_txt_file_contents >> ${this_subject}_${this_txt_file_prefix}_roi_results.txt
+						this_txt_roi_name=$(echo $this_txt_file_core_name | cut -d_ -f 2)
+
+						roi_line_numbers=$(awk 'END{print NR}' $this_txt_file)
+						for (( this_row=1; this_row<=${roi_line_numbers}; this_row++ )); do
+							this_roi_beta=$(cat $this_txt_file| sed -n ${this_row}p | cut -d ',' -f1)
+							this_roi_condition=$(cat $this_txt_file| sed -n ${this_row}p | cut -d ',' -f2)
+					
+							echo $this_txt_roi_name, $this_roi_condition, $this_roi_beta, >> ${this_subject}_roi_results.txt
+						done
 					done
-					cd $Study_dir/withinGroup_Results/MRI_files/${this_functional_run_folder}/${group_name}
-					rm ${this_subject}_meants5mmManEnteredROI_roi_results.txt
+					cd $Study_dir/Crunch_Effects/${this_functional_run_folder}/${group_name}
+					if [ -e ${this_subject}_roi_results.txt ]; then
+   	     	       		rm ${this_subject}_roi_results.txt
+   	     	   		fi
 					cd ${Study_dir}/$this_subject/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/Level1_Results
-	      			cp ${this_subject}_${this_txt_file_prefix}_roi_results.txt $Study_dir/withinGroup_Results/MRI_files/${this_functional_run_folder}/${group_name}
+	      			cp ${this_subject}_roi_results.txt ${Study_dir}/Crunch_Effects/${this_functional_run_folder}/${group_name}
 				done
 			done <<< "$subjects"
 		done
 	fi
-
-	if [[ $this_roi_analysis_step == "convert_to_mni_for_significant_clusters" ]]; then
-		####### find roi locations ##############################
-		################################################################3
-		# no longer available... create new script
-		#roi_analysis_steps=("level_two_stats_withinGroup")
-		#roi_analysis_steps=("level_two_stats_betweenGroup")
-		################################################################
-		for this_functional_run_folder in ${fmri_processed_folder_names[@]}; do
-			ml matlab
-			cd $Study_dir/withinGroup_Results/MRI_files/${this_functional_run_folder}/${group_name}
-					
-			lines_to_ignore=$(awk '/#/{print NR}' ROIs.txt)
-	
-			roi_line_numbers=$(awk 'END{print NR}' ROIs.txt)
-			for (( this_folder_row=1; this_folder_row<=${roi_line_numbers}; this_folder_row++ )); do
-				if ! [[ ${lines_to_ignore[*]} =~ $this_folder_row ]]; then
-					echo $this_folder_row
-					this_roi_name=$(cat ROIs.txt | sed -n ${this_folder_row}p | cut -d ',' -f1)
-					this_roi_x=$(cat ROIs.txt | sed -n ${this_folder_row}p | cut -d ',' -f2)
-					this_roi_y=$(cat ROIs.txt | sed -n ${this_folder_row}p | cut -d ',' -f3)
-					this_roi_z=$(cat ROIs.txt | sed -n ${this_folder_row}p | cut -d ',' -f4)
-					echo converting mni $this_roi_name coordinates to voxel coordinates
-					#################################33
-					matlab -nodesktop -nosplash -r "try; convert_to_mni_coordinates '$this_roi_name' '$this_roi_x' '$this_roi_y' '${this_roi_z}'; catch; end; quit"
-				#	cd $Study_dir
-					#################################33
-				fi
-			done
-		done
-	fi
-
-#if [[ $this_roi_analysis_step == "extract_intensity_from_significant_clusters" ]]; then
-#	for this_functional_run_folder in ${fmri_processed_folder_names[@]}; do
-#		while IFS=',' read -ra subject_list; do
-#			for this_subject in "${subject_list[@]}"; do
- # 				
-#				ml matlab
-#				cd $Study_dir/withinGroup_Results/MRI_files/${this_functional_run_folder}/${group_name}
-#				cp MNIROIs.txt ${Study_dir}/$this_subject/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/Level1_Results
-#				cd ${Study_dir}/$this_subject/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/Level1_Results
-
-#				lines_to_ignore=$(awk '/#/{print NR}' MNIROIs.txt)
-#				roi_line_numbers=$(awk 'END{print NR}' MNIROIs.txt)
-
-#				for (( this_folder_row=1; this_folder_row<=${roi_line_numbers}; this_folder_row++ )); do
-#					if ! [[ ${lines_to_ignore[*]} =~ $this_folder_row ]]; then
-#						this_roi_name=$(cat MNIROIs.txt | sed -n ${this_folder_row}p | cut -d ',' -f1)
-#						this_roi_x=$(cat MNIROIs.txt | sed -n ${this_folder_row}p | cut -d ',' -f2)
-#						this_roi_y=$(cat MNIROIs.txt | sed -n ${this_folder_row}p | cut -d ',' -f3)
-#						this_roi_z=$(cat MNIROIs.txt | sed -n ${this_folder_row}p | cut -d ',' -f4)
-#						echo Analyzing $this_roi_name for $this_subject
-
-#						if [ -e ${this_roi_name}point.nii ]; then
-#							rm ${this_roi_name}point*.nii
-#							rm ${this_roi_name}sphere5mm*.nii
-#							
-#							if [[ $this_functional_run_folder == "05_MotorImagery" ]]; then
-#								rm CONmeants5mm_${this_roi_name}sphere_flat.txt
-#								rm CONmeants5mm_${this_roi_name}sphere_low.txt
-#								rm CONmeants5mm_${this_roi_name}sphere_medium.txt
-#								rm CONmeants5mm_${this_roi_name}sphere_high.txt
-#								rm meants5mmSignificantROI_${this_roi_name}sphere_flat.txt
-#								rm meants5mmSignificantROI_${this_roi_name}sphere_low.txt
-#								rm meants5mmSignificantROI_${this_roi_name}sphere_medium.txt
-#								rm meants5mmSignificantROI_${this_roi_name}sphere_high.txt
-#							if [[ $this_functional_run_folder == "06_Nback" ]]; then
-#								rm CONmeants5mm_${this_roi_name}sphere_zero.txt
-#								rm CONmeants5mm_${this_roi_name}sphere_one.txt
-#								rm CONmeants5mm_${this_roi_name}sphere_two.txt
-#								rm CONmeants5mm_${this_roi_name}sphere_three.txt
-#								rm meants5mmSignificantROI_${this_roi_name}sphere_zero.txt
-#								rm meants5mmSignificantROI_${this_roi_name}sphere_one.txt
-#								rm meants5mmSignificantROI_${this_roi_name}sphere_two.txt
-#								rm meants5mmSignificantROI_${this_roi_name}sphere_three.txt
-#							fi
-#							
-#						fi
-#						
-#						ml fsl
-#						fslmaths con_0001.nii -mul 0 -add 1 -roi $this_roi_x 1 $this_roi_y 1 $this_roi_z 1 0 1 ${this_roi_name}point -odt float
-#				 		fslmaths ${this_roi_name}point.nii -kernel sphere 5 -fmean ${this_roi_name}sphere5mm.nii -odt float
-#				 		gunzip *nii.gz*
-#	
-#						if [[ $this_functional_run_folder == "05_MotorImagery" ]]; then
-#				 	 		fslmeants -i spmT_0013.nii -o meants5mmSignificantROI_${this_roi_name}sphere_flat.txt -m ${this_roi_name}sphere5mm.nii
-#				 	 		fslmeants -i spmT_0014.nii -o meants5mmSignificantROI_${this_roi_name}sphere_high.txt -m ${this_roi_name}sphere5mm.nii
-#				 	 		fslmeants -i spmT_0015.nii -o meants5mmSignificantROI_${this_roi_name}sphere_low.txt -m ${this_roi_name}sphere5mm.nii
-#					 		fslmeants -i spmT_0016.nii -o meants5mmSignificantROI_${this_roi_name}sphere_medium.txt -m ${this_roi_name}sphere5mm.nii
-#						fi
-
-#						if [[ $this_functional_run_folder == "06_Nback" ]]; then
-#							fslmeants -i spmT_0020.nii -o meants5mmSignificantROI_${this_roi_name}sphere_zero.txt -m ${this_roi_name}sphere5mm.nii
-#							fslmeants -i spmT_0017.nii -o meants5mmSignificantROI_${this_roi_name}sphere_one.txt -m ${this_roi_name}sphere5mm.nii
-#							fslmeants -i spmT_0019.nii -o meants5mmSignificantROI_${this_roi_name}sphere_two.txt -m ${this_roi_name}sphere5mm.nii
-#							fslmeants -i spmT_0018.nii -o meants5mmSignificantROI_${this_roi_name}sphere_three.txt -m ${this_roi_name}sphere5mm.nii
-#						fi
-#					fi
-#				done
-#			done
-#		done <<< "$subjects"
-#	done
-#fi
-
-#if [[ $this_roi_analysis_step == "collect_roi_from_significant_clusters" ]]; then
-#	data_folder_to_analyze=($fmri_processed_folder_names)
-#	for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
-#		while IFS=',' read -ra subject_list; do
- # 				for this_subject in "${subject_list[@]}"; do
- # 					cd ${Study_dir}/$this_subject/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/Level1_Results
-#      			echo Currently collecting roi results for $this_subject
-
-#				if [ -e ${this_subject}_meants5mmSignificantROIroi_results.txt ]; then
- # 	    	       		rm ${this_subject}_meants5mmSignificantROI_roi_results.txt
- # 	    	   		fi
-
-#				for this_txt_file in meants5mmSignificantROI_*.txt; do
-#					this_txt_file_core_name=$(echo $this_txt_file | cut -d. -f 1)
-#					this_txt_file_prefix=$(echo $this_txt_file_core_name | cut -d_ -f 1)
-#					this_txt_file_contents=$(cat $this_txt_file)
-#					
-#					echo $this_txt_file_core_name, $this_txt_file_contents >> ${this_subject}_${this_txt_file_prefix}_roi_results.txt
-#				done
-#				cd $Study_dir/withinGroup_Results/MRI_files/${this_functional_run_folder}/${group_name}
-#				rm ${this_subject}_meants5mmSignificantROI_roi_results.txt
-#				cd ${Study_dir}/$this_subject/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/Level1_Results
-#      			
-#				cp ${this_subject}_${this_txt_file_prefix}_roi_results.txt $Study_dir/withinGroup_Results/MRI_files/${this_functional_run_folder}/${group_name}
-#			done
-#		done <<< "$subjects"
-#	done	
-#fi
-
-	#####################################################################################################################################################
 
 # need WFU roi masks for this section..
 #####################################################################################################################################################
@@ -358,11 +261,18 @@ for this_roi_analysis_step in "${roi_analysis_steps[@]}"; do
 						rm mask*
 						rm meantsWFUROI_*.txt
 						rm roi_*.txt
+						rm noNAN*.nii
+     					rm pos*.nii
 					fi
 
 					if [ -e brain_mask.nii ]; then
 						rm brain_mask.nii
 					fi
+
+					#if [ -e posmask_con_0013.nii ]; then
+						#rm maskedcon_0013.nii
+					#	rm posmask_con_0013.nii
+					#fi
 
 					ml fsl
 					fslmaths ANTs_c0Template_T1_IXI555_MNI152_GS_brain.nii -bin brain_mask
@@ -378,38 +288,139 @@ for this_roi_analysis_step in "${roi_analysis_steps[@]}"; do
 						gunzip *nii.gz*		
 					done
      				if [[ $this_functional_run_folder == "05_MotorImagery" ]]; then
-     					if ! [ -e noNANcon_0013.nii ]; then
+     					
+     				#	rm posmask_spmT_0013.nii
+     				#	rm maskedspmT_0013.nii
+     				#	rm noNANmaskedspmT_0013.nii
+     				#	rm posmask_spmT_0014.nii
+     					#rm maskedspmT_0014.nii
+     				#	rm noNANmaskedspmT_0014.nii
+     				#	rm posmask_spmT_0015.nii
+     				#	rm maskedspmT_0015.nii
+     				#	rm noNANmaskedspmT_0015.nii
+     				#	rm posmask_spmT_0016.nii
+     				#	rm maskedspmT_0016.nii
+     				#	rm noNANmaskedspmT_0016.nii
+
+     					#if ! [ -e posmask_con_0013.nii ]; then
+     					#if ! [ -e noNANcon_0013.nii ]; then
 							#echo does not exist
      						#fslmaths con_0013.nii -nan noNANcon_0013
-     						fslmaths con_0013.nii -thr 0 -bin posmask_con_0013
-							fslmaths con_0013.nii -mas posmask_con_0013 maskedcon_0013.nii     						
+
+     						# try a different type of threshold ... this does not seem to be working
+     						#fslmaths con_0013.nii -thr 0.001 -bin posmask_con_0013.nii
+							#fslmaths con_0013.nii -mas posmask_con_0013.nii maskedcon_0013.nii
+							#gunzip *nii.gz*
+							#fslmaths maskedcon_0013.nii -nan noNANmaskedcon_0013.nii
+							#gunzip *nii.gz*			
+
+							fslmaths spmT_0013.nii -thr 0.001 -bin posmask_spmT_0013.nii
+							gunzip *nii.gz*
+							fslmaths spmT_0013.nii -mas posmask_spmT_0013.nii maskedspmT_0013.nii
+							gunzip *nii.gz*
+							fslmaths maskedspmT_0013.nii -nan noNANmaskedspmT_0013.nii
+							gunzip *nii.gz*
+
+							fslmaths spmT_0014.nii -thr 0.001 -bin posmask_spmT_0014.nii
+							gunzip *nii.gz*
+							fslmaths spmT_0014.nii -mas posmask_spmT_0014.nii maskedspmT_0014.nii
+							gunzip *nii.gz*
+							fslmaths maskedspmT_0014.nii -nan noNANmaskedspmT_0014.nii
+							gunzip *nii.gz*
+
+							fslmaths spmT_0015.nii -thr 0.001 -bin posmask_spmT_0015.nii
+							gunzip *nii.gz*
+							fslmaths spmT_0015.nii -mas posmask_spmT_0015.nii maskedspmT_0015.nii
+							gunzip *nii.gz*
+							fslmaths maskedspmT_0015.nii -nan noNANmaskedspmT_0015.nii
+							gunzip *nii.gz*
+
+							fslmaths spmT_0016.nii -thr 0.001 -bin posmask_spmT_0016.nii
+							gunzip *nii.gz*
+							fslmaths spmT_0016.nii -mas posmask_spmT_0016.nii maskedspmT_0016.nii
+							gunzip *nii.gz*
+							fslmaths maskedspmT_0016.nii -nan noNANmaskedspmT_0016.nii
+							gunzip *nii.gz*						
+     						
      						#fslmaths con_0014.nii -nan noNANcon_0014
      						#fslmaths con_0015.nii -nan noNANcon_0015
      						#fslmaths con_0016.nii -nan noNANcon_0016
-						fi
+						#fi
 
      					for this_maskroi_file in maskedWFU*.nii; do
      						this_maskroi_corename=$(echo $this_maskroi_file | cut -d. -f 1)
-					 		fslmeants -i noNANcon_0013.nii -o meantsWFUROI_${this_maskroi_corename}_flat.txt -m $this_maskroi_file
-					 		fslmeants -i noNANcon_0014.nii -o meantsWFUROI_${this_maskroi_corename}_high.txt -m $this_maskroi_file
-					 		fslmeants -i noNANcon_0015.nii -o meantsWFUROI_${this_maskroi_corename}_low.txt -m $this_maskroi_file
-					 		fslmeants -i noNANcon_0016.nii -o meantsWFUROI_${this_maskroi_corename}_medium.txt -m $this_maskroi_file
+					 		#fslmeants -i noNANmaskedspmT_0013.nii -o meantsWFUROI_${this_maskroi_corename}_flat.txt -m $this_maskroi_file
+					 		
+					 		#fslmeants -i noNANmaskedcon_0013.nii -o meantsWFUROI_${this_maskroi_corename}_flat.txt -m $this_maskroi_file
+
+					 		fslmeants -i noNANmaskedspmT_0013.nii -o meantsWFUROI_${this_maskroi_corename}_flat.txt -m $this_maskroi_file
+					 		fslmeants -i noNANmaskedspmT_0014.nii -o meantsWFUROI_${this_maskroi_corename}_high.txt -m $this_maskroi_file
+					 		fslmeants -i noNANmaskedspmT_0015.nii -o meantsWFUROI_${this_maskroi_corename}_low.txt -m $this_maskroi_file
+					 		fslmeants -i noNANmaskedspmT_0016.nii -o meantsWFUROI_${this_maskroi_corename}_medium.txt -m $this_maskroi_file
+					 		
+					 		#fslmeants -i noNANcon_0014.nii -o meantsWFUROI_${this_maskroi_corename}_high.txt -m $this_maskroi_file
+					 		#fslmeants -i noNANcon_0015.nii -o meantsWFUROI_${this_maskroi_corename}_low.txt -m $this_maskroi_file
+					 		#fslmeants -i noNANcon_0016.nii -o meantsWFUROI_${this_maskroi_corename}_medium.txt -m $this_maskroi_file
 					 	done
 					fi
 					if [[ $this_functional_run_folder == "06_Nback" ]]; then
-						if ! [ -e con_0017.nii ]; then
+     					rm posmask_spmT_0017.nii
+     					rm maskedspmT_0017.nii
+     					rm noNANmaskedspmT_0017.nii
+     					rm posmask_spmT_0018.nii
+     					rm maskedspmT_0018.nii
+     					rm noNANmaskedspmT_0018.nii
+     					rm posmask_spmT_0019.nii
+     					rm maskedspmT_0019.nii
+     					rm noNANmaskedspmT_0019.nii
+     					rm posmask_spmT_0020.nii
+     					rm maskedspmT_0020.nii
+     					rm noNANmaskedspmT_0020.nii
+						if ! [ -e posmask_spmT_0017.nii ]; then
 							#echo does not exist
-     						fslmaths con_0017.nii -nan noNANcon_0017
-     						fslmaths con_0018.nii -nan noNANcon_0018
-     						fslmaths con_0019.nii -nan noNANcon_0019
-     						fslmaths con_0020.nii -nan noNANcon_0020
+     						#fslmaths con_0017.nii -nan noNANcon_0017
+     						#fslmaths con_0018.nii -nan noNANcon_0018
+     						#fslmaths con_0019.nii -nan noNANcon_0019
+     						#fslmaths con_0020.nii -nan noNANcon_0020
+     						fslmaths spmT_0017.nii -thr 0.001 -bin posmask_spmT_0017.nii
+							gunzip *nii.gz*
+							fslmaths spmT_0017.nii -mas posmask_spmT_0017.nii maskedspmT_0017.nii
+							gunzip *nii.gz*
+							fslmaths maskedspmT_0017.nii -nan noNANmaskedspmT_0017.nii
+							gunzip *nii.gz*
+
+							fslmaths spmT_0018.nii -thr 0.001 -bin posmask_spmT_0018.nii
+							gunzip *nii.gz*
+							fslmaths spmT_0018.nii -mas posmask_spmT_0018.nii maskedspmT_0018.nii
+							gunzip *nii.gz*
+							fslmaths maskedspmT_0018.nii -nan noNANmaskedspmT_0018.nii
+							gunzip *nii.gz*
+
+							fslmaths spmT_0019.nii -thr 0.001 -bin posmask_spmT_0019.nii
+							gunzip *nii.gz*
+							fslmaths spmT_0019.nii -mas posmask_spmT_0019.nii maskedspmT_0019.nii
+							gunzip *nii.gz*
+							fslmaths maskedspmT_0019.nii -nan noNANmaskedspmT_0019.nii
+							gunzip *nii.gz*
+
+							fslmaths spmT_0020.nii -thr 0.001 -bin posmask_spmT_0020.nii
+							gunzip *nii.gz*
+							fslmaths spmT_0020.nii -mas posmask_spmT_0020.nii maskedspmT_0020.nii
+							gunzip *nii.gz*
+							fslmaths maskedspmT_0020.nii -nan noNANmaskedspmT_0020.nii
+							gunzip *nii.gz*			
 						fi
 						for this_maskroi_file in maskedWFU*.nii; do
      						this_maskroi_corename=$(echo $this_maskroi_file | cut -d. -f 1)
-							fslmeants -i noNANcon_0020.nii -o meantsNetworkROI_${this_maskroi_corename}_zero.txt -m $this_maskroi_file
-							fslmeants -i noNANcon_0017.nii -o meantsNetworkROI_${this_maskroi_corename}_one.txt -m $this_maskroi_file
-							fslmeants -i noNANcon_0019.nii -o meantsNetworkROI_${this_maskroi_corename}_two.txt -m $this_maskroi_file
-							fslmeants -i noNANcon_0018.nii -o meantsNetworkROI_${this_maskroi_corename}_three.txt -m $this_maskroi_file
+     						fslmeants -i noNANmaskedspmT_0020.nii -o meantsWFUROI_${this_maskroi_corename}_zero.txt -m $this_maskroi_file
+					 		fslmeants -i noNANmaskedspmT_0017.nii -o meantsWFUROI_${this_maskroi_corename}_one.txt -m $this_maskroi_file
+					 		fslmeants -i noNANmaskedspmT_0019.nii -o meantsWFUROI_${this_maskroi_corename}_two.txt -m $this_maskroi_file
+					 		fslmeants -i noNANmaskedspmT_0018.nii -o meantsWFUROI_${this_maskroi_corename}_three.txt -m $this_maskroi_file
+							#fslmeants -i noNANcon_0020.nii -o meantsNetworkROI_${this_maskroi_corename}_zero.txt -m $this_maskroi_file
+							#fslmeants -i noNANcon_0017.nii -o meantsNetworkROI_${this_maskroi_corename}_one.txt -m $this_maskroi_file
+							#fslmeants -i noNANcon_0019.nii -o meantsNetworkROI_${this_maskroi_corename}_two.txt -m $this_maskroi_file
+							#fslmeants -i noNANcon_0018.nii -o meantsNetworkROI_${this_maskroi_corename}_three.txt -m $this_maskroi_file
+
 						done
 					fi
 				done
@@ -422,22 +433,28 @@ for this_roi_analysis_step in "${roi_analysis_steps[@]}"; do
 		for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
 			while IFS=',' read -ra subject_list; do
    				for this_subject in "${subject_list[@]}"; do
-   					cd ${Study_dir}/$this_subject/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/Level1_Results
-	      			echo Currently collecting roi results for $this_subject
+   					#cd ${Study_dir}/$this_subject/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/Level1_Results
+	      			
 
 					# for each txt file parse variable name , read contents and place in subject_roi_results.txt
-					if [ -e ${this_subject}_meantsWFUROI_roi_results.txt ]; then
-   	    	       		rm ${this_subject}_meantsWFUROI_roi_results.txt
-   	    	   		fi
-					for this_txt_file in meantsWFUROI_*.txt; do
+					#if [ -e ${this_subject}_meantsWFUROI_roi_results.txt ]; then
+   	    	       	#	rm ${this_subject}_meantsWFUROI_roi_results.txt
+   	    	   		#fi
+					#for this_txt_file in meantsWFUROI_*.txt; do
 
-						this_txt_file_core_name=$(echo $this_txt_file | cut -d. -f 1)
-						this_txt_file_prefix=$(echo $this_txt_file_core_name | cut -d_ -f 1)
-						this_txt_file_contents=$(cat $this_txt_file)
+					#	this_txt_file_core_name=$(echo $this_txt_file | cut -d. -f 1)
 						
-						echo $this_txt_file_core_name, $this_txt_file_contents >> ${this_subject}_${this_txt_file_prefix}_roi_results.txt
-					done
-					cp ${this_subject}_${this_txt_file_prefix}_roi_results.txt $Study_dir/withinGroup_Results/MRI_files/${this_functional_run_folder}/${group_name}
+						
+					#	this_txt_file_prefix=$(echo $this_txt_file_core_name | cut -d_ -f 1)
+					#	this_txt_file_contents=$(cat $this_txt_file)
+					#	echo Extracting: $this_txt_file_core_name $this_subject ${this_functional_run_folder} = $this_txt_file_contents
+						
+					#	echo $this_txt_file_core_name, $this_txt_file_contents >> ${this_subject}_meantsWFUROI_roi_results.txt
+					#done
+					cd $Study_dir/withinGroup_Results/MRI_files/${this_functional_run_folder}/${group_name}
+					rm ${this_subject}_meantsWFUROI_roi_results.txt
+					cd ${Study_dir}/$this_subject/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/Level1_Results
+					cp ${this_subject}_meantsWFUROI_roi_results.txt $Study_dir/withinGroup_Results/MRI_files/${this_functional_run_folder}/${group_name}
 				done
 			done <<< "$subjects"
 		done	
@@ -450,72 +467,90 @@ if [[ $this_roi_analysis_step == "extract_intensity_from_network_rois" ]]; then
 		for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
 			while IFS=',' read -ra subject_list; do
    				for this_subject in "${subject_list[@]}"; do
-					cp $Study_dir/ROIs_Networks/network_*.nii ${Study_dir}/$this_subject/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/Level1_Results
-   	   				cp ${Study_dir}/$this_subject/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/ANTs_c0Template_T1_IXI555_MNI152_GS_brain.nii ${Study_dir}/$this_subject/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/Level1_Results
-   	   				cd ${Study_dir}/$this_subject/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/Level1_Results
- 
- 					rm noNANcon_00*.nii
+   					echo extracting betas for $this_subject
+					cd $Study_dir/$this_subject/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/Level1_Results
+
 					shopt -s nullglob
 					prefix_to_delete=(mask*)
 					if [ -e "$prefix_to_delete" ]; then
 						rm mask*
+						rm meantsNetworkROI_*.txt
+						rm noNAN*.nii
+     					rm pos*.nii
+     					rm network*
 					fi
 
 					if [ -e brain_mask.nii ]; then
 						rm brain_mask.nii
 					fi
-#
-					ml fsl
+
+   	   				cp $Study_dir/$this_subject/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/ANTs_c0Template_T1_IXI555_MNI152_GS_brain.nii $Study_dir/$this_subject/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/Level1_Results
+   	   				
+   	   				ml fsl
 					fslmaths ANTs_c0Template_T1_IXI555_MNI152_GS_brain.nii -bin brain_mask
 					gunzip *nii.gz
 
-					for this_roi_file in network*.nii; do
-						this_roi_corename=$(echo $this_roi_file | cut -d. -f 1)
-						#echo $this_roi_file
-						ml fsl
-				#
-						flirt -in $this_roi_file -ref con_0001.nii -applyxfm -usesqform -out mask${this_roi_corename}
-						gunzip *nii.gz*		
-
-						fslmaths mask${this_roi_corename}.nii -mas brain_mask.nii masked${this_roi_corename}.nii
-						gunzip *nii.gz*								
-
-					done
 
 					ml fsl
      				if [[ $this_functional_run_folder == "05_MotorImagery" ]]; then
-     					if ! [ -e noNANcon_0013.nii ]; then
-							#echo does not exist
-     						fslmaths con_0013.nii -nan noNANcon_0013
-     						fslmaths con_0014.nii -nan noNANcon_0014
-     						fslmaths con_0015.nii -nan noNANcon_0015
-     						fslmaths con_0016.nii -nan noNANcon_0016
-						fi
-     					for this_maskroi_file in maskednetwork*.nii; do
 
+     					cp $Study_dir/ROIs_Networks/networkZMotorImagery.nii $Study_dir/$this_subject/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/Level1_Results
+     					cp $Study_dir/ROIs_Networks/networkDefaultmode.nii $Study_dir/$this_subject/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/Level1_Results
+       					cp $Study_dir/ROIs_Networks/networkSomatosensory.nii $Study_dir/$this_subject/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/Level1_Results
+					
+     					for this_roi_file in network*.nii; do
+							this_roi_corename=$(echo $this_roi_file | cut -d. -f 1)
+							#echo $this_roi_file
+							ml fsl
+					
+							flirt -in $this_roi_file -ref con_0001.nii -applyxfm -usesqform -out mask${this_roi_corename}
+							gunzip *nii.gz*		
+	
+							fslmaths mask${this_roi_corename}.nii -mas brain_mask.nii masked${this_roi_corename}.nii
+							gunzip *nii.gz*								
+	
+						done
+
+     					for this_maskroi_file in maskednetwork*.nii; do
      						this_maskroi_corename=$(echo $this_maskroi_file | cut -d. -f 1)
-					 		fslmeants -i noNANcon_0013.nii -o meantsNetworkROI_${this_maskroi_corename}_flat.txt -m $this_maskroi_file
-					 		fslmeants -i noNANcon_0014.nii -o meantsNetworkROI_${this_maskroi_corename}_high.txt -m $this_maskroi_file
-					 		fslmeants -i noNANcon_0015.nii -o meantsNetworkROI_${this_maskroi_corename}_low.txt -m $this_maskroi_file
-					 		fslmeants -i noNANcon_0016.nii -o meantsNetworkROI_${this_maskroi_corename}_medium.txt -m $this_maskroi_file
+					 		fslmeants -i spmT_0001.nii -o meantsNetworkROI_${this_maskroi_corename}_flat.txt -m $this_maskroi_file
+					 		fslmeants -i spmT_0002.nii -o meantsNetworkROI_${this_maskroi_corename}_high.txt -m $this_maskroi_file
+					 		fslmeants -i spmT_0003.nii -o meantsNetworkROI_${this_maskroi_corename}_low.txt -m $this_maskroi_file
+					 		fslmeants -i spmT_0004.nii -o meantsNetworkROI_${this_maskroi_corename}_medium.txt -m $this_maskroi_file
 					 	done
 					fi
 					if [[ $this_functional_run_folder == "06_Nback" ]]; then
-						if ! [ -e con_0017.nii ]; then
-							#echo does not exist
-     						fslmaths con_0017.nii -nan noNANcon_0017
-     						fslmaths con_0018.nii -nan noNANcon_0018
-     						fslmaths con_0019.nii -nan noNANcon_0019
-     						fslmaths con_0020.nii -nan noNANcon_0020
-						fi
+						cp $Study_dir/ROIs_Networks/networkWorkingmemory.nii $Study_dir/$this_subject/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/Level1_Results
+     					cp $Study_dir/ROIs_Networks/networkDefaultmode.nii $Study_dir/$this_subject/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/Level1_Results
+       					cp $Study_dir/ROIs_Networks/networkSomatosensory.nii $Study_dir/$this_subject/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/Level1_Results
+					
+     						for this_roi_file in network*.nii; do
+								this_roi_corename=$(echo $this_roi_file | cut -d. -f 1)
+								#echo $this_roi_file
+								ml fsl
+						
+								flirt -in $this_roi_file -ref con_0001.nii -applyxfm -usesqform -out mask${this_roi_corename}
+								gunzip *nii.gz*	
+		
+								fslmaths mask${this_roi_corename}.nii -mas brain_mask.nii masked${this_roi_corename}.nii
+								gunzip *nii.gz*
+		
+							done
+
+     				
 						for this_maskroi_file in maskednetwork*.nii; do
      						this_maskroi_corename=$(echo $this_maskroi_file | cut -d. -f 1)
      						echo $this_maskroi_corename
      						echo $this_maskroi_file
-     						fslmeants -i noNANcon_0020.nii -o meantsNetworkROI_${this_maskroi_corename}_zero.txt -m $this_maskroi_file
-							fslmeants -i noNANcon_0017.nii -o meantsNetworkROI_${this_maskroi_corename}_one.txt -m $this_maskroi_file
-							fslmeants -i noNANcon_0019.nii -o meantsNetworkROI_${this_maskroi_corename}_two.txt -m $this_maskroi_file
-							fslmeants -i noNANcon_0018.nii -o meantsNetworkROI_${this_maskroi_corename}_three.txt -m $this_maskroi_file
+     						#fslmeants -i noNANcon_0020.nii -o meantsNetworkROI_${this_maskroi_corename}_zero.txt -m $this_maskroi_file
+							#fslmeants -i noNANcon_0017.nii -o meantsNetworkROI_${this_maskroi_corename}_one.txt -m $this_maskroi_file
+							#fslmeants -i noNANcon_0019.nii -o meantsNetworkROI_${this_maskroi_corename}_two.txt -m $this_maskroi_file
+							#fslmeants -i noNANcon_0018.nii -o meantsNetworkROI_${this_maskroi_corename}_three.txt -m $this_maskroi_file
+
+							fslmeants -i noNANmaskedspmT_0020.nii -o meantsNetworkROI_${this_maskroi_corename}_zero.txt -m $this_maskroi_file
+							fslmeants -i noNANmaskedspmT_0017.nii -o meantsNetworkROI_${this_maskroi_corename}_one.txt -m $this_maskroi_file
+							fslmeants -i noNANmaskedspmT_0019.nii -o meantsNetworkROI_${this_maskroi_corename}_two.txt -m $this_maskroi_file
+							fslmeants -i noNANmaskedspmT_0018.nii -o meantsNetworkROI_${this_maskroi_corename}_three.txt -m $this_maskroi_file
 						done
 					fi
 				done
@@ -543,9 +578,12 @@ if [[ $this_roi_analysis_step == "extract_intensity_from_network_rois" ]]; then
 						
 						echo $this_txt_file_core_name, $this_txt_file_contents >> ${this_subject}_${this_txt_file_prefix}_roi_results.txt
 					done
+					cd $Study_dir/withinGroup_Results/MRI_files/${this_functional_run_folder}/${group_name}
+					rm ${this_subject}_meantsNetworkROI_roi_results.txt
+					cd ${Study_dir}/$this_subject/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/Level1_Results
 					cp ${this_subject}_${this_txt_file_prefix}_roi_results.txt $Study_dir/withinGroup_Results/MRI_files/${this_functional_run_folder}/${group_name}
 				done
 			done <<< "$subjects"
-		done	
+		done
 	fi
 done

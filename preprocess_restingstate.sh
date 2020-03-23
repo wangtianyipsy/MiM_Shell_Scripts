@@ -511,6 +511,9 @@ do
 		if [[ $this_preprocessing_step == "smooth_restingstate_ants" ]]; then
 			data_folder_to_analyze=($restingstate_processed_folder_names)
 				cd ${Subject_dir}/Processed/MRI_files/${data_folder_to_analyze}/ANTS_Normalization
+				if [ -e smoothed_*.nii ]; then 
+                	rm smoothed_*.nii
+            	fi
 				ml matlab
 				matlab -nodesktop -nosplash -r "try; smooth_restingstate_ants; catch; end; quit"
 			echo This step took $SECONDS seconds to execute
