@@ -27,10 +27,6 @@ cd ${mask_path}
 #done
 
 
-
-
-
-
 ### TO DO: make it determine that if it has a binary mask to not do any of that.  
 
 
@@ -61,11 +57,14 @@ images_to_split=( smoothed_* )
 
 ###actual beta extraction
 	outfile=${this_sub}_${this_network}_network_Vals.txt
+	##DMN Locations
 	outfile2=DF_PCC_betas
 	outfile3=DF_med_prefron_cor_betas
+
+	###WM Locations
 	outfile4=L_DLPFC_betas
-	outfile5=
-	outfile6=
+	outfile5=parietal_post_central_gyrus
+	
 binary_network=( binary* )
 for this_binary in ${binary_network[@]}; do		
 		beta=0
@@ -85,12 +84,8 @@ done
 		echo -e "$beta" >> "$outfile4"
 
 		beta=0
-		beta=$(fslmeants -i ${this_vol} -c 1 55 -3 --usemm)	
+		beta=$(fslmeants -i ${this_vol} -c -45 -12 60 --usemm)	
 		echo -e "$beta" >> "$outfile5"
-
-		beta=0
-		beta=$(fslmeants -i ${this_vol} -c 1 55 -3 --usemm)	
-		echo -e "$beta" >> "$outfile6"
 
 ### temp method of copying binary network template back to network folder
 #for this_binary in ${binary_network[@]}; do
