@@ -1,98 +1,78 @@
-#!/bin/bash 
+#!/bin/bash
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>
+
+#export MATLABPATH=/ufrc/rachaelseidler/grant.tays/Code/
+
+Study_dir=/ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/MiM_Data
 
 
-SUB=( GT_dummy )
+Subjects=( 2008 )
+this_functional_run_folder=( 06_Nback )
 
-for this_sub in ${SUB[@]}; do
-mask_path=/ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/MiM_Data/ROIs_Networks
-MRI_path=/ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/MiM_Data/${this_sub}/Processed/MRI_files/06_Nback/ANTS_Normalization
-
-networks=( ${mask_path}/network* )
-	### bring in a new network
-export MATLABPATH=/ufrc/rachaelseidler/grant.tays/Code/
-
-ml fsl
-ml matlab
-
-###temp method, copy network to the subject specific folder, adapt it there and copy it back as binary to network folder later
-cd ${mask_path}
-
-
-
-
-#for this_network in ${networks[@]}; do
-### if ${this_network} == binary_*; do nothing?  Idk how this part will work out.
-
-#	cp ${this_network} ${MRI_path}
-#done
-
-
-### TO DO: make it determine that if it has a binary mask to not do any of that.  
-
-
-cd ${MRI_path}
-
-
-### SPLITS RUNS INTO VOLUMES, GUNZIPS THEM SO THEY CAN COREGISTER
-images_to_split=( smoothed_* )
-	for this_image_to_split in ${images_to_split[@]}; do
-		#echo ${this_image_to_split}
-		#fslsplit  ${this_image_to_split} ${this_image_to_split}_vol
-		#gunzip smoothed_*
-
-
-####  MATLAB CODES TO COREGISTER MASK TO FILES, THEN TRASNFORM IT INTO BINARY
-			#matlab -nodesktop -nosplash -r "try; mask_coreg_to_vol; catch; end; quit"
-			### coregister and reslice mask to vol000
-           # matlab -nodesktop -nosplash -r "try; imcalc_binary_mask_conv; catch; end; quit"
-            ###imcalc it to a binary mask, save as binary_
-
-
-		vol=( ${this_image_to_split}* )
-		for this_network in ${networks[@]}; do
-		echo ${this_network}
-			for this_vol in ${vol[@]}; do 
-			echo ${this_vol}
-
-
-###actual beta extraction
-	outfile=${this_sub}_${this_network}_network_Vals.txt
-	##DMN Locations
-	outfile2=DF_PCC_betas
-	outfile3=DF_med_prefron_cor_betas
-
-	###WM Locations
-	outfile4=L_DLPFC_betas
-	outfile5=parietal_post_central_gyrus
+for this_subject in ${Subjects[@]}; do
 	
-binary_network=( binary* )
-for this_binary in ${binary_network[@]}; do		
-		beta=0
-		beta=$(fslmeants -i ${this_vol} -m ${mask_path}/binary_*.nii)
-		echo -e "$beta" >> "$outfile"				​
-done
-		beta=0
-		beta=$(fslmeants -i ${this_vol} -c 1 -61 38 --usemm)	
-		echo -e "$beta" >> "$outfile2"
+	cd ${Study_dir}/ROIs_Networks
 
-		beta=0
-		beta=$(fslmeants -i ${this_vol} -c 1 55 -3 --usemm)	
-		echo -e "$beta" >> "$outfile3"
+	ml fsl
+	ml matlab
 
-		beta=0
-		beta=$(fslmeants -i ${this_vol} -c -45 29 34 --usemm)	
-		echo -e "$beta" >> "$outfile4"
+	shopt -s nullglob
+	prefix_to_delete=(binary*)
+	if [ -e "$prefix_to_delete" ]; then
+		rm binary*
+	fi
 
-		beta=0
-		beta=$(fslmeants -i ${this_vol} -c -45 -12 60 --usemm)	
-		echo -e "$beta" >> "$outfile5"
+	for this_network in network*.nii; do
+		echo binarizing $this_network
+		
+		fslmaths $this_network -bin binary_${this_network}
+		gunzip *nii.gz
 
-### temp method of copying binary network template back to network folder
-#for this_binary in ${binary_network[@]}; do
-	#cp ${this_binary} ${mask_path}
-	#rm ${this_binary}
-#done
+		cp binary_${this_network} ${Study_dir}/$this_subject/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
+	done
+
+	cd ${Study_dir}/$this_subject/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
+
+	shopt -s nullglob
+	prefix_to_delete=(dimMatch_*)
+	if [ -e "$prefix_to_delete" ]; then
+		rm dimMatch_*
+		rm *.txt
+	fi
+
+	for this_binary_mask in binary_*.nii; do
+		echo matching diminensions for $this_binary_mask
+		flirt -in $this_binary_mask -ref MNI_2mm.nii -applyxfm -usesqform -out dimMatch_$this_binary_mask
+		gunzip *nii.gz*		
+	done
+
+	for this_dimMatch_binary_mask in dimMatch_*.nii; do
+		this_mask_file_corename=$(echo $this_dimMatch_binary_mask | cut -d. -f 1)
+		fmri_run_index=1
+		for this_functional_run in smoothed_*.nii; do
+			echo Currently calculating average activation for $this_subject at ${this_dimMatch_binary_mask} in $this_functional_run
+			
+			fslsplit $this_functional_run
+			gunzip *nii.gz*
+
+			for this_volume_file in vol*; do		
+				beta=0
+				outfile=${this_mask_file_corename}_fmri${fmri_run_index}_betas.txt		
+				beta=$(fslmeants -i $this_volume_file -m $this_dimMatch_binary_mask)
+				echo -e "$beta" >> "$outfile"				​
 			done
-		done			
+			rm vol*
+
+			(( fmri_run_index ++ ))
+		done
 	done
 done
