@@ -426,7 +426,7 @@ do
 	
 			outputFolder=${Subject_dir}/Processed/MRI_files/${data_folder_to_analyze}/ANTS_Normalization
 			T1_Template=${Subject_dir}/Processed/MRI_files/${data_folder_to_analyze}/ANTS_Normalization/biascorrected_SkullStripped_T1.nii
-			MNI_Template=/ufrc/rachaelseidler/tfettrow/Crunch_Code/MR_Templates/MNI_1mm.nii
+			MNI_Template=$Code_dir/MR_Templates/MNI_1mm.nii
 			this_core_file_name=biascorrected_SkullStripped_T1
 			echo 'registering' $T1_Template 'to' $MNI_Template
 
@@ -454,7 +454,7 @@ do
 
       
 			cd ${Subject_dir}/Processed/MRI_files/${data_folder_to_analyze}/ANTS_Normalization
-			cp /ufrc/rachaelseidler/tfettrow/Crunch_Code/MR_Templates/MNI_2mm.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
+			cp $Code_dir/MR_Templates/MNI_2mm.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
 							
 			if [ -e warpedToMNI_biascorrected*.nii ]; then 
         	    rm warpedToMNI_*.nii
@@ -468,7 +468,7 @@ do
 			-n BSpline -o warpedToMNI_${this_core_file_name}.nii -t [warpToMNIParams_${this_core_file_name}1Warp.nii.gz] -t [warpToMNIParams_${this_core_file_name}0GenericAffine.mat,0] -v
 
 			cp ${Subject_dir}/Processed/MRI_files/${data_folder_to_analyze}/unwarpedRealigned*.nii ${Subject_dir}/Processed/MRI_files/${data_folder_to_analyze}/ANTS_Normalization
-			cp /ufrc/rachaelseidler/tfettrow/Crunch_Code/MR_Templates/MNI_2mm.nii ${Subject_dir}/Processed/MRI_files/${data_folder_to_analyze}/ANTS_Normalization
+			cp $Code_dir/MR_Templates/MNI_2mm.nii ${Subject_dir}/Processed/MRI_files/${data_folder_to_analyze}/ANTS_Normalization
 			cd ${Subject_dir}/Processed/MRI_files/${data_folder_to_analyze}/ANTS_Normalization
 			for this_file_to_warp in unwarpedRealigned*.nii; do 
 				ml fsl
