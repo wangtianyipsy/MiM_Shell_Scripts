@@ -9,6 +9,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+# TO DO: 
+# need a 2mm SUIT image
+# add smoohing
+
+
 argument_counter=0
 for this_argument in "$@"; do
 	if	[[ $argument_counter == 0 ]]; then
@@ -116,20 +121,6 @@ for this_argument in "$@"; do
 		fi
 ###################################################################################
 
-########### COPYING SUIT TEMPLATE AND COREGin FOR CHECK REGin in SPM ############################
-		if [[ $this_ceres_processing_step ==  "coreg_SUIT_to_ceres" ]]; then
-			for this_functional_run_folder in ${fmri_processed_folder_names[@]} ${restingstate_processed_folder_names[@]}; do
-				cd $Subject_dir/Processed/MRI_files/$this_functional_run_folder/ANTS_Normalization
-				ml matlab
-				matlab -nodesktop -nosplash -r "try; nii_setOrigin('CB_mask.nii',5); catch; end; quit"
-			done	
-			echo This step took $SECONDS seconds to execute
-        	cd "${Subject_dir}"
-        	echo "coreg SUIT to CERES: $SECONDS sec" >> ceres_processing_log.txt
-        	SECONDS=0
-		fi
-####################################################################################
-
 ########### JAMMED FULL WITH LOTS OF STEPS (Change dimensions, masking, and Ants warping) ############################
 		if [[ $this_ceres_processing_step ==  "ceres_cb_mask_norm" ]]; then
 			for this_functional_run_folder in ${fmri_processed_folder_names[@]} ${restingstate_processed_folder_names[@]}; do
@@ -139,15 +130,15 @@ for this_argument in "$@"; do
 				fi
 				ml fsl
 
-				## only run once.. got to be a better way
+				# only run once.. got to be a better way
 				this_mask_match=0
 				for this_func_run in coreg_unwarp*.nii; do
 					if [[ $this_mask_match == 0 ]]; then
 						flirt -in CB_mask.nii -ref $this_func_run -applyxfm -usesqform -out dimMatch_CB_mask
-						gunzip *nii.gz*		
+						gunzip *nii.gz*
 						(( this_mask_match++ ))
 					fi
-				done			
+				done
 
 				for this_func_run in coreg_unwarp*.nii; do
 					echo $this_func_run
@@ -169,7 +160,7 @@ for this_argument in "$@"; do
 					fi
 				
 					for ceres_image in native_tissue*.nii; do
-						SUIT_Template=SUIT_1mm.nii
+						SUIT_Template=$Code_dir/MR_Templates/SUIT_1mm.nii
 						echo 'registering' $ceres_image 'to' $SUIT_Template
 						
 						antsRegistration --dimensionality 3 --float 0 \
@@ -196,17 +187,21 @@ for this_argument in "$@"; do
 						gunzip *nii.gz*	
 					done
 				
-					if [ -e warpedToSUIT.nii ]; then 
-						rm warpedToSUIT.nii
-					fi
-					
+					cp cp $Code_dir/MR_Templates/SUIT_2mm.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
+							
+					if [ -e warpedToSUIT*.nii ]; then 
+        	    		rm warpedToSUIT*.nii
+        			fi
+	
 					for this_volume_file in CBmasked_vol*; do
-						antsApplyTransforms -d 3 -e 3 -i $this_volume_file -r SUIT_1mm.nii \
+						antsApplyTransforms -d 3 -e 3 -i $this_volume_file -r SUIT_2mm.nii \
 						-o warpedToSUIT_${this_volume_file}	-t [warpToSUITParams1Warp.nii] -t [warpToSUITParams0GenericAffine.mat,0] -v
 					done
 	
 					fslmerge -t warpedToSUIT_$this_func_run warpedToSUIT_CBmasked_vol0* 
+					gunzip *nii.gz*
 					rm warpedToSUIT_CBmasked_vol*
+					rm CBmasked_vol*
 				done
 			done
 			echo This step took $SECONDS seconds to execute
