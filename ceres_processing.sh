@@ -190,20 +190,20 @@ for this_argument in "$@"; do
         	    		rm warpedToSUIT*.nii
         			fi
 	
-					for this_volume_file in CBmasked_vol*; do
+					for this_volume_file in vol*; do
 						antsApplyTransforms -d 3 -e 3 -i $this_volume_file -r SUIT_2mm.nii \
 						-o warpedToSUIT_${this_volume_file}	-t [warpToSUITParams1Warp.nii] -t [warpToSUITParams0GenericAffine.mat,0] -v
 					done
 	
-					fslmerge -t warpedToSUIT_$this_func_run warpedToSUIT_CBmasked_vol0* 
+					fslmerge -t warpedToSUIT_$this_func_run warpedToSUIT_vol0* 
 					gunzip *nii.gz*
-					rm warpedToSUIT_CBmasked_vol*
-					rm CBmasked_vol*
+					rm warpedToSUIT_vol*
+					rm vol*
 				done
 			done
 			echo This step took $SECONDS seconds to execute
         	cd "${Subject_dir}"
-        	echo "CB Mask Func: $SECONDS sec" >> ceres_processing_log.txt
+        	echo "Split_vol Func: $SECONDS sec" >> ceres_processing_log.txt
         	SECONDS=0
 		fi
 		if [[ $this_ceres_processing_step ==  "ceres_smooth_norm"  ]]; then
