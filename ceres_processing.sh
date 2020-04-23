@@ -10,9 +10,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # TO DO: 
-# need a 2mm SUIT image
-# add smoohing
-
 
 argument_counter=0
 for this_argument in "$@"; do
@@ -187,7 +184,7 @@ for this_argument in "$@"; do
 						gunzip *nii.gz*	
 					done
 				
-					cp cp $Code_dir/MR_Templates/SUIT_2mm.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
+					cp $Code_dir/MR_Templates/SUIT_2mm.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
 							
 					if [ -e warpedToSUIT*.nii ]; then 
         	    		rm warpedToSUIT*.nii
@@ -207,6 +204,17 @@ for this_argument in "$@"; do
 			echo This step took $SECONDS seconds to execute
         	cd "${Subject_dir}"
         	echo "CB Mask Func: $SECONDS sec" >> ceres_processing_log.txt
+        	SECONDS=0
+		fi
+		if [[ $this_ceres_processing_step ==  "ceres_smooth_norm"  ]]; then
+			for this_functional_run_folder in ${fmri_processed_folder_names[@]} ${restingstate_processed_folder_names[@]}; do
+				cd $Subject_dir/Processed/MRI_files/$this_functional_run_folder/ANTS_Normalization
+				ml matlab
+				matlab -nodesktop -nosplash -r "try; ceres_smooth_antsnorm; catch; end; quit"
+			done	
+			echo This step took $SECONDS seconds to execute
+        	cd "${Subject_dir}"
+        	echo "smoothing ceres: $SECONDS sec" >> ceres_processing_log.txt
         	SECONDS=0
 		fi		
 	done
