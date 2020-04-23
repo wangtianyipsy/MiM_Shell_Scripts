@@ -195,15 +195,19 @@ for this_argument in "$@"; do
 						-o warpedToSUIT_${this_volume_file}	-t [warpToSUITParams1Warp.nii] -t [warpToSUITParams0GenericAffine.mat,0] -v
 					done
 	
-					fslmerge -t warpedToSUIT_$this_func_run warpedToSUIT_vol0* 
+					fslmerge -t warpedToSUITWHOLEBRAIN_$this_func_run warpedToSUIT_vol0* 
 					gunzip *nii.gz*
+
+					# will eventually sort out which ones to remove
+					rm warpedToSUIT_CBmasked_vol*
+                    rm CBmasked_vol*
 					rm warpedToSUIT_vol*
 					rm vol*
 				done
 			done
 			echo This step took $SECONDS seconds to execute
         	cd "${Subject_dir}"
-        	echo "Split_vol Func: $SECONDS sec" >> ceres_processing_log.txt
+        	echo "Normalizing CB: $SECONDS sec" >> ceres_processing_log.txt
         	SECONDS=0
 		fi
 		if [[ $this_ceres_processing_step ==  "ceres_smooth_norm"  ]]; then
