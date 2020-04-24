@@ -122,31 +122,32 @@ for this_argument in "$@"; do
 		if [[ $this_ceres_processing_step ==  "ceres_cb_mask_norm" ]]; then
 			for this_functional_run_folder in ${fmri_processed_folder_names[@]} ${restingstate_processed_folder_names[@]}; do
 				cd $Subject_dir/Processed/MRI_files/$this_functional_run_folder/ANTS_Normalization
+				echo 'running normalization steps... this may take a while...'
 				if [ -e dimMatch_CB_mask.nii ]; then 
 				    rm dimMatch_CB_mask.nii
 				fi
 				ml fsl
 
 				# only run once.. got to be a better way
-				this_mask_match=0
-				for this_func_run in coreg_unwarp*.nii; do
-					if [[ $this_mask_match == 0 ]]; then
-						flirt -in CB_mask.nii -ref $this_func_run -applyxfm -usesqform -out dimMatch_CB_mask
-						gunzip *nii.gz*
-						(( this_mask_match++ ))
-					fi
-				done
+				# this_mask_match=0
+				# for this_func_run in coreg_unwarp*.nii; do
+				# 	if [[ $this_mask_match == 0 ]]; then
+				# 		flirt -in CB_mask.nii -ref $this_func_run -applyxfm -usesqform -out dimMatch_CB_mask
+				# 		gunzip *nii.gz*
+				# 		(( this_mask_match++ ))
+				# 	fi
+				# done
 
 				for this_func_run in coreg_unwarp*.nii; do
-					echo $this_func_run
-					fslsplit $this_func_run
-					gunzip *nii.gz*
-					for this_volume_file in vol*.nii; do
-						echo $this_volume_file
-						fslmaths $this_volume_file -mas CB_mask.nii CBmasked_${this_volume_file}
-						gunzip *nii.gz*
-					done
-					rm vol*
+					# echo $this_func_run
+					# fslsplit $this_func_run
+					# gunzip *nii.gz*
+					# for this_volume_file in vol*.nii; do
+					# 	echo $this_volume_file
+					# 	fslmaths $this_volume_file -mas CB_mask.nii CBmasked_${this_volume_file}
+					# 	gunzip *nii.gz*
+					# done
+					# rm vol*
 					
 					ml gcc/5.2.0
 					ml ants
@@ -186,10 +187,14 @@ for this_argument in "$@"; do
 				
 					cp $Code_dir/MR_Templates/SUIT_2mm.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
 							
-					if [ -e warpedToSUIT*.nii ]; then 
-        	    		rm warpedToSUIT*.nii
-        			fi
-	
+					# if [ -e warpedToSUIT*.nii ]; then 
+     #    	    		rm warpedToSUIT*.nii
+     #    			fi
+					
+					echo 'splitting' $this_func_run 'and applying flowfield'
+					fslsplit $this_func_run
+					gunzip *nii.gz*
+
 					for this_volume_file in vol*; do
 						antsApplyTransforms -d 3 -e 3 -i $this_volume_file -r SUIT_2mm.nii \
 						-o warpedToSUIT_${this_volume_file}	-t [warpToSUITParams1Warp.nii] -t [warpToSUITParams0GenericAffine.mat,0] -v
