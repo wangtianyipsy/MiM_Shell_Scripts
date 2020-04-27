@@ -20,9 +20,9 @@ for this_argument in "$@"; do
 	fi
 	
 	# Set the path for our custom matlab functions and scripts
-	Code_dir=/ufrc/rachaelseidler/moriah.hanson/Code
+	Code_dir=/ufrc/rachaelseidler/tfettrow/Crunch_Code
 		
-	export MATLABPATH=${Code_dir}/Matlab_scripts/helper
+	export MATLABPATH=${Code_dir}/Matlab_Scripts/helper
 		
 	study_dir=/ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/MiM_Data/
 	Subject_dir=/ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/MiM_Data/$subject
@@ -197,9 +197,10 @@ for this_argument in "$@"; do
 					gunzip *nii.gz*
 
 					# will eventually sort out which ones to remove
-					rm warpedToSUIT_vol0*
-                    rm vol0*
-			
+					rm warpedToSUIT_CBmasked_vol*
+                    rm CBmasked_vol*
+					rm warpedToSUIT_vol*
+					rm vol*
 				done
 			done
 			echo This step took $SECONDS seconds to execute
