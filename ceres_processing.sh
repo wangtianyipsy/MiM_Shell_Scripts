@@ -123,31 +123,17 @@ for this_argument in "$@"; do
 			for this_functional_run_folder in ${fmri_processed_folder_names[@]} ${restingstate_processed_folder_names[@]}; do
 				cd $Subject_dir/Processed/MRI_files/$this_functional_run_folder/ANTS_Normalization
 				echo 'running normalization steps... this may take a while...'
-				if [ -e dimMatch_CB_mask.nii ]; then 
-				    rm dimMatch_CB_mask.nii
-				fi
+				
 				ml fsl
-
-				# only run once.. got to be a better way
-				# this_mask_match=0
-				# for this_func_run in coreg_unwarp*.nii; do
-				# 	if [[ $this_mask_match == 0 ]]; then
-				# 		flirt -in CB_mask.nii -ref $this_func_run -applyxfm -usesqform -out dimMatch_CB_mask
-				# 		gunzip *nii.gz*
-				# 		(( this_mask_match++ ))
-				# 	fi
-				# done
-
 				for this_func_run in coreg_unwarp*.nii; do
-					# echo $this_func_run
-					# fslsplit $this_func_run
-					# gunzip *nii.gz*
-					# for this_volume_file in vol*.nii; do
-					# 	echo $this_volume_file
-					# 	fslmaths $this_volume_file -mas CB_mask.nii CBmasked_${this_volume_file}
-					# 	gunzip *nii.gz*
-					# done
-					# rm vol*
+					fslsplit $this_func_run
+					gunzip *nii.gz*
+					for this_volume_file in vol*.nii; do
+						echo $this_volume_file
+						fslmaths $this_volume_file -mas CB_mask.nii CBmasked_${this_volume_file}
+						gunzip *nii.gz*
+					done
+					rm vol*
 					
 					ml gcc/5.2.0
 					ml ants
@@ -177,30 +163,37 @@ for this_argument in "$@"; do
 					   	 	--convergence [1000x500x250x100,1e-6,10] \
 					   	 	--shrink-factors 8x4x2x1 \
 					   	 	--smoothing-sigmas 3x2x1x0vox \
-					   	 	--transform SyN[0.1,3,0] \
-					   	 	--metric CC[$SUIT_Template,$ceres_image,1,2] \
-					   	 	--convergence [100x70x50x20,1e-6,10] \
-					   	 	--shrink-factors 8x4x2x1 \
-					   	 	--smoothing-sigmas 3x2x1x0vox
-						gunzip *nii.gz*	
+					   	 	# --transform SyN[0.1,3,0] \
+					   	 	# --metric CC[$SUIT_Template,$ceres_image,1,2] \
+					   	 	# --convergence [100x70x50x20,1e-6,10] \
+					   	 	# --shrink-factors 8x4x2x1 \
+					   	 	# --smoothing-sigmas 3x2x1x0vox
+						gunzip *nii.gz*
 					done
 				
 					cp $Code_dir/MR_Templates/SUIT_2mm.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
 							
-					# if [ -e warpedToSUIT*.nii ]; then 
-     #    	    		rm warpedToSUIT*.nii
-     #    			fi
+					if [ -e warpedToSUIT*.nii ]; then 
+        	    		rm warpedToSUIT*.nii
+        			fi
 					
 					echo 'splitting' $this_func_run 'and applying flowfield'
 					fslsplit $this_func_run
 					gunzip *nii.gz*
 
-					for this_volume_file in vol*; do
+					# rigid and affine application
+					for this_volume_file in CBmasked_vol*; do
 						antsApplyTransforms -d 3 -e 3 -i $this_volume_file -r SUIT_2mm.nii \
-						-o warpedToSUIT_${this_volume_file}	-t [warpToSUITParams1Warp.nii] -t [warpToSUITParams0GenericAffine.mat,0] -v
+						-o warpedToSUIT_${this_volume_file}	-t [warpToSUITParams0GenericAffine.mat,0] -v
 					done
+
+					# rigid and affine and Syn application
+					# for this_volume_file in CBmasked_vol*; do
+					# 	antsApplyTransforms -d 3 -e 3 -i $this_volume_file -r SUIT_2mm.nii \
+					# 	-o warpedToSUIT_${this_volume_file}	-t [warpToSUITParams1Warp.nii] -t [warpToSUITParams0GenericAffine.mat,0] -v
+					# done
 	
-					fslmerge -t warpedToSUITWHOLEBRAIN_$this_func_run warpedToSUIT_vol0* 
+					fslmerge -t warpedToSUITaffine_$this_func_run warpedToSUIT_vol0* 
 					gunzip *nii.gz*
 
 					# will eventually sort out which ones to remove
