@@ -122,10 +122,11 @@ for this_argument in "$@"; do
 		if [[ $this_ceres_processing_step ==  "ceres_cb_mask_norm" ]]; then
 			for this_functional_run_folder in ${fmri_processed_folder_names[@]} ${restingstate_processed_folder_names[@]}; do
 				cd $Subject_dir/Processed/MRI_files/$this_functional_run_folder/ANTS_Normalization
-				echo 'running normalization steps... this may take a while...'
+				# echo 'running normalization steps... this may take a while...'
 				
 				ml fsl
 				for this_func_run in coreg_unwarp*.nii; do
+					echo 'splitting' $this_func_run 'and applying flowfield'
 					fslsplit $this_func_run
 					gunzip *nii.gz*
 					for this_volume_file in vol*.nii; do
@@ -169,7 +170,7 @@ for this_argument in "$@"; do
 					   	 	# --shrink-factors 8x4x2x1 \
 					   	 	# --smoothing-sigmas 3x2x1x0vox
 						gunzip *nii.gz*
-					done
+					done	
 				
 					cp $Code_dir/MR_Templates/SUIT_2mm.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
 							
@@ -177,13 +178,9 @@ for this_argument in "$@"; do
         	    		rm warpedToSUIT*.nii
         			fi
 					
-					echo 'splitting' $this_func_run 'and applying flowfield'
-					fslsplit $this_func_run
-					gunzip *nii.gz*
-
 					# rigid and affine application
 					for this_volume_file in CBmasked_vol*; do
-						antsApplyTransforms -d 3 -e 3 -i $this_volume_file -r SUIT_2mm.nii \
+						antsApplyTransforms -e 3 -i $this_volume_file -r SUIT_2mm.nii \
 						-o warpedToSUIT_${this_volume_file}	-t [warpToSUITParams0GenericAffine.mat,0] -v
 					done
 
@@ -193,14 +190,13 @@ for this_argument in "$@"; do
 					# 	-o warpedToSUIT_${this_volume_file}	-t [warpToSUITParams1Warp.nii] -t [warpToSUITParams0GenericAffine.mat,0] -v
 					# done
 	
-					fslmerge -t warpedToSUITaffine_$this_func_run warpedToSUIT_vol0* 
+					fslmerge -t warpedToSUITaffine_$this_func_run warpedToSUIT_CBmasked_vol0* 
 					gunzip *nii.gz*
 
 					# will eventually sort out which ones to remove
 					rm warpedToSUIT_CBmasked_vol*
                     rm CBmasked_vol*
 					rm warpedToSUIT_vol*
-					rm vol*
 				done
 			done
 			echo This step took $SECONDS seconds to execute
