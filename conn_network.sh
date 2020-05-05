@@ -15,11 +15,13 @@ Code_dir=/ufrc/rachaelseidler/tfettrow/Crunch_Code
 	
 export MATLABPATH=${Code_dir}/Matlab_Scripts/helper
 	
-Subject_dir=/ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/MiM_Data
+Study_dir=/ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/MiM_Data
 
-cd $Subject_dir
+cd $Study_dir
 
 ml matlab
-matlab -nodesktop -nosplash -r "try; conn_network_withinGroup_taskbased(1.5,'2002','2007','2008','2012','2013','2018','2020','2021','2022','2023','2025','2026'); catch; end; quit"
+matlab -nodesktop -nosplash -r "try; conn_network_withinGroup_taskbased('project_name', 'conn_project_nb_test','task_folder', '06_Nback', 'TR',1.5, 'subjects', {'2008'}, 'roi_templates', {'\\cifs.rc.ufl.edu\ufrc\rachaelseidler\share\FromExternal\Research_Projects_UF\CRUNCH\MiM_Data\ROIs_Networks\binary_networkDefaultmode.nii'}); catch; end; quit"
+
+#matlab -nodesktop -nosplash -r "try; conn_network_withinGroup_taskbased(1.5,'2002','2007','2008','2012','2013','2018','2020','2021','2022','2023','2025','2026'); catch; end; quit"
 
 #matlab -nodesktop -nosplash -r "try; conn_seed_network('1002','1004'); catch; end; quit"
