@@ -10,13 +10,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 argument_counter=0
-step_counter=0
 for this_argument in "$@"
 do
 	if	[[ $argument_counter == 0 ]]; then
     	subject=$this_argument
 	else
-		preprocessing_steps="$this_argument"
+		fmri_processing_steps="$this_argument"
 	fi
 	
 	# Set the path for our custom matlab functions and scripts
@@ -95,7 +94,7 @@ do
 	t1_processed_folder_names=$(echo "${t1_processed_folder_name_array[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' ')
 
 
-	for this_preprocessing_step in "${preprocessing_steps[@]}"; do
+	for this_preprocessing_step in "${fmri_processing_steps[@]}"; do
 		if [[ $this_preprocessing_step ==  "slicetime_fmri" ]]; then
 		    data_folder_to_analyze=($fmri_processed_folder_names)
         	#cd $Subject_dir/Processed/MRI_files
@@ -581,9 +580,7 @@ do
 			cd "${Subject_dir}"
 			echo "Bias Corrected: $SECONDS sec" >> preprocessing_log.txt
 			SECONDS=0
-		fi
-	
-		
+		fi	
 
 		if [[ $this_preprocessing_step == "ants_norm_fmri" ]]; then
 			data_folder_to_analyze=($fmri_processed_folder_names)
@@ -807,7 +804,5 @@ do
 			SECONDS=0
 		fi
 	done
-
-	(( step_counter++ ))
 	(( argument_counter++ ))
 done
