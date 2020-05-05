@@ -110,7 +110,7 @@ for this_argument in "$@"; do
 				cd $Subject_dir/Processed/MRI_files/$this_functional_run_folder/ANTS_Normalization
 				ml matlab
 				matlab -nodesktop -nosplash -r "try; ceres_coregWrite_func_to_T1; catch; end; quit"
-			done	
+			done
 			echo This step took $SECONDS seconds to execute
         	cd "${Subject_dir}"
         	echo "coreg and write: $SECONDS sec" >> ceres_processing_log.txt
@@ -126,6 +126,7 @@ for this_argument in "$@"; do
 				
 				ml fsl
 				for this_func_run in coreg_unwarp*.nii; do
+					
 					echo 'splitting' $this_func_run 'and applying flowfield'
 					fslsplit $this_func_run
 					gunzip *nii.gz*
@@ -135,17 +136,16 @@ for this_argument in "$@"; do
 						gunzip *nii.gz*
 					done
 					rm vol*
-					
-					ml gcc/5.2.0
-					ml ants
-					if [ -e warpToSUITParams*.nii ]; then 
-					    rm warpToSUITParams*.nii
-					    rm warpToSUITParams*.mat
-					    rm warpToSUITEstimate*.nii
-					fi
-				
+									
 					for ceres_image in native_tissue*.nii; do
-						SUIT_Template=$Code_dir/MR_Templates/SUIT_1mm.nii
+						ml gcc/5.2.0; ml ants
+						N4BiasFieldCorrection -i $ceres_image -o biascorrected_$ceres_image
+						ceres_image=biascorrected_$ceres_image
+						echo $ceres_image
+
+						ml gcc/5.2.0
+						ml ants
+						SUIT_Template=$Code_dir/MR_Templates/SUIT_CBonly_1mm.nii
 						echo 'registering' $ceres_image 'to' $SUIT_Template
 						
 						antsRegistration --dimensionality 3 --float 0 \
@@ -164,39 +164,42 @@ for this_argument in "$@"; do
 					   	 	--convergence [1000x500x250x100,1e-6,10] \
 					   	 	--shrink-factors 8x4x2x1 \
 					   	 	--smoothing-sigmas 3x2x1x0vox \
-					   	 	# --transform SyN[0.1,3,0] \
-					   	 	# --metric CC[$SUIT_Template,$ceres_image,1,2] \
-					   	 	# --convergence [100x70x50x20,1e-6,10] \
-					   	 	# --shrink-factors 8x4x2x1 \
-					   	 	# --smoothing-sigmas 3x2x1x0vox
+					   	 	--transform SyN[0.1,3,0] \
+					   	 	--metric CC[$SUIT_Template,$ceres_image,1,2] \
+					   	 	--convergence [100x70x50x20,1e-6,10] \
+					   	 	--shrink-factors 8x4x2x1 \
+					   	 	--smoothing-sigmas 3x2x1x0vox
+
 						gunzip *nii.gz*
 					done	
 				
-					cp $Code_dir/MR_Templates/SUIT_2mm.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
-							
-					if [ -e warpedToSUIT*.nii ]; then 
-        	    		rm warpedToSUIT*.nii
-        			fi
-					
-					# rigid and affine application
-					for this_volume_file in CBmasked_vol*; do
-						antsApplyTransforms -e 3 -i $this_volume_file -r SUIT_2mm.nii \
-						-o warpedToSUIT_${this_volume_file}	-t [warpToSUITParams0GenericAffine.mat,0] -v
+					cp $Code_dir/MR_Templates/SUIT_CBonly_2mm.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
+								
+					#rigid and affine and Syn application
+					for ceres_image in native_tissue*.nii; do
+						antsApplyTransforms -e 3 -i $ceres_image -r SUIT_CBonly_2mm.nii \
+						-o warpedToSUITCBonly_${ceres_image}	-t [warpToSUITParams1Warp.nii] -t [warpToSUITParams0GenericAffine.mat,0] -v
 					done
 
-					# rigid and affine and Syn application
-					# for this_volume_file in CBmasked_vol*; do
-					# 	antsApplyTransforms -d 3 -e 3 -i $this_volume_file -r SUIT_2mm.nii \
-					# 	-o warpedToSUIT_${this_volume_file}	-t [warpToSUITParams1Warp.nii] -t [warpToSUITParams0GenericAffine.mat,0] -v
-					# done
+					for this_volume_file in CBmasked_vol*; do
+						antsApplyTransforms -e 3 -i $this_volume_file -r SUIT_CBonly_2mm.nii \
+						-o warpedToSUIT_${this_volume_file}	-t [warpToSUITParams1Warp.nii] -t [warpToSUITParams0GenericAffine.mat,0] -v
+					done
 	
-					fslmerge -t warpedToSUITaffine_$this_func_run warpedToSUIT_CBmasked_vol0* 
+					fslmerge -t warpedToSUITCBonly_$this_func_run warpedToSUIT_CBmasked_vol0* 
 					gunzip *nii.gz*
 
 					# will eventually sort out which ones to remove
 					rm warpedToSUIT_CBmasked_vol*
                     rm CBmasked_vol*
 					rm warpedToSUIT_vol*
+					shopt -s nullglob
+					prefix_to_delete=(warpToSUITParams*.nii)
+					if [ -e "$prefix_to_delete" ]; then
+	                	rm warpToSUITParams*.nii
+	                	rm warpToSUITEstimate*.nii
+	                	rm biascorrected_*.nii
+	            	fi
 				done
 			done
 			echo This step took $SECONDS seconds to execute
