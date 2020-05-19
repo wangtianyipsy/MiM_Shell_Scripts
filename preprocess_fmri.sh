@@ -216,19 +216,18 @@ do
 
 		if [[ $this_preprocessing_step == "unwarp_fmri" ]]; then
 			fieldmap_folders=($fmri_fieldmap_processed_folder_names)
-			data_folder_to_copy_to=($fmri_processed_folder_names)
-			 # TO DO: change data_folder_to_copy_to to fMRI_folders
+			fmri_folders=($fmri_processed_folder_names)
    			this_loop_index=0
 		   	for this_fieldmap_folder in ${fieldmap_folders[@]}; do
-				cd ${Subject_dir}/Processed/MRI_files/${fmri_processed_folder_names[$this_loop_index]}/
+				cd ${Subject_dir}/Processed/MRI_files/${fmri_folders[$this_loop_index]}/
 				for this_functional_run_file_json in *.json; do 
 					echo $this_functional_run_file_json
 					cd ${Subject_dir}/Processed/MRI_files/$this_fieldmap_folder
-			   		cp fpm_my_fieldmap.hdr ${Subject_dir}/Processed/MRI_files/${data_folder_to_copy_to[$this_loop_index]}
-	    	        cp fpm_my_fieldmap.img ${Subject_dir}/Processed/MRI_files/${data_folder_to_copy_to[$this_loop_index]}
-					cp ${Code_dir}/Matlab_Scripts/helper/vdm_defaults.m ${Subject_dir}/Processed/MRI_files/${data_folder_to_copy_to[$this_loop_index]}
-					cp se_epi_unwarped.nii ${Subject_dir}/Processed/MRI_files/${data_folder_to_copy_to[$this_loop_index]}
-					cd ${Subject_dir}/Processed/MRI_files/${fmri_processed_folders[$this_loop_index]}/
+			   		cp fpm_my_fieldmap.hdr ${Subject_dir}/Processed/MRI_files/${fmri_folders[$this_loop_index]}
+	    	        cp fpm_my_fieldmap.img ${Subject_dir}/Processed/MRI_files/${fmri_folders[$this_loop_index]}
+					cp ${Code_dir}/Matlab_Scripts/helper/vdm_defaults.m ${Subject_dir}/Processed/MRI_files/${fmri_folders[$this_loop_index]}
+					cp se_epi_unwarped.nii ${Subject_dir}/Processed/MRI_files/${fmri_folders[$this_loop_index]}
+					cd ${Subject_dir}/Processed/MRI_files/${fmri_folders[$this_loop_index]}/
 
 					read_out=$(cat vdm_defaults.m)
 	
