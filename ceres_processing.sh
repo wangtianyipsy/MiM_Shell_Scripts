@@ -9,8 +9,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# TO DO: 
-
 argument_counter=0
 for this_argument in "$@"; do
 	if	[[ $argument_counter == 0 ]]; then
@@ -24,7 +22,7 @@ for this_argument in "$@"; do
 		
 	export MATLABPATH=${Code_dir}/Matlab_Scripts/helper
 		
-	study_dir=/ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/MiM_Data/
+	study_dir=/ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/MiM_Data
 	Subject_dir=/ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/MiM_Data/$subject
 	cd $Subject_dir
 
@@ -108,8 +106,25 @@ for this_argument in "$@"; do
 		if [[ $this_ceres_processing_step ==  "coreg_func_to_ceresT1" ]]; then
 			for this_functional_run_folder in ${fmri_processed_folder_names[@]} ${restingstate_processed_folder_names[@]}; do
 				cd $Subject_dir/Processed/MRI_files/$this_functional_run_folder/ANTS_Normalization
-				ml matlab
-				matlab -nodesktop -nosplash -r "try; ceres_coregWrite_func_to_T1; catch; end; quit"
+				cp ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/meanunwarped*.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
+
+				for this_func_run in unwarpedRealigned*.nii; do
+					this_core_file_name=$(echo $this_func_run | cut -d. -f 1)
+
+					ml fsl
+					flirt -in biascorrected_SkullStripped_T1.nii -ref mean${this_func_run} -out dimMatch2Func_biascorrected_SkullStripped_T1.nii
+					gunzip -f *nii.gz
+
+					ml gcc; ml ants
+					antsApplyTransforms -d 3 -e 3 -i ${this_core_file_name}.nii --float 0 -r dimMatch2Func_biascorrected_SkullStripped_T1.nii \
+					-n BSpline -o coregToT1_${this_core_file_name}.nii -t [warpToT1Params_biascorrected_mean${this_core_file_name}0GenericAffine.mat,0] -v 
+
+					antsApplyTransforms -d 3 -e 3 -i native_tissue*.nii --float 0 -r dimMatch2Func_biascorrected_SkullStripped_T1.nii \
+					-n BSpline -o coregToT1_native_tissue_CB.nii -t [warpToT1Params_biascorrected_mean${this_core_file_name}0GenericAffine.mat,0] -v 					
+
+					fslmaths coregToT1_native_tissue_CB.nii -thr 0.5 -bin binary_coregToT1_native_tissue_CB
+					gunzip -f *nii.gz					
+				done
 			done
 			echo This step took $SECONDS seconds to execute
         	cd "${Subject_dir}"
@@ -122,84 +137,51 @@ for this_argument in "$@"; do
 		if [[ $this_ceres_processing_step ==  "ceres_cb_mask_norm" ]]; then
 			for this_functional_run_folder in ${fmri_processed_folder_names[@]} ${restingstate_processed_folder_names[@]}; do
 				cd $Subject_dir/Processed/MRI_files/$this_functional_run_folder/ANTS_Normalization
-				# echo 'running normalization steps... this may take a while...'
+				echo 'running normalization steps... this may take a while...'
 				
-				ml fsl
-				for this_func_run in coreg_unwarp*.nii; do
+				for ceres_image in native_*.nii; do
+					ml gcc/5.2.0; ml ants
+					N4BiasFieldCorrection -i $ceres_image -o biascorrected_$ceres_image
+					ceres_image=biascorrected_$ceres_image
+					SUIT_Template_1mm=$Code_dir/MR_Templates/SUIT_maskedByCEREScoreg_1mm.nii
+					SUIT_Template_2mm=$Code_dir/MR_Templates/SUIT_maskedByCEREScoreg_2mm.nii
+					echo 'registering' $ceres_image 'to' $SUIT_Template_1mm
 					
-					echo 'splitting' $this_func_run 'and applying flowfield'
-					fslsplit $this_func_run
-					gunzip *nii.gz*
-					for this_volume_file in vol*.nii; do
-						echo $this_volume_file
-						fslmaths $this_volume_file -mas CB_mask.nii CBmasked_${this_volume_file}
-						gunzip *nii.gz*
-					done
-					rm vol*
-									
-					for ceres_image in native_tissue*.nii; do
-						ml gcc/5.2.0; ml ants
-						N4BiasFieldCorrection -i $ceres_image -o biascorrected_$ceres_image
-						ceres_image=biascorrected_$ceres_image
-						echo $ceres_image
+					ml gcc/5.2.0; ml ants
+					antsRegistration --dimensionality 3 --float 0 \
+				   	 	--output [warpToSUITParams,warpToSUITEstimate.nii] \
+				   	 	--interpolation Linear \
+				   	 	--winsorize-image-intensities [0.01,0.99] \
+				   	 	--use-histogram-matching 1 \
+				   	 	--initial-moving-transform [$SUIT_Template_1mm,$ceres_image,1] \
+				   	 	--transform Rigid[0.1] \
+				   	 	--metric MI[$SUIT_Template_1mm,$ceres_image,1,64,Regular,.5] \
+				   	 	--convergence [1000x500x250x100,1e-6,10] \
+				   	 	--shrink-factors 8x4x2x1 \
+				   	 	--smoothing-sigmas 3x2x1x0vox \
+				   	 	--transform Affine[0.1] \
+				   	 	--metric MI[$SUIT_Template_1mm,$ceres_image,1,64,Regular,.5] \
+				   	 	--convergence [1000x500x250x100,1e-6,10] \
+				   	 	--shrink-factors 8x4x2x1 \
+				   	 	--smoothing-sigmas 3x2x1x0vox \
+				   	 	--transform SyN[0.1,3,0] \
+				   	 	--metric CC[$SUIT_Template_1mm,$ceres_image,1,2] \
+				   	 	--convergence [100x70x50x20,1e-6,10] \
+				   	 	--shrink-factors 8x4x2x1 \
+				   	 	--smoothing-sigmas 3x2x1x0vox
+				done
 
-						ml gcc/5.2.0
-						ml ants
-						SUIT_Template=$Code_dir/MR_Templates/SUIT_CBonly_1mm.nii
-						echo 'registering' $ceres_image 'to' $SUIT_Template
-						
-						antsRegistration --dimensionality 3 --float 0 \
-					   	 	--output [warpToSUITParams,warpToSUITEstimate.nii] \
-					   	 	--interpolation Linear \
-					   	 	--winsorize-image-intensities [0.01,0.99] \
-					   	 	--use-histogram-matching 1 \
-					   	 	--initial-moving-transform [$SUIT_Template,$ceres_image,1] \
-					   	 	--transform Rigid[0.1] \
-					   	 	--metric MI[$SUIT_Template,$ceres_image,1,64,Regular,.5] \
-					   	 	--convergence [1000x500x250x100,1e-6,10] \
-					   	 	--shrink-factors 8x4x2x1 \
-					   	 	--smoothing-sigmas 3x2x1x0vox \
-					   	 	--transform Affine[0.1] \
-					   	 	--metric MI[$SUIT_Template,$ceres_image,1,64,Regular,.5] \
-					   	 	--convergence [1000x500x250x100,1e-6,10] \
-					   	 	--shrink-factors 8x4x2x1 \
-					   	 	--smoothing-sigmas 3x2x1x0vox \
-					   	 	--transform SyN[0.1,3,0] \
-					   	 	--metric CC[$SUIT_Template,$ceres_image,1,2] \
-					   	 	--convergence [100x70x50x20,1e-6,10] \
-					   	 	--shrink-factors 8x4x2x1 \
-					   	 	--smoothing-sigmas 3x2x1x0vox
+				gunzip -f *nii.gz
 
-						gunzip *nii.gz*
-					done	
-				
-					cp $Code_dir/MR_Templates/SUIT_CBonly_2mm.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
-								
-					#rigid and affine and Syn application
-					for ceres_image in native_tissue*.nii; do
-						antsApplyTransforms -e 3 -i $ceres_image -r SUIT_CBonly_2mm.nii \
-						-o warpedToSUITCBonly_${ceres_image}	-t [warpToSUITParams1Warp.nii] -t [warpToSUITParams0GenericAffine.mat,0] -v
-					done
+				cp $SUIT_Template_2mm ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
+				for this_func_run in unwarpedRealigned*.nii; do
+					ml fsl	
+					fslmaths coregToT1_${this_func_run} -mas binary_coregToT1_native_tissue_CB.nii CBmasked_coregToT1_${this_func_run}
+					gunzip -f *nii.gz
 
-					for this_volume_file in CBmasked_vol*; do
-						antsApplyTransforms -e 3 -i $this_volume_file -r SUIT_CBonly_2mm.nii \
-						-o warpedToSUIT_${this_volume_file}	-t [warpToSUITParams1Warp.nii] -t [warpToSUITParams0GenericAffine.mat,0] -v
-					done
-	
-					fslmerge -t warpedToSUITCBonly_$this_func_run warpedToSUIT_CBmasked_vol0* 
-					gunzip *nii.gz*
-
-					# will eventually sort out which ones to remove
-					rm warpedToSUIT_CBmasked_vol*
-                    rm CBmasked_vol*
-					rm warpedToSUIT_vol*
-					shopt -s nullglob
-					prefix_to_delete=(warpToSUITParams*.nii)
-					if [ -e "$prefix_to_delete" ]; then
-	                	rm warpToSUITParams*.nii
-	                	rm warpToSUITEstimate*.nii
-	                	rm biascorrected_*.nii
-	            	fi
+					ml gcc/5.2.0; ml ants
+					antsApplyTransforms -d 3 -e 3 -i CBmasked_coregToT1_${this_func_run} -r $SUIT_Template_2mm \
+					-o warpedToSUITKH_CBmasked_coregToT1_${this_func_run} -t [warpToSUITParams1Warp.nii] -t [warpToSUITParams0GenericAffine.mat,0] -v
 				done
 			done
 			echo This step took $SECONDS seconds to execute
@@ -207,6 +189,7 @@ for this_argument in "$@"; do
         	echo "Normalizing CB: $SECONDS sec" >> ceres_processing_log.txt
         	SECONDS=0
 		fi
+		
 		if [[ $this_ceres_processing_step ==  "ceres_smooth_norm"  ]]; then
 			for this_functional_run_folder in ${fmri_processed_folder_names[@]} ${restingstate_processed_folder_names[@]}; do
 				cd $Subject_dir/Processed/MRI_files/$this_functional_run_folder/ANTS_Normalization
