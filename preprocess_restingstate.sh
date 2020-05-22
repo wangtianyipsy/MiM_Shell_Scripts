@@ -76,7 +76,7 @@ do
 	restingstate_processed_folder_names=$(echo "${restingstate_processed_folder_name_array[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' ')
 	t1_processed_folder_names=$(echo "${t1_processed_folder_name_array[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' ')
 
-	#for this_preprocessing_step in "${preprocessing_step[@]}"; do
+	for this_preprocessing_step in "${preprocessing_step[@]}"; do
 		if [[ $this_preprocessing_step == "slicetime_restingstate" ]]; then
 		    data_folder_to_analyze=($restingstate_processed_folder_names)
         	#cd $Subject_dir/Processed/MRI_files
@@ -255,7 +255,7 @@ do
 					
 									fslmerge -a $this_slicetimed_file vol*
 									rm vol*
-									gunzip *nii.gz*
+									gunzip -f *nii.gz
 									
 									ml matlab			
 					
@@ -359,7 +359,7 @@ do
 			if [ -e warpedToT1_*.nii ]; then 
         	    rm warpedToT1_*.nii
         	fi
-        	gunzip *.nii.gz
+        	gunzip -f *nii.gz
 			for this_mean_file in biascorrected_mean*.nii; do
 				this_core_file_name=$(echo $this_mean_file | cut -d. -f 1)
 				antsApplyTransforms -d 3 -e 3 -i ${this_core_file_name}.nii -r biascorrected_SkullStripped_T1.nii \
@@ -411,7 +411,7 @@ do
 			if [ -e warpedToMNI_biascorrected*.nii ]; then 
         	    rm warpedToMNI_*.nii
         	fi
-        	gunzip *.nii.gz
+        	gunzip -f *nii.gz
 			ml gcc/5.2.0
 			ml ants
 			
@@ -457,7 +457,7 @@ do
 			SECONDS=0
 		fi
 
-	#done
+	done
 	(( step_counter++ ))
 	(( argument_counter++ ))		
 done

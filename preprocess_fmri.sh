@@ -142,14 +142,14 @@ do
 	
 				if [ $((this_file_number_of_slices%2)) -ne 0 ]; then
 					fslsplit AP_PA_merged.nii slice -z
-					gunzip *nii.gz*
+					gunzip -f *nii.gz
 					rm slice0000.nii
 					fslmerge -z AP_PA_merged slice0*
 					rm slice00*.nii
 				fi
 	
 				fslmaths AP_PA_merged.nii -Tmean Mean_AP_PA_merged.nii
-				gunzip *nii.gz*
+				gunzip -f *nii.gz
 	
 				cp Mean_AP_PA_merged.nii "${Subject_dir}/Processed/MRI_files/${data_folder_to_copy_to[$this_loop_index]}"
 				(( this_loop_index++ ))
@@ -206,7 +206,7 @@ do
 				ml fsl/5.0.8
 				fslchfiletype ANALYZE my_fieldmap_nifti.nii fpm_my_fieldmap
 	
-				gunzip *nii.gz*
+				gunzip -f *nii.gz
 			done
 			echo This step took $SECONDS seconds to execute
 			cd "${Subject_dir}"
@@ -240,6 +240,7 @@ do
    					this_core_functional_file_name=$(echo $this_functional_run_file_json | cut -d. -f 1)
    					total_readout_sec=$(grep "TotalReadoutTime" ${this_functional_run_file_json} | tr -dc '0.00-9.00')
 					encoding_direction=$(grep "PhaseEncodingDirection" ${this_functional_run_file_json} | cut -d: -f 2 | head -1 | tr -d '"' |  tr -d ',')
+					## j- = P > A    j = A > P
 					if [[ $encoding_direction =~ j- ]]; then
 						array[2]="pm_def.K_SPACE_TRAVERSAL_BLIP_DIR = -1;"
 					else
@@ -283,7 +284,7 @@ do
 			echo "Realign and Unwarp: $SECONDS sec" >> preprocessing_log.txt
 			SECONDS=0
 		fi
-	
+
 		if [[ $this_preprocessing_step == "art_fmri" ]]; then
 			data_folder_to_analyze=($fmri_processed_folder_names)
 			data_folder_to_copy_from=($t1_processed_folder_names)
@@ -378,7 +379,7 @@ do
 					
 									fslmerge -a $this_slicetimed_file vol*
 									rm vol*
-									gunzip *nii.gz*
+									gunzip -f *nii.gz
 									
 									ml matlab			
 									## re-coregister slicetimed to mean_Distmap only if removing start of run (bc we coreg first volume to Distmap)
@@ -574,6 +575,10 @@ do
 					T1_Template=biascorrected_SkullStripped_T1.nii
 					Mean_Func=$this_mean_file
 
+					if [ -e warpToT1_*.nii ]; then 
+        	        	rm warpToT1_*.nii
+        	    	fi
+
 					this_core_file_name=$(echo $this_mean_file | cut -d. -f 1)
 					echo 'registering' $Mean_Func 'to' $T1_Template
 					# moving low res func to high res T1
@@ -589,12 +594,13 @@ do
 					    --shrink-factors 8x4x2x1 \
 					    --smoothing-sigmas 3x2x1x0vox
 				done
+				gunzip -f *nii.gz
 			done
 		
 			data_folder_to_analyze=($fmri_processed_folder_names)
 			for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
 				cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
-				gunzip *nii.gz
+				gunzip -f *nii.gz
 				ml gcc/5.2.0
 				ml ants
 
@@ -658,7 +664,7 @@ do
 				cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
 				cp ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/unwarpedRealigned*.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
 				cp /ufrc/rachaelseidler/tfettrow/Crunch_Code/MR_Templates/MNI_2mm.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
-				gunzip *nii.gz
+				gunzip -f *nii.gz
 
 				if [ -e warpedToMNI_biascorrected*.nii ]; then 
         	        rm warpedToMNI_*.nii
@@ -717,10 +723,14 @@ do
 				cp ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/Condition_Onsets*.csv ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
 				cp ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/art_regression_outliers_and_movement*.mat ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
 				# grab TR from json file
+				run_once_index=0
 				for this_functional_run_file in *.json; do
-					TR_from_json=$(grep "RepetitionTime" ${this_functional_run_file} | tr -dc '0.00-9.00')
-					echo $TR_from_json
-  				break; done
+					if [[ run_once_index == 0 ]]; then
+						TR_from_json=$(grep "RepetitionTime" ${this_functional_run_file} | tr -dc '0.00-9.00')
+						echo $TR_from_json
+					fi
+					(( run_once_index++ ))
+  				done
   				ml matlab
     			matlab -nodesktop -nosplash -r "try; level_one_stats(1, '$TR_from_json'); catch; end; quit"
     		done
