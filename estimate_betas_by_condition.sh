@@ -11,7 +11,7 @@
 
 # this script requires arguments 
 
-# example >> estimate_betas_by_condition.sh '1002,1004' youngAdult 05_MotorImagery collect_intensity_from_network_rois
+# example >> estimate_betas_by_condition.sh '1002,1004' youngAdult 05_MotorImagery gather_subject_betas_manually_entered_roi ROI_settings_motorimagerySWE.txt
 
 # things to be aware of with this script: 
 # 1) only run one step at a time
@@ -19,19 +19,9 @@
 # 3) only run one task (MotorImagery or Nback) at a time
 
 # potential steps:
-#convert_manually_entered_roi_to_voxel_coordinates
-#create_roi_sphere_for_maually_entered_roi
+#gather_subject_betas_manually_entered_roi
 #collect_manually_entered_rois
 
-#convert_to_mni_for_significant_clusters
-#extract_intensity_from_significant_clusters
-#collect_roi_from_significant_clusters
-
-#extract_intensity_from_WFU_rois
-#collect_intensity_from_WFU_rois
-
-#extract_intensity_from_network_rois
-#collect_intensity_from_network_rois
 
 ##################################################
 
@@ -45,200 +35,84 @@ for this_argument in "$@"; do
 		fmri_processed_folder_names=$this_argument
 	elif [[ $argument_counter == 3 ]]; then
 		roi_analysis_steps=$this_argument
+	elif [[ $argument_counter == 4 ]]; then
+		roi_settings_file=$this_argument
 	fi
-	(( argument_counter++ ))		
+	(( argument_counter++ ))
 done
 
+# TO DO: setup an error if one of these is not present
 echo $subjects
 echo $group_name
 echo $fmri_processed_folder_names
 echo $roi_analysis_steps
+echo $roi_settings_file
 
 Code_dir=/ufrc/rachaelseidler/tfettrow/Crunch_Code
 export MATLABPATH=${Code_dir}/Matlab_Scripts/helper
 
 #for SUB in ${subjects[@]}; do
 Study_dir=/ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/MiM_Data
-cd "${Study_dir}"
-
-for this_roi_analysis_step in "${roi_analysis_steps[@]}"; do
+#cd "${Study_dir}"
 	
-# for predetmined rois (.txt has manually entered mni coords)
 #####################################################################################################################################################
-	 if [[ $this_roi_analysis_step == "convert_load_sensitive_voxel_coordinates" ]]; then
-	 	for this_functional_run_folder in ${fmri_processed_folder_names[@]}; do
-	 		if [[ $this_functional_run_folder == "05_MotorImagery" ]] ; then
-	 			cd ${Study_dir}/betweenGroup_Results_3Fac/MRI_files/${this_functional_run_folder}/
-	 			shopt -s nullglob
-				prefix_to_delete=(roi_*.csv)
-   				if  [ -e $prefix_to_delete ]; then 
-	      			rm roi_*.csv
-	      		fi
+	# replaced by convert_rois_to_spheres... should have something synonomous for networks (ask GT/see WFU below)
 
-				cd $Study_dir
+	if [[ $this_roi_analysis_step == "gather_subject_betas_manually_entered_roi" ]]; then
+		for this_functional_run_folder in ${fmri_processed_folder_names[@]}; do # only doing one task folder at a time so this for loop not necessary
+			ml fsl
 
-
-				lines_to_ignore=$(awk '/#/{print NR}' MotorImagery_roi_load_young.txt)
-
-				roi_line_numbers=$(awk 'END{print NR}' MotorImagery_roi_load_young.txt)
-				for (( this_row=1; this_row<=${roi_line_numbers}; this_row++ )); do
-					if ! [[ ${lines_to_ignore[*]} =~ $this_row ]]; then
-						if [[ $group_name == oldAdult ]]; then 
-							this_roi_name=$(cat MotorImagery_roi_load_old.txt | sed -n ${this_row}p | cut -d ',' -f1)
-							this_roi_x=$(cat MotorImagery_roi_load_old.txt | sed -n ${this_row}p | cut -d ',' -f2)
-							this_roi_y=$(cat MotorImagery_roi_load_old.txt | sed -n ${this_row}p | cut -d ',' -f3)
-							this_roi_z=$(cat MotorImagery_roi_load_old.txt | sed -n ${this_row}p | cut -d ',' -f4)
-						fi
-						if [[ $group_name == youngAdult ]]; then 
-							this_roi_name=$(cat MotorImagery_roi_load_young.txt | sed -n ${this_row}p | cut -d ',' -f1)
-							this_roi_x=$(cat MotorImagery_roi_load_young.txt | sed -n ${this_row}p | cut -d ',' -f2)
-							this_roi_y=$(cat MotorImagery_roi_load_young.txt | sed -n ${this_row}p | cut -d ',' -f3)
-							this_roi_z=$(cat MotorImagery_roi_load_young.txt | sed -n ${this_row}p | cut -d ',' -f4)
-						fi
-						cd ${Study_dir}/betweenGroup_Results_3Fac/MRI_files/${this_functional_run_folder}/
-						
-						ml matlab
-						matlab -nodesktop -nosplash -r "try; convert_to_voxel_coordinates '$this_roi_name' '$this_roi_x' '$this_roi_y' '${this_roi_z}'; catch; end; quit"
-						cd $Study_dir
-					fi
-				done
-	 		fi
-	 	done
-	fi
-
-	if [[ $this_roi_analysis_step == "create_roi_sphere_for_load_sensitive_rois" ]]; then
-		for this_functional_run_folder in ${fmri_processed_folder_names[@]}; do
 			while IFS=',' read -ra subject_list; do
-   				for this_subject in "${subject_list[@]}"; do
-   					cd ${Study_dir}/$this_subject/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/Level1_Results
-					shopt -s nullglob
-					prefix_to_delete=(*roi_results.txt)
-   					if  [ -e $prefix_to_delete ]; then 
-	      				rm *_roi_results.txt
-	      				rm brain_mask.nii
-	      				rm brain_mask.nii.gz
-	      			fi
-   				done
-			done <<< "$subjects"
+	   		    for this_subject in "${subject_list[@]}"; do
+	   		    	cd ${Study_dir}/$this_subject/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/Level1_Results	     					
+	   		    	if [ -e ${this_subject}_roi_results.txt ]; then
+			   	      	rm ${this_subject}_roi_results.txt
+			   	    fi
+	   		    	cd "${Study_dir}"
+					lines_to_ignore=$(awk '/#/{print NR}' $roi_settings_file)
+					echo $lines_to_ignore
+					roi_line_numbers=$(awk 'END{print NR}' $roi_settings_file)
+					for (( this_row=1; this_row<=${roi_line_numbers}; this_row++ )); do
+						if ! [[ ${lines_to_ignore[*]} =~ $this_row ]]; then
+							this_roi_file_corename=$(cat $roi_settings_file | sed -n ${this_row}p | cut -d ',' -f4)
+							this_roi_file_corename_squeeze=$(echo $this_roi_file_corename | sed -r 's/( )+//g')
+							this_roi_image_name=${Study_dir}/ROIs/${this_roi_file_corename_squeeze}.nii
+							echo pulling betas for $this_roi_image_name on $this_subject
 
-			
-			cd ${Code_dir}/MR_Templates
-			#if ! [ -e brain_mask.nii ]; then 
-				rm brain_mask.nii
-	      				rm brain_mask.nii.gz
-				ml fsl
-				fslmaths MNI_2mm.nii -bin brain_mask
-				gunzip *nii.gz
-				cp brain_mask.nii $Study_dir/betweenGroup_Results_3Fac/MRI_files/${this_functional_run_folder}/
-			#fi
+							cd ${Study_dir}/$this_subject/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/Level1_Results
+	     					if [[ $this_functional_run_folder == "05_MotorImagery" ]]; then
+					 	
+					 			if ! [ -e noNANcon_0001.nii ]; then
+		     						fslmaths con_0001.nii -nan noNANcon_0001
+		     						fslmaths con_0002.nii -nan noNANcon_0002
+		     						fslmaths con_0003.nii -nan noNANcon_0003
+		     						fslmaths con_0004.nii -nan noNANcon_0004
+		     						gunzip *nii.gz*
+		     					fi
 
-		 	cd $Study_dir/betweenGroup_Results_3Fac/MRI_files/${this_functional_run_folder}/
-			for this_roi_file in roi_*.csv; do
-				
-				this_roi_file_corename=$(echo $this_roi_file | cut -d. -f 1)
-				this_roi_corename=$(echo $this_roi_file_corename | cut -d'_' -f 2)
-				
-				this_roi_x=$(cat $this_roi_file | sed -n 2p | cut -d ',' -f1)
-				this_roi_y=$(cat $this_roi_file | sed -n 2p | cut -d ',' -f2)
-				this_roi_z=$(cat $this_roi_file | sed -n 2p | cut -d ',' -f3)
-
-			
-				if [ -e LoadSensitiveROI_${this_roi_corename}_point.nii ]; then 
-					rm LoadSensitiveROI_${this_roi_corename}_point.nii
-					rm LoadSensitiveROI_${this_roi_corename}_sphere5mm.nii
-					rm maskedLoadSensitiveROI_${this_roi_corename}_sphere5mm.nii
-				fi
-
-				#fslmaths MNI_2mm.nii -bin brain_mask
-				#gunzip *nii.gz
-				#cp brain_mask.nii $Study_dir/betweenGroup_Results_3Fac/MRI_files/${this_functional_run_folder}/
-
-				ml fsl
-				echo converting ${this_roi_corename}: $this_roi_x $this_roi_y $this_roi_z to 5mm sphere ....
-				fslmaths con_0001.nii -mul 0 -add 1 -roi $this_roi_x 1 $this_roi_y 1 $this_roi_z 1 0 1 LoadSensitiveROI_${this_roi_corename}_point -odt float
-				fslmaths LoadSensitiveROI_${this_roi_corename}_point.nii -kernel sphere 5 -fmean LoadSensitiveROI_${this_roi_corename}_sphere5mm.nii -odt float
-				gunzip *nii.gz*
-						
-				fslmaths LoadSensitiveROI_${this_roi_corename}_sphere5mm.nii -mas brain_mask.nii maskedLoadSensitiveROI_${this_roi_corename}_sphere5mm.nii
-				gunzip *nii.gz*		
-
-				while IFS=',' read -ra subject_list; do
-   				    for this_subject in "${subject_list[@]}"; do
-   				    	cd ${Study_dir}/$this_subject/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/Level1_Results
-   				    	if [ -e maskedLoadSensitiveROI_${this_roi_corename}_sphere5mm.nii ]; then 
-   					    	rm LoadSensitiveROI_${this_roi_corename}_sphere5mm.nii
-   				    		rm maskedLoadSensitiveROI_${this_roi_corename}_sphere5mm.nii
-   				    	fi
-
-   				    	cp $Study_dir/betweenGroup_Results_3Fac/MRI_files/${this_functional_run_folder}/maskedLoadSensitiveROI_${this_roi_corename}_sphere5mm.nii ${Study_dir}/$this_subject/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/Level1_Results
-   	   					cd ${Study_dir}/$this_subject/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/Level1_Results
-	      				
-	      				echo Currently calculating average activation for $this_subject at ${this_roi_corename}
-
-
-     					if [[ $this_functional_run_folder == "05_MotorImagery" ]]; then
-				 			beta=0
-							outfile=${this_subject}_${this_roi_corename}_roi_results.txt
-							beta=$(fslmeants -i con_0001.nii -m maskedLoadSensitiveROI_${this_roi_corename}_sphere5mm.nii)
-				 			echo -e "$beta", flat, >> "$outfile"				​
-							
-				 			beta=$(fslmeants -i con_0002.nii -m maskedLoadSensitiveROI_${this_roi_corename}_sphere5mm.nii)
-				 			echo -e "$beta", low, >> "$outfile"				​
-							
-				 			beta=$(fslmeants -i con_0003.nii -m maskedLoadSensitiveROI_${this_roi_corename}_sphere5mm.nii)
-							echo -e "$beta", medium, >> "$outfile"				​
-							
-							beta=$(fslmeants -i con_0004.nii -m maskedLoadSensitiveROI_${this_roi_corename}_sphere5mm.nii)
-							echo -e "$beta", high, >> "$outfile"				​
-							
-						fi	
-						cd $Study_dir/betweenGroup_Results_3Fac/MRI_files/${this_functional_run_folder}/
+								outfile=${this_subject}_roi_results.txt
+								beta=0
+								beta=$(fslmeants -i noNANcon_0001.nii -m $this_roi_image_name)
+					 			echo $this_roi_file_corename_squeeze, "$beta", flat, >> "$outfile"				​
+								
+					 			beta=$(fslmeants -i noNANcon_0003.nii -m $this_roi_image_name)
+					 			echo $this_roi_file_corename_squeeze, "$beta", low, >> "$outfile"				​
+								
+					 			beta=$(fslmeants -i noNANcon_0004.nii -m $this_roi_image_name)
+								echo $this_roi_file_corename_squeeze, "$beta", medium, >> "$outfile"				​
+								
+								beta=$(fslmeants -i noNANcon_0002.nii -m $this_roi_image_name)
+								echo $this_roi_file_corename_squeeze, "$beta", high, >> "$outfile"				​								
+							fi	
+							#echo $this_roi_file_corename_squeeze, $this_roi_condition, $this_roi_beta, >> ${this_subject}_roi_results.txt
+			 				cd ${Study_dir}
+		 				fi			
 					done
- 				done <<< "$subjects"
- 									
-			done
-			
+				done
+	 		done <<< "$subjects"
 		done
 	fi
-
-	if [[ $this_roi_analysis_step == "collect_load_sensitive_rois" ]]; then
-		data_folder_to_analyze=($fmri_processed_folder_names)
-		for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
-			while IFS=',' read -ra subject_list; do
-   				for this_subject in "${subject_list[@]}"; do
-   					cd ${Study_dir}/$this_subject/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/Level1_Results
-	      			echo Currently collecting roi results for $this_subject
-
-					# for each txt file parse variable name , read contents and place in subject_roi_results.txt
-					 if [ -e ${this_subject}_roi_results.txt ]; then
-   	     	       		rm ${this_subject}_roi_results.txt
-   	     	       		rm *meants5mmLoadSensitiveROI_roi_results.txt
-   	     	   		fi
-
-
-   	    	   		#rm ${this_subject}_meants5mmLoadSensitiveROI_roi_results.txt
-					for this_txt_file in *roi_results*.txt; do
-						this_txt_file_core_name=$(echo $this_txt_file | cut -d. -f 1)
-						this_txt_roi_name=$(echo $this_txt_file_core_name | cut -d_ -f 2)
-
-						roi_line_numbers=$(awk 'END{print NR}' $this_txt_file)
-						for (( this_row=1; this_row<=${roi_line_numbers}; this_row++ )); do
-							this_roi_beta=$(cat $this_txt_file| sed -n ${this_row}p | cut -d ',' -f1)
-							this_roi_condition=$(cat $this_txt_file| sed -n ${this_row}p | cut -d ',' -f2)
-					
-							echo $this_txt_roi_name, $this_roi_condition, $this_roi_beta, >> ${this_subject}_roi_results.txt
-						done
-					done
-					cd $Study_dir/Crunch_Effects/${this_functional_run_folder}/${group_name}
-					if [ -e ${this_subject}_roi_results.txt ]; then
-   	     	       		rm ${this_subject}_roi_results.txt
-   	     	   		fi
-					cd ${Study_dir}/$this_subject/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/Level1_Results
-	      			cp ${this_subject}_roi_results.txt ${Study_dir}/Crunch_Effects/${this_functional_run_folder}/${group_name}
-				done
-			done <<< "$subjects"
-		done
-	fi
+	
 
 # need WFU roi masks for this section..
 #####################################################################################################################################################
