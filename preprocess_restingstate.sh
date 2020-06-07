@@ -76,7 +76,7 @@ do
 	restingstate_processed_folder_names=$(echo "${restingstate_processed_folder_name_array[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' ')
 	t1_processed_folder_names=$(echo "${t1_processed_folder_name_array[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' ')
 
-	for this_preprocessing_step in "${preprocessing_step[@]}"; do
+	#for this_preprocessing_step in "${preprocessing_step[@]}"; do
 		if [[ $this_preprocessing_step == "slicetime_restingstate" ]]; then
 		    data_folder_to_analyze=($restingstate_processed_folder_names)
         	#cd $Subject_dir/Processed/MRI_files
@@ -456,8 +456,13 @@ do
 			echo "Smoothing ANTS files: $SECONDS sec" >> preprocessing_log.txt
 			SECONDS=0
 		fi
+		if [[ $this_preprocessing_step == "copy_files_restingstate" ]]; then
+			data_folder_to_analyze=($restingstate_processed_folder_names)
+			cp ${Subject_dir}/Processed/MRI_files/${data_folder_to_analyze}/art_regression_outliers_and_movement*.mat ${Subject_dir}/Processed/MRI_files/${data_folder_to_analyze}/ANTS_Normalization
+			cp ${Subject_dir}/Processed/MRI_files/05_MotorImagery/ANTS_Normalization/warpedToMNI_biascorrected*.nii ${Subject_dir}/Processed/MRI_files/${data_folder_to_analyze}/ANTS_Normalization
+		fi
 
-	done
+	#done
 	(( step_counter++ ))
 	(( argument_counter++ ))		
 done

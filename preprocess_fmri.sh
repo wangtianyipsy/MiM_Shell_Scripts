@@ -675,7 +675,7 @@ do
 				ml gcc/5.2.0
 				ml ants
 				antsApplyTransforms -d 3 -e 3 -i ${this_core_file_name}.nii -r MNI_2mm.nii \
-				-n BSpline -o warpedToMNI_${this_core_file_name}.nii -t [warpToMNIParams_${this_core_file_name}1Warp.nii.gz] -t [warpToMNIParams_${this_core_file_name}0GenericAffine.mat,0] -v
+				-n BSpline -o warpedToMNI_${this_core_file_name}.nii -t [warpToMNIParams_${this_core_file_name}1Warp.nii] -t [warpToMNIParams_${this_core_file_name}0GenericAffine.mat,0] -v
 
 				for this_file_to_warp in unwarpedRealigned*.nii; do 
 					ml fsl
@@ -723,22 +723,94 @@ do
 				cp ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/Condition_Onsets*.csv ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
 				cp ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/art_regression_outliers_and_movement*.mat ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
 				# grab TR from json file
-				run_once_index=0
-				for this_functional_run_file in *.json; do
-					if [[ run_once_index == 0 ]]; then
-						TR_from_json=$(grep "RepetitionTime" ${this_functional_run_file} | tr -dc '0.00-9.00')
-						echo $TR_from_json
-					fi
-					(( run_once_index++ ))
-  				done
+				# TO DO: this is not working properly so hardcoded level_one_stats.m
+				# for this_functional_run_file in *.json; do
+				# 		TR_from_json=$(grep "RepetitionTime" ${this_functional_run_file} | tr -dc '0.00-9.00')
+				# 		echo $TR_from_json
+  		# 		done
   				ml matlab
-    			matlab -nodesktop -nosplash -r "try; level_one_stats(1, '$TR_from_json'); catch; end; quit"
+    			# matlab -nodesktop -nosplash -r "try; level_one_stats(1, '$TR_from_json'); catch; end; quit"
+    			matlab -nodesktop -nosplash -r "try; level_one_stats(1, 1.5); catch; end; quit"
     		done
     		echo This step took $SECONDS seconds to execute
     		cd "${Subject_dir}"
 			echo "Level One ANTS: $SECONDS sec" >> preprocessing_log.txt
 			SECONDS=0
 		fi
+
+
+		################################################################################################3
+		# steps for setting up taskbased fmri data
+
+		# TO DO: provide a warning that this should be run after CERES (if including ceres)
+		# copy warped files from ANTS_Norm folder into ANTS_Norm/conn
+		if [[ $this_preprocessing_step == "copy_fmri_for_conn" ]]; then
+			data_folder_to_analyze=($fmri_processed_folder_names)
+			for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
+				mkdir -p "${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/conn_processing"
+				cp ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/Condition_Onsets*.csv ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/conn_processing
+				cp ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/unwarpedRealigned* ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/conn_processing
+				cp ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/rp_* ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/conn_processing
+				cp ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/slicetimed_* ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/conn_processing			
+			done
+			echo This step took $SECONDS seconds to execute
+    		cd "${Subject_dir}"
+			echo "copy fmri for conn processing: $SECONDS sec" >> preprocessing_log.txt
+			SECONDS=0
+		fi
+
+		# rerun ART
+		if [[ $this_preprocessing_step == "art_fmri_conn" ]]; then
+			data_folder_to_analyze=($fmri_processed_folder_names)
+			for this_functional_run_folder in ${data_folder_to_analyze[@]}; do 
+				cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/conn_processing
+
+				for this_functional_file in unwarpedRealigned*.nii; do
+					ml matlab
+					matlab -nodesktop -nosplash -r "try; art_fmri_conn('$this_functional_file'); catch; end; quit"
+		
+					rm -rf Conn_Art_Folder_Stuff
+	    			rm Conn_Art_Folder_Stuff.mat
+	    			rm art_mask.hdr
+	    			rm art_mask.img
+				done
+			done
+			echo This step took $SECONDS seconds to execute
+    		cd "${Subject_dir}"
+			echo "art for taskbased conn : $SECONDS sec" >> preprocessing_log.txt
+			SECONDS=0
+		fi
+		if [[ $this_preprocessing_step == "no_outliers_copy_wholebrain" ]]; then
+			data_folder_to_analyze=($fmri_processed_folder_names)
+			for this_functional_run_folder in ${data_folder_to_analyze[@]}; do 
+				cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/conn_processing
+				rm ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/conn_processing/slicetimed_*
+				rm ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/conn_processing/unwarpedRealigned_*
+				cp ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/warpedToMNI_* ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/conn_processing
+				cp ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/smoothed_warpedToMNI_* ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/conn_processing				
+			done
+			echo This step took $SECONDS seconds to execute
+    		cd "${Subject_dir}"
+			echo "art for taskbased conn : $SECONDS sec" >> preprocessing_log.txt
+			SECONDS=0
+		fi
+		if [[ $this_preprocessing_step == "no_outliers_copy_cerebellum" ]]; then
+			data_folder_to_analyze=($fmri_processed_folder_names)
+			for this_functional_run_folder in ${data_folder_to_analyze[@]}; do 
+				cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/conn_processing
+				rm ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/conn_processing/slicetimed_*
+				rm ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/conn_processing/unwarpedRealigned_*
+				cp ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/warpedToSUIT* ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/conn_processing				
+			done
+			echo This step took $SECONDS seconds to execute
+    		cd "${Subject_dir}"
+			echo "art for taskbased conn : $SECONDS sec" >> preprocessing_log.txt
+			SECONDS=0
+		fi
+
+
+		# remove outliers (need to remove from warped files and either a) rerun realing and ART or b) remove indices from movement and ART outlier matrices)
+
 	done
 	(( argument_counter++ ))
 done
