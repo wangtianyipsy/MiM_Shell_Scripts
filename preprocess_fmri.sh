@@ -100,7 +100,7 @@ do
         	for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
         	    cd "${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/"
         	    
-        	    if [ -e slicetimed_*.nii ]; then 
+        	    if [[ -e slicetimed_*.nii ]]; then 
         	        rm slicetimed_*.nii
         	    fi
         	    ml matlab
@@ -353,58 +353,62 @@ do
 
 								if ! [[ $this_slicetimed_file_number_of_volumes = $this_raw_file_number_of_volumes ]]; then
 									echo "Warning:" $this_slicetimed_file_corename "in" $processed_folder_names "WAS ALREADY ADJUSTED!!!"
-									#exit 1
+									exit 1
 								else
-									fslsplit $this_slicetimed_file
-									this_volume_index=0
-									for this_volume_file in vol*; do
-										if ! [[ ${first_index_array} =~ NA ]]; then 
-											if [[ $this_volume_index -lt ${first_index_array} ]]; then
-												rm $this_volume_file
-												#echo $this_volume_file
+									if [[ ${first_index_array} =~ rm ]]; then
+										rm $this_slicetimed_file
+									else
+										fslsplit $this_slicetimed_file
+										this_volume_index=0
+										for this_volume_file in vol*; do
+											if ! [[ ${first_index_array} =~ NA ]] || [[ ${first_index_array} =~ rm ]]; then 
+												if [[ $this_volume_index -lt ${first_index_array} ]]; then
+													rm $this_volume_file
+													#echo $this_volume_file
+												fi
 											fi
-										fi
-										if ! [[ ${last_index_array} =~ NA ]]; then 
-											if [[ ${last_index_array} -lt ${this_volume_index} ]]; then
-												rm $this_volume_file
-												#echo $this_volume_file
+											if ! [[ ${last_index_array} =~ NA ]] || [[ ${first_index_array} =~ rm ]]; then 
+												if [[ ${last_index_array} -lt ${this_volume_index} ]]; then
+													rm $this_volume_file
+													#echo $this_volume_file
+												fi
 											fi
-										fi
-										(( this_volume_index++ ))
-									done
-			
-									rm ${this_slicetimed_file_corename}.nii
-									rm unwarpedRealigned_${this_slicetimed_file_corename}.nii
-									rm rp_unwarpedRealigned_${this_slicetimed_file_corename}.txt
-					
-									fslmerge -a $this_slicetimed_file vol*
-									rm vol*
-									gunzip -f *nii.gz
-									
-									ml matlab			
-									## re-coregister slicetimed to mean_Distmap only if removing start of run (bc we coreg first volume to Distmap)
-									if ! [[ ${first_index_array} =~ NA ]]; then 
-										matlab -nodesktop -nosplash -r "try; coregister_fmri_to_MeanFM_single('$this_slicetimed_file'); catch; end; quit"
-									fi
-					
-									matlab -nodesktop -nosplash -r "try; realign_unwarp_single('$this_slicetimed_file'); catch; end; quit"
-								
-									for this_rp_file in rp_*.txt; do
-										if ! [[ $this_rp_file =~ "unwarpedRealigned" ]]; then
-											this_filename_1=$(echo $this_rp_file | cut -d'_' -f1)
-											this_filename_2=$(echo $this_rp_file | cut -d'_' -f2)
-											this_filename_3=$(echo $this_rp_file | cut -d'_' -f3)
-											this_filename_4=$(echo $this_rp_file | cut -d'_' -f4)
-											mv -v $this_rp_file ${this_filename_1}_unwarpedRealigned_${this_filename_2}_${this_filename_3}_${this_filename_4}
-										fi
-									done
+											(( this_volume_index++ ))
+										done
+												
+										rm ${this_slicetimed_file_corename}.nii
+										rm unwarpedRealigned_${this_slicetimed_file_corename}.nii
+										rm rp_unwarpedRealigned_${this_slicetimed_file_corename}.txt
 						
-									matlab -nodesktop -nosplash -r "try; art_fmri('unwarpedRealigned_${this_slicetimed_file}'); catch; end; quit"
-									rm T1.nii
-									rm -rf Conn_Art_Folder_Stuff
-    								rm Conn_Art_Folder_Stuff.mat
-    								rm art_mask.hdr
-    								rm art_mask.img
+										fslmerge -a $this_slicetimed_file vol*
+										rm vol*
+										gunzip -f *nii.gz
+										
+										ml matlab			
+										## re-coregister slicetimed to mean_Distmap only if removing start of run (bc we coreg first volume to Distmap)
+										if ! [[ ${first_index_array} =~ NA ]]; then 
+											matlab -nodesktop -nosplash -r "try; coregister_fmri_to_MeanFM_single('$this_slicetimed_file'); catch; end; quit"
+										fi
+						
+										matlab -nodesktop -nosplash -r "try; realign_unwarp_single('$this_slicetimed_file'); catch; end; quit"
+									
+										for this_rp_file in rp_*.txt; do
+											if ! [[ $this_rp_file =~ "unwarpedRealigned" ]]; then
+												this_filename_1=$(echo $this_rp_file | cut -d'_' -f1)
+												this_filename_2=$(echo $this_rp_file | cut -d'_' -f2)
+												this_filename_3=$(echo $this_rp_file | cut -d'_' -f3)
+												this_filename_4=$(echo $this_rp_file | cut -d'_' -f4)
+												mv -v $this_rp_file ${this_filename_1}_unwarpedRealigned_${this_filename_2}_${this_filename_3}_${this_filename_4}
+											fi
+										done
+							
+										matlab -nodesktop -nosplash -r "try; art_fmri('unwarpedRealigned_${this_slicetimed_file}'); catch; end; quit"
+										rm T1.nii
+										rm -rf Conn_Art_Folder_Stuff
+    									rm Conn_Art_Folder_Stuff.mat
+    									rm art_mask.hdr
+    									rm art_mask.img
+    								fi
     							fi
 							fi
 						done
@@ -532,10 +536,7 @@ do
 			SECONDS=0
 		fi
 
-
 		if [[ $this_preprocessing_step == "n4_bias_correction" ]]; then
-			this_t1_folder=($t1_processed_folder_names)
-			cd ${Subject_dir}/Processed/MRI_files/${this_t1_folder}/
 			ml gcc/5.2.0; ml ants
 			N4BiasFieldCorrection -i SkullStripped_T1.nii -o biascorrected_SkullStripped_T1.nii
 			
@@ -555,7 +556,7 @@ do
 			cd "${Subject_dir}"
 			echo "Bias Corrected: $SECONDS sec" >> preprocessing_log.txt
 			SECONDS=0
-		fi	
+		fi
 
 		if [[ $this_preprocessing_step == "ants_norm_fmri" ]]; then
 			data_folder_to_analyze=($fmri_processed_folder_names)
@@ -617,12 +618,17 @@ do
 		
 			data_folder_to_analyze=($fmri_processed_folder_names)
 			for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
+				this_t1_folder=($t1_processed_folder_names)
 				cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
 	
 				if [ -e warpToMNIParams_*.nii ]; then 
         	        rm warpToMNIParams_*.nii
         	        rm warpToMNIParams_*.mat
         	        rm warpToMNIEstimate_*.nii
+        	        rm warpedToMNI_*.nii
+        	   		rm c1*
+        	   		rm c2*
+        	   		rm c3*
         	    fi
 
 				ml gcc/5.2.0
@@ -663,12 +669,11 @@ do
 			for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
 				cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
 				cp ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/unwarpedRealigned*.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
+				cp ${Subject_dir}/Processed/MRI_files/${this_t1_folder}/c1T1.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
+				cp ${Subject_dir}/Processed/MRI_files/${this_t1_folder}/c2T1.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
+				cp ${Subject_dir}/Processed/MRI_files/${this_t1_folder}/c3T1.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
 				cp /ufrc/rachaelseidler/tfettrow/Crunch_Code/MR_Templates/MNI_2mm.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
 				gunzip -f *nii.gz
-
-				if [ -e warpedToMNI_biascorrected*.nii ]; then 
-        	        rm warpedToMNI_*.nii
-        	    fi
 
 				this_core_file_name=biascorrected_SkullStripped_T1
 				
@@ -676,6 +681,15 @@ do
 				ml ants
 				antsApplyTransforms -d 3 -e 3 -i ${this_core_file_name}.nii -r MNI_2mm.nii \
 				-n BSpline -o warpedToMNI_${this_core_file_name}.nii -t [warpToMNIParams_${this_core_file_name}1Warp.nii] -t [warpToMNIParams_${this_core_file_name}0GenericAffine.mat,0] -v
+
+				antsApplyTransforms -d 3 -e 3 -i c1T1.nii -r MNI_2mm.nii \
+				-n BSpline -o warpedToMNI_c1T1.nii -t [warpToMNIParams_${this_core_file_name}1Warp.nii] -t [warpToMNIParams_${this_core_file_name}0GenericAffine.mat,0] -v
+
+				antsApplyTransforms -d 3 -e 3 -i c2T1.nii -r MNI_2mm.nii \
+				-n BSpline -o warpedToMNI_c2T1.nii -t [warpToMNIParams_${this_core_file_name}1Warp.nii] -t [warpToMNIParams_${this_core_file_name}0GenericAffine.mat,0] -v
+
+				antsApplyTransforms -d 3 -e 3 -i c3T1.nii -r MNI_2mm.nii \
+				-n BSpline -o warpedToMNI_c3T1.nii -t [warpToMNIParams_${this_core_file_name}1Warp.nii] -t [warpToMNIParams_${this_core_file_name}0GenericAffine.mat,0] -v
 
 				for this_file_to_warp in unwarpedRealigned*.nii; do 
 					ml fsl
@@ -714,6 +728,123 @@ do
 			echo "Smoothing ANTS files: $SECONDS sec" >> preprocessing_log.txt
 			SECONDS=0
 		fi
+
+		if [[ $this_preprocessing_step == "check_fmri_ants" ]]; then
+			data_folder_to_analyze=($fmri_processed_folder_names)
+			for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
+				cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
+				ml fsl
+				for this_functional_file in smoothed_warpedToMNI_unwarpedRealigned*.nii; do
+					this_core_functional_file_name=$(echo $this_functional_file | cut -d. -f 1)
+					echo saving jpeg of $this_core_functional_file_name
+					xvfb-run -s "-screen 0 640x480x24" fsleyes render --scene ortho --outfile ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/check_MNI_ants_${this_core_functional_file_name} \
+					${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/MNI_2mm.nii -cm red-yellow \
+					${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/$this_functional_file --alpha 85
+				
+				done
+			done
+			# echo This step took $SECONDS seconds to execute
+			# cd "${Subject_dir}"
+			# echo "Smoothing ANTS files: $SECONDS sec" >> preprocessing_log.txt
+			# SECONDS=0
+		fi
+
+		if [[ $this_preprocessing_step == "check_fmri_outliers" ]]; then	
+			data_folder_to_analyze=($fmri_processed_folder_names)
+			for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
+				cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}
+				for this_slicetimed_file in slicetimed*.nii; do
+					this_slicetimed_file_runnumber=$(echo "$this_slicetimed_file" | grep -o '[0-9]\+')
+					echo "checking run $this_slicetimed_file_runnumber is appropriate length"
+
+
+					cd ${Subject_dir}
+					lines_to_ignore=$(awk '/#/{print NR}' outlier_removal_settings.txt)
+					line_numbers_to_process=$(awk 'END{print NR}' outlier_removal_settings.txt)
+
+					for (( this_line_number=1; this_line_number<=${line_numbers_to_process}; this_line_number++ )); do
+						if ! [[ ${lines_to_ignore[*]} =~ $this_line_number ]]; then
+							processed_folder_name_array=$(cat outlier_removal_settings.txt | sed -n ${this_line_number}p | cut -d ',' -f1)
+							run_number_array=$(cat outlier_removal_settings.txt | sed -n ${this_line_number}p | cut -d ',' -f2)
+							first_index_array=$(cat outlier_removal_settings.txt | sed -n ${this_line_number}p | cut -d ',' -f3)
+							last_index_array=$(cat outlier_removal_settings.txt | sed -n ${this_line_number}p | cut -d ',' -f4)
+							this_processed_folder_name=$(echo "${processed_folder_name_array[@]}" | tr '' '\n' )
+
+							# 1) check if this_functional_run_folder = any of the processed folder names
+							# 2) if it does, check if this_slicetimed_file = any of the run numbers
+							# 3) if it does, check the number of volumes in run = outliers
+							# 4) else, assume (based on scan card) a certain length for each folder and check if run is that length
+							# 5) throw error if 3 or 4 are not true
+
+							if [[ $this_functional_run_folder == $this_processed_folder_name ]] && [[ $this_slicetimed_file_runnumber == $run_number_array ]]; then
+								# assigned assumed volume lengths
+								if [[ $this_processed_folder_name == "05_MotorImagery" ]]; then
+									expected_full_run_length=168
+									if ! [[ ${first_index_array} =~ NA ]] || [[ ${first_index_array} =~ rm ]]; then
+										if ! [[ ${last_index_array} =~ NA ]]; then
+											expected_adjusted_run_length=$(expr $first_index_array - $last_index_array)
+										elif [[ ${last_index_array} =~ NA ]]; then
+											expected_adjusted_run_length=$(expr $expected_full_run_length - $first_index_array)
+										fi
+									elif [[ ${first_index_array} =~ NA ]]; then
+											expected_adjusted_run_length=$last_index_array										
+									fi
+								elif [[ $this_processed_folder_name == "06_Nback" ]]; then
+									expected_full_run_length=200
+									if ! [[ ${first_index_array} =~ NA ]] || [[ ${first_index_array} =~ rm ]]; then
+										if ! [[ ${last_index_array} =~ NA ]]; then
+											expected_adjusted_run_length=$(expr $first_index_array - $last_index_array)
+										elif [[ ${last_index_array} =~ NA ]]; then
+											expected_adjusted_run_length=$(expr $expected_full_run_length - $first_index_array)
+										fi
+									elif [[ ${first_index_array} =~ NA ]]; then
+										expected_adjusted_run_length=$last_index_array			
+									fi
+								fi
+
+								echo $expected_adjusted_run_length
+
+								cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}
+								this_slicetimed_file_corename=$(echo $this_slicetimed_file | cut -d. -f 1)
+								this_slicetimed_file_info=$(fslhd $this_slicetimed_file)
+								this_slicetimed_file_number_of_volumes=$(echo $this_slicetimed_file_info | grep -o dim4.* | tr -s ' ' | cut -d ' ' -f 2)	
+
+								if ! [[ $this_slicetimed_file_number_of_volumes == $expected_adjusted_run_length ]]; then
+									echo "Warning:" $this_slicetimed_file_corename "in" $this_processed_folder_name "is not the length as expected"
+									# exit 1
+								fi
+								cd ${Subject_dir}
+
+							elif ! [[ $this_functional_run_folder == $this_processed_folder_name ]] && [[ $this_slicetimed_file_runnumber == $run_number_array ]]; then
+								if ! [[ $this_slicetimed_file_number_of_volumes == $expected_full_run_length ]]; then
+									echo "Warning:" $this_slicetimed_file_corename "in" $this_processed_folder_name "is not the length as expected"
+									# exit 1
+								fi
+							fi
+
+			
+							# if [[ $this_slicetimed_file_runnumber =~ ${run_number_array} ]]; then
+							# 	ml fsl
+								
+							# 	## need to check the length of slicetimed run with respect to raw.. if already changed throw an error
+							# 	this_slicetimed_file_corename=$(echo $this_slicetimed_file | cut -d. -f 1)
+							# 	this_raw_file_name=$(echo $this_slicetimed_file | cut -d_ -f2-)
+		
+							# 	this_slicetimed_file_info=$(fslhd $this_slicetimed_file)
+							# 	this_slicetimed_file_number_of_volumes=$(echo $this_slicetimed_file_info | grep -o dim4.* | tr -s ' ' | cut -d ' ' -f 2)
+							# 	this_raw_file_info=$(fslhd $this_raw_file_name)
+							# 	this_raw_file_number_of_volumes=$(echo $this_raw_file_info | grep -o dim4.* | tr -s ' ' | cut -d ' ' -f 2)
+							# 	if ! [[ $this_slicetimed_file_number_of_volumes = $this_raw_file_number_of_volumes ]]; then
+							# 		echo "Warning:" $this_slicetimed_file_corename "in" $processed_folder_names "WAS ALREADY ADJUSTED!!!"
+							# 		exit 1
+							# 	fi
+							# fi
+						fi
+					done		
+				done
+			done
+		fi
+
 	
 		if [[ $this_preprocessing_step == "level_one_stats_ants" ]]; then
 			data_folder_to_analyze=($fmri_processed_folder_names)
@@ -730,7 +861,7 @@ do
   		# 		done
   				ml matlab
     			# matlab -nodesktop -nosplash -r "try; level_one_stats(1, '$TR_from_json'); catch; end; quit"
-    			matlab -nodesktop -nosplash -r "try; level_one_stats(1, 1.5); catch; end; quit"
+    			matlab -nodesktop -nosplash -r "try; level_one_stats(1, 1.5, 'smoothed_warpedToMNI', 'Level1_WholeBrain'); catch; end; quit"
     		done
     		echo This step took $SECONDS seconds to execute
     		cd "${Subject_dir}"
@@ -780,7 +911,7 @@ do
 			echo "art for taskbased conn : $SECONDS sec" >> preprocessing_log.txt
 			SECONDS=0
 		fi
-		if [[ $this_preprocessing_step == "no_outliers_copy_wholebrain" ]]; then
+		if [[ $this_preprocessing_step == "fmri_conn_no_outliers_copy_wholebrain" ]]; then
 			data_folder_to_analyze=($fmri_processed_folder_names)
 			for this_functional_run_folder in ${data_folder_to_analyze[@]}; do 
 				cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/conn_processing
@@ -794,7 +925,7 @@ do
 			echo "art for taskbased conn : $SECONDS sec" >> preprocessing_log.txt
 			SECONDS=0
 		fi
-		if [[ $this_preprocessing_step == "no_outliers_copy_cerebellum" ]]; then
+		if [[ $this_preprocessing_step == "fmri_conn_no_outliers_copy_cerebellum" ]]; then
 			data_folder_to_analyze=($fmri_processed_folder_names)
 			for this_functional_run_folder in ${data_folder_to_analyze[@]}; do 
 				cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/conn_processing
@@ -808,7 +939,109 @@ do
 			SECONDS=0
 		fi
 
+		if [[ $this_preprocessing_step == "fmri_conn_remove_outlier_volumes" ]]; then
+			lines_to_ignore=$(awk '/#/{print NR}' outlier_removal_settings.txt)
+			line_numbers_to_process=$(awk 'END{print NR}' outlier_removal_settings.txt)
+			
+			#this_index=0
+			for (( this_line_number=1; this_line_number<=${line_numbers_to_process}; this_line_number++ )); do
+				if ! [[ ${lines_to_ignore[*]} =~ $this_line_number ]]; then
+					processed_folder_name_array=$(cat outlier_removal_settings.txt | sed -n ${this_line_number}p | cut -d ',' -f1)
+					run_number_array=$(cat outlier_removal_settings.txt | sed -n ${this_line_number}p | cut -d ',' -f2)
+					first_index_array=$(cat outlier_removal_settings.txt | sed -n ${this_line_number}p | cut -d ',' -f3)
+					last_index_array=$(cat outlier_removal_settings.txt | sed -n ${this_line_number}p | cut -d ',' -f4)
+					processed_folder_names=$(echo "${processed_folder_name_array[@]}" | tr '' '\n' )
 
+					for this_processed_folder in $processed_folder_names; do
+						# only run the conn_processing folders"$STR" == *"$SUB"*
+						if [[ $this_processed_folder == *"conn_processing"* ]]; then
+							conn_processing_folder_name=$(echo "${this_processed_folder}" | cut -d '/' -f1)
+							
+							cd "${Subject_dir}/Processed/MRI_files/${conn_processing_folder_name}/ANTS_Normalization/conn_processing"
+		
+					# 	for this_slicetimed_file in slicetimed*.nii; do
+					# 		this_slicetimed_file_runnumber=$(echo "$this_slicetimed_file" | grep -o '[0-9]\+')
+					# 		echo $this_slicetimed_file_runnumber
+					# 		if [[ $this_slicetimed_file_runnumber =~ ${run_number_array} ]]; then
+					# 			ml fsl
+					# 			## need to check the length of slicetimed run with respect to raw.. if already changed throw an error
+					# 			this_slicetimed_file_corename=$(echo $this_slicetimed_file | cut -d. -f 1)
+					# 			this_raw_file_name=$(echo $this_slicetimed_file | cut -d_ -f2-)
+		
+					# 			this_slicetimed_file_info=$(fslhd $this_slicetimed_file)
+					# 			this_slicetimed_file_number_of_volumes=$(echo $this_slicetimed_file_info | grep -o dim4.* | tr -s ' ' | cut -d ' ' -f 2)
+
+					# 			this_raw_file_info=$(fslhd $this_raw_file_name)
+					# 			this_raw_file_number_of_volumes=$(echo $this_raw_file_info | grep -o dim4.* | tr -s ' ' | cut -d ' ' -f 2)
+
+					# 			if ! [[ $this_slicetimed_file_number_of_volumes = $this_raw_file_number_of_volumes ]]; then
+					# 				echo "Warning:" $this_slicetimed_file_corename "in" $processed_folder_names "WAS ALREADY ADJUSTED!!!"
+					# 				#exit 1
+					# 			else
+					# 				fslsplit $this_slicetimed_file
+					# 				this_volume_index=0
+					# 				for this_volume_file in vol*; do
+					# 					if ! [[ ${first_index_array} =~ NA ]]; then 
+					# 						if [[ $this_volume_index -lt ${first_index_array} ]]; then
+					# 							rm $this_volume_file
+					# 							#echo $this_volume_file
+					# 						fi
+					# 					fi
+					# 					if ! [[ ${last_index_array} =~ NA ]]; then 
+					# 						if [[ ${last_index_array} -lt ${this_volume_index} ]]; then
+					# 							rm $this_volume_file
+					# 							#echo $this_volume_file
+					# 						fi
+					# 					fi
+					# 					(( this_volume_index++ ))
+					# 				done
+			
+					# 				rm ${this_slicetimed_file_corename}.nii
+					# 				rm unwarpedRealigned_${this_slicetimed_file_corename}.nii
+					# 				rm rp_unwarpedRealigned_${this_slicetimed_file_corename}.txt
+					
+					# 				fslmerge -a $this_slicetimed_file vol*
+					# 				rm vol*
+					# 				gunzip -f *nii.gz
+									
+					# 				ml matlab			
+					# 				## re-coregister slicetimed to mean_Distmap only if removing start of run (bc we coreg first volume to Distmap)
+					# 				if ! [[ ${first_index_array} =~ NA ]]; then 
+					# 					matlab -nodesktop -nosplash -r "try; coregister_fmri_to_MeanFM_single('$this_slicetimed_file'); catch; end; quit"
+					# 				fi
+					
+					# 				matlab -nodesktop -nosplash -r "try; realign_unwarp_single('$this_slicetimed_file'); catch; end; quit"
+								
+					# 				for this_rp_file in rp_*.txt; do
+					# 					if ! [[ $this_rp_file =~ "unwarpedRealigned" ]]; then
+					# 						this_filename_1=$(echo $this_rp_file | cut -d'_' -f1)
+					# 						this_filename_2=$(echo $this_rp_file | cut -d'_' -f2)
+					# 						this_filename_3=$(echo $this_rp_file | cut -d'_' -f3)
+					# 						this_filename_4=$(echo $this_rp_file | cut -d'_' -f4)
+					# 						mv -v $this_rp_file ${this_filename_1}_unwarpedRealigned_${this_filename_2}_${this_filename_3}_${this_filename_4}
+					# 					fi
+					# 				done
+						
+					# 				matlab -nodesktop -nosplash -r "try; art_fmri('unwarpedRealigned_${this_slicetimed_file}'); catch; end; quit"
+					# 				rm T1.nii
+					# 				rm -rf Conn_Art_Folder_Stuff
+    	# 							rm Conn_Art_Folder_Stuff.mat
+    	# 							rm art_mask.hdr
+    	# 							rm art_mask.img
+    	# 						fi
+					# 		fi
+					# 	done
+						fi
+
+					 done
+				fi
+				cd "${Subject_dir}"
+			done
+			# echo This step took $SECONDS seconds to execute
+			# cd "${Subject_dir}"
+			# echo "Outlier Removal: $SECONDS sec" >> preprocessing_log.txt
+			# SECONDS=0
+		fi
 		# remove outliers (need to remove from warped files and either a) rerun realing and ART or b) remove indices from movement and ART outlier matrices)
 
 	done
