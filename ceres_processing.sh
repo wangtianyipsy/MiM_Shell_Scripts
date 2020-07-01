@@ -143,8 +143,8 @@ for this_argument in "$@"; do
 					ml gcc/5.2.0; ml ants
 					N4BiasFieldCorrection -i $ceres_image -o biascorrected_$ceres_image
 					ceres_image=biascorrected_$ceres_image
-					SUIT_Template_1mm=$Code_dir/MR_Templates/SUIT_maskedByCEREScoreg_1mm.nii
-					SUIT_Template_2mm=$Code_dir/MR_Templates/SUIT_maskedByCEREScoreg_2mm.nii
+					SUIT_Template_1mm=$Code_dir/MR_Templates/SUIT_Nobrainstem_1mm.nii
+					SUIT_Template_2mm=$Code_dir/MR_Templates/SUIT_Nobrainstem_2mm.nii
 					echo 'registering' $ceres_image 'to' $SUIT_Template_1mm
 					
 					ml gcc/5.2.0; ml ants
@@ -181,7 +181,7 @@ for this_argument in "$@"; do
 
 					ml gcc/5.2.0; ml ants
 					antsApplyTransforms -d 3 -e 3 -i CBmasked_coregToT1_${this_func_run} -r $SUIT_Template_2mm \
-					-o warpedToSUITKH_CBmasked_coregToT1_${this_func_run} -t [warpToSUITParams1Warp.nii] -t [warpToSUITParams0GenericAffine.mat,0] -v
+					-o warpedToSUIT_CBmasked_coregToT1_${this_func_run} -t [warpToSUITParams1Warp.nii] -t [warpToSUITParams0GenericAffine.mat,0] -v
 				done
 			done
 			echo This step took $SECONDS seconds to execute
@@ -201,6 +201,28 @@ for this_argument in "$@"; do
         	echo "smoothing ceres: $SECONDS sec" >> ceres_processing_log.txt
         	SECONDS=0
 		fi		
+
+		if [[ $this_ceres_processing_step == "level_one_stats_ceres" ]]; then
+			data_folder_to_analyze=($fmri_processed_folder_names)
+			for this_functional_run_folder in ${fmri_processed_folder_names[@]}; do
+				cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
+				# grab TR from json file
+				# TO DO: this is not working properly so hardcoded level_one_stats.m
+				# for this_functional_run_file in *.json; do
+				# 		TR_from_json=$(grep "RepetitionTime" ${this_functional_run_file} | tr -dc '0.00-9.00')
+				# 		echo $TR_from_json
+  				# 		done
+  				ml matlab
+    			# matlab -nodesktop -nosplash -r "try; level_one_stats(1, '$TR_from_json'); catch; end; quit"
+    			matlab -nodesktop -nosplash -r "try; level_one_stats(1, 1.5, 'smoothed_warpedToSUIT', 'Level1_Ceres'); catch; end; quit"
+    		done
+    		echo This step took $SECONDS seconds to execute
+    		cd "${Subject_dir}"
+			echo "Level One ANTS: $SECONDS sec" >> preprocessing_log.txt
+			SECONDS=0
+		fi
+
+		### potentially mask smoothed images ####
 	done
 	(( argument_counter++ ))
 done
