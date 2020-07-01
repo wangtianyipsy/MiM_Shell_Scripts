@@ -14,28 +14,27 @@ settings_file=$1
 Code_dir=/ufrc/rachaelseidler/tfettrow/Crunch_Code
 export MATLABPATH=${Code_dir}/Matlab_Scripts/helper
 
-#for SUB in ${subjects[@]}; do
 Study_dir=/ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/MiM_Data
 
-# cd "${Study_dir}"
-# lines_to_ignore=$(awk '/#/{print NR}' $settings_file)
+cd "${Study_dir}"
+lines_to_ignore=$(awk '/#/{print NR}' $settings_file)
 
-# roi_line_numbers=$(awk 'END{print NR}' $settings_file)
-# for (( this_row=1; this_row<=${roi_line_numbers}; this_row++ )); do
-# 	if ! [[ ${lines_to_ignore[*]} =~ $this_row ]]; then
-# 		this_roi_name=$(cat $settings_file | sed -n ${this_row}p | cut -d ',' -f4)
-# 		this_roi_x=$(cat $settings_file | sed -n ${this_row}p | cut -d ',' -f1)
-# 		this_roi_y=$(cat $settings_file | sed -n ${this_row}p | cut -d ',' -f2)
-# 		this_roi_z=$(cat $settings_file | sed -n ${this_row}p | cut -d ',' -f3)
+roi_line_numbers=$(awk 'END{print NR}' $settings_file)
+for (( this_row=1; this_row<=${roi_line_numbers}; this_row++ )); do
+	if ! [[ ${lines_to_ignore[*]} =~ $this_row ]]; then
+		this_roi_name=$(cat $settings_file | sed -n ${this_row}p | cut -d ',' -f4)
+		this_roi_x=$(cat $settings_file | sed -n ${this_row}p | cut -d ',' -f1)
+		this_roi_y=$(cat $settings_file | sed -n ${this_row}p | cut -d ',' -f2)
+		this_roi_z=$(cat $settings_file | sed -n ${this_row}p | cut -d ',' -f3)
 
-# 		cd ${Study_dir}/ROIs/
+		cd ${Study_dir}/ROIs/
 
-# 		ml matlab
-# 		matlab -nodesktop -nosplash -r "try; convert_to_voxel_coordinates '$this_roi_name' '$this_roi_x' '$this_roi_y' '${this_roi_z}'; catch; end; quit"
+		ml matlab
+		matlab -nodesktop -nosplash -r "try; convert_to_voxel_coordinates '$this_roi_name' '$this_roi_x' '$this_roi_y' '${this_roi_z}'; catch; end; quit"
 				
-# 		cd $Study_dir
-# 	fi
-# done
+		cd $Study_dir
+	fi
+done
 
 cd "${Study_dir}"
 lines_to_ignore=$(awk '/#/{print NR}' $settings_file)
