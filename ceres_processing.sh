@@ -116,6 +116,7 @@ for this_argument in "$@"; do
 					gunzip -f *nii.gz
 
 					ml gcc; ml ants
+					# TO DO: if whole brain normalization procedure changes, adjust here...
 					antsApplyTransforms -d 3 -e 3 -i ${this_core_file_name}.nii --float 0 -r dimMatch2Func_biascorrected_SkullStripped_T1.nii \
 					-n BSpline -o coregToT1_${this_core_file_name}.nii -t [warpToT1Params_biascorrected_mean${this_core_file_name}0GenericAffine.mat,0] -v 
 
@@ -139,6 +140,7 @@ for this_argument in "$@"; do
 				cd $Subject_dir/Processed/MRI_files/$this_functional_run_folder/ANTS_Normalization
 				echo 'running normalization steps... this may take a while...'
 				
+				# TO DO: remove this for loop
 				for ceres_image in native_*.nii; do
 					ml gcc/5.2.0; ml ants
 					N4BiasFieldCorrection -i $ceres_image -o biascorrected_$ceres_image
@@ -173,15 +175,21 @@ for this_argument in "$@"; do
 
 				gunzip -f *nii.gz
 
+				ml gcc/5.2.0; ml ants
+				antsApplyTransforms -d 3 -e 3 -i $ceres_image -r $SUIT_Template_2mm \
+				-o warpedToSUIT_CBmasked_coregToT1_${this_func_run} -t [warpToSUITParams1Warp.nii] -t [warpToSUITParams0GenericAffine.mat,0] -v
+
 				cp $SUIT_Template_2mm ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
 				for this_func_run in unwarpedRealigned*.nii; do
 					ml fsl	
+
 					fslmaths coregToT1_${this_func_run} -mas binary_coregToT1_native_tissue_CB.nii CBmasked_coregToT1_${this_func_run}
 					gunzip -f *nii.gz
 
 					ml gcc/5.2.0; ml ants
 					antsApplyTransforms -d 3 -e 3 -i CBmasked_coregToT1_${this_func_run} -r $SUIT_Template_2mm \
 					-o warpedToSUIT_CBmasked_coregToT1_${this_func_run} -t [warpToSUITParams1Warp.nii] -t [warpToSUITParams0GenericAffine.mat,0] -v
+
 				done
 			done
 			echo This step took $SECONDS seconds to execute
