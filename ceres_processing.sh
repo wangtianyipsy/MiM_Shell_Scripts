@@ -70,10 +70,9 @@ for this_argument in "$@"; do
 		(( this_index++ ))
 	done
 	
-	
 	fmri_processed_folder_names=$(echo "${fmri_processed_folder_name_array[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' ')
 	restingstate_processed_folder_names=$(echo "${restingstate_processed_folder_name_array[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' ')
-	
+
 	for this_ceres_processing_step in "${ceres_processing_steps[@]}"; do
 ###################################################################################
 
@@ -96,6 +95,8 @@ for this_argument in "$@"; do
 
 			for this_functional_run_folder in ${fmri_processed_folder_names[@]} ${restingstate_processed_folder_names[@]}; do
 				cp $Subject_dir/Processed/MRI_files/01_Ceres/CB_mask.nii $Subject_dir/Processed/MRI_files/$this_functional_run_folder/ANTS_Normalization
+				cp $Subject_dir/Processed/MRI_files/01_Ceres/WM_mask.nii $Subject_dir/Processed/MRI_files/$this_functional_run_folder/ANTS_Normalization
+				cp $Subject_dir/Processed/MRI_files/01_Ceres/GM_mask.nii $Subject_dir/Processed/MRI_files/$this_functional_run_folder/ANTS_Normalization
 				cp $Subject_dir/Processed/MRI_files/01_Ceres/job* $Subject_dir/Processed/MRI_files/$this_functional_run_folder/ANTS_Normalization
 				cp $Subject_dir/Processed/MRI_files/01_Ceres/native_tissue_ln_crop_mmni* $Subject_dir/Processed/MRI_files/$this_functional_run_folder/ANTS_Normalization
 			done
@@ -107,6 +108,10 @@ for this_argument in "$@"; do
 			for this_functional_run_folder in ${fmri_processed_folder_names[@]} ${restingstate_processed_folder_names[@]}; do
 				cd $Subject_dir/Processed/MRI_files/$this_functional_run_folder/ANTS_Normalization
 				cp ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/meanunwarped*.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
+
+				if [[ -e coregToT1_*.nii ]]; then 
+        	        rm coregToT1_*.nii
+        	    fi
 
 				for this_func_run in unwarpedRealigned*.nii; do
 					this_core_file_name=$(echo $this_func_run | cut -d. -f 1)
@@ -121,10 +126,24 @@ for this_argument in "$@"; do
 					-n BSpline -o coregToT1_${this_core_file_name}.nii -t [warpToT1Params_biascorrected_mean${this_core_file_name}0GenericAffine.mat,0] -v 
 
 					antsApplyTransforms -d 3 -e 3 -i native_tissue*.nii --float 0 -r dimMatch2Func_biascorrected_SkullStripped_T1.nii \
-					-n BSpline -o coregToT1_native_tissue_CB.nii -t [warpToT1Params_biascorrected_mean${this_core_file_name}0GenericAffine.mat,0] -v 					
+					-n BSpline -o coregToT1_native_tissue_CB.nii -t [warpToT1Params_biascorrected_mean${this_core_file_name}0GenericAffine.mat,0] -v
+
+					antsApplyTransforms -d 3 -e 3 -i CB_mask.nii --float 0 -r dimMatch2Func_biascorrected_SkullStripped_T1.nii \
+					-n BSpline -o coregToT1_CB_mask.nii -t [warpToT1Params_biascorrected_mean${this_core_file_name}0GenericAffine.mat,0] -v  					
+
+					antsApplyTransforms -d 3 -e 3 -i WM_mask.nii --float 0 -r dimMatch2Func_biascorrected_SkullStripped_T1.nii \
+					-n BSpline -o coregToT1_WM_mask.nii -t [warpToT1Params_biascorrected_mean${this_core_file_name}0GenericAffine.mat,0] -v  					
+
+					antsApplyTransforms -d 3 -e 3 -i GM_mask.nii --float 0 -r dimMatch2Func_biascorrected_SkullStripped_T1.nii \
+					-n BSpline -o coregToT1_GM_mask.nii -t [warpToT1Params_biascorrected_mean${this_core_file_name}0GenericAffine.mat,0] -v  					
 
 					fslmaths coregToT1_native_tissue_CB.nii -thr 0.5 -bin binary_coregToT1_native_tissue_CB
-					gunzip -f *nii.gz					
+					gunzip -f *nii.gz
+
+					# masking vv is the reason for dimMatch2Func above
+					fslmaths coregToT1_${this_func_run} -mas binary_coregToT1_native_tissue_CB.nii CBmasked_coregToT1_${this_func_run}
+					gunzip -f *nii.gz
+
 				done
 			done
 			echo This step took $SECONDS seconds to execute
@@ -134,8 +153,34 @@ for this_argument in "$@"; do
 		fi
 ###################################################################################
 
+
+################## Norm Dartel #################################################################
+		if [[ $this_ceres_processing_step ==  "ceres_cb_mask_spm_norm" ]]; then
+			for this_functional_run_folder in ${fmri_processed_folder_names[@]} ${restingstate_processed_folder_names[@]}; do
+				cd $Subject_dir/Processed/MRI_files/$this_functional_run_folder/ANTS_Normalization
+				echo 'running normalization steps... this may take a while...'
+
+				ml matlab
+				matlab -nodesktop -nosplash -r "try; ceres_norm_suit_estimate; catch; end; quit"
+				matlab -nodesktop -nosplash -r "try; ceres_norm_suit_apply; catch; end; quit"
+			done
+		fi
+###################################################################################
+
+		if [[ $this_ceres_processing_step ==  "ceres_smooth_ants_norm"  ]]; then
+			for this_functional_run_folder in ${fmri_processed_folder_names[@]} ${restingstate_processed_folder_names[@]}; do
+				cd $Subject_dir/Processed/MRI_files/$this_functional_run_folder/ANTS_Normalization
+				ml matlab
+				matlab -nodesktop -nosplash -r "try; ceres_smooth_spmnorm; catch; end; quit"
+			done	
+			echo This step took $SECONDS seconds to execute
+        	cd "${Subject_dir}"
+        	echo "smoothing ceres: $SECONDS sec" >> ceres_processing_log.txt
+        	SECONDS=0
+		fi
+
 ########### JAMMED FULL WITH LOTS OF STEPS (Change dimensions, masking, and Ants warping) ############################
-		if [[ $this_ceres_processing_step ==  "ceres_cb_mask_norm" ]]; then
+		if [[ $this_ceres_processing_step ==  "ceres_cb_mask_ants_norm" ]]; then
 			for this_functional_run_folder in ${fmri_processed_folder_names[@]} ${restingstate_processed_folder_names[@]}; do
 				cd $Subject_dir/Processed/MRI_files/$this_functional_run_folder/ANTS_Normalization
 				echo 'running normalization steps... this may take a while...'
@@ -173,23 +218,22 @@ for this_argument in "$@"; do
 				   	 	--smoothing-sigmas 3x2x1x0vox
 				done
 
-				gunzip -f *nii.gz
+				# gunzip -f *nii.gz
 
-				ml gcc/5.2.0; ml ants
-				antsApplyTransforms -d 3 -e 3 -i $ceres_image -r $SUIT_Template_2mm \
-				-o warpedToSUIT_CBmasked_coregToT1_${this_func_run} -t [warpToSUITParams1Warp.nii] -t [warpToSUITParams0GenericAffine.mat,0] -v
+				# ml gcc/5.2.0; ml ants
+				# antsApplyTransforms -d 3 -e 3 -i $ceres_image -r $SUIT_Template_2mm \
+				# -o warpedToSUIT_CBmasked_coregToT1_${this_func_run} -t [warpToSUITParams1Warp.nii] -t [warpToSUITParams0GenericAffine.mat,0] -v
 
 				cp $SUIT_Template_2mm ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
 				for this_func_run in unwarpedRealigned*.nii; do
 					ml fsl	
 
-					fslmaths coregToT1_${this_func_run} -mas binary_coregToT1_native_tissue_CB.nii CBmasked_coregToT1_${this_func_run}
-					gunzip -f *nii.gz
+					# fslmaths coregToT1_${this_func_run} -mas binary_coregToT1_native_tissue_CB.nii CBmasked_coregToT1_${this_func_run}
+					# gunzip -f *nii.gz
 
 					ml gcc/5.2.0; ml ants
 					antsApplyTransforms -d 3 -e 3 -i CBmasked_coregToT1_${this_func_run} -r $SUIT_Template_2mm \
 					-o warpedToSUIT_CBmasked_coregToT1_${this_func_run} -t [warpToSUITParams1Warp.nii] -t [warpToSUITParams0GenericAffine.mat,0] -v
-
 				done
 			done
 			echo This step took $SECONDS seconds to execute
@@ -229,7 +273,6 @@ for this_argument in "$@"; do
 			echo "Level One ANTS: $SECONDS sec" >> preprocessing_log.txt
 			SECONDS=0
 		fi
-
 		### potentially mask smoothed images ####
 	done
 	(( argument_counter++ ))
