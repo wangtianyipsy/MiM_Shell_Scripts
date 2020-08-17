@@ -11,10 +11,10 @@
 
 settings_file=$1
 
-Code_dir=/ufrc/rachaelseidler/tfettrow/Crunch_Code
+Code_dir=/blue/rachaelseidler/tfettrow/Crunch_Code
 export MATLABPATH=${Code_dir}/Matlab_Scripts/helper
 
-Study_dir=/ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/MiM_Data
+Study_dir=/blue/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/MiM_Data
 
 cd "${Study_dir}"
 lines_to_ignore=$(awk '/#/{print NR}' $settings_file)

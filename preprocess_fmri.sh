@@ -19,11 +19,11 @@ do
 	fi
 	
 	# Set the path for our custom matlab functions and scripts
-	Code_dir=/ufrc/rachaelseidler/tfettrow/Crunch_Code
+	Code_dir=/blue/rachaelseidler/tfettrow/Crunch_Code
 	
 	export MATLABPATH=${Code_dir}/Matlab_Scripts/helper
 	
-	Subject_dir=/ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/MiM_Data/${subject}
+	Subject_dir=/blue/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/MiM_Data/${subject}
 	cd "${Subject_dir}"
 
 	lines_to_ignore=$(awk '/#/{print NR}' file_settings.txt)
@@ -537,6 +537,8 @@ do
 		fi
 
 		if [[ $this_preprocessing_step == "n4_bias_correction" ]]; then
+			this_t1_folder=($t1_processed_folder_names)
+			cd ${Subject_dir}/Processed/MRI_files/${this_t1_folder}/
 			ml gcc/5.2.0; ml ants
 			N4BiasFieldCorrection -i SkullStripped_T1.nii -o biascorrected_SkullStripped_T1.nii
 			
@@ -548,7 +550,7 @@ do
 				cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
 				# for each run in this functional folder, bias correct and place in ANTS folder
 
-				for this_func_file in meanunwarpedRealigned*.nii; do 
+				for this_func_file in meanunwarpedRealigned_*.nii; do 
 					N4BiasFieldCorrection -i $this_func_file -o biascorrected_$this_func_file
 				done
 			done
@@ -566,7 +568,7 @@ do
 				ml gcc/5.2.0
 				ml ants
 
-				if [ -e warpToT1Params_*.nii ]; then 
+				if [[ -e warpToT1Params_*.nii ]]; then 
         	        rm warpToT1Params_*.nii
         	        rm warpToT1Params_*.mat
         	        rm warpToT1Estimate_*.nii
@@ -636,7 +638,7 @@ do
 	
 				outputFolder=${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
 				T1_Template=${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/biascorrected_SkullStripped_T1.nii
-				MNI_Template=/ufrc/rachaelseidler/tfettrow/Crunch_Code/MR_Templates/MNI_1mm.nii
+				MNI_Template=${Code_dir}/MR_Templates/MNI_1mm.nii
 
 				this_core_file_name=biascorrected_SkullStripped_T1
 
@@ -672,7 +674,7 @@ do
 				cp ${Subject_dir}/Processed/MRI_files/${this_t1_folder}/c1T1.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
 				cp ${Subject_dir}/Processed/MRI_files/${this_t1_folder}/c2T1.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
 				cp ${Subject_dir}/Processed/MRI_files/${this_t1_folder}/c3T1.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
-				cp /ufrc/rachaelseidler/tfettrow/Crunch_Code/MR_Templates/MNI_2mm.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
+				cp ${Code_dir}/MR_Templates/MNI_2mm.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
 				gunzip -f *nii.gz
 
 				this_core_file_name=biascorrected_SkullStripped_T1
@@ -785,7 +787,7 @@ do
 	
 				outputFolder=${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
 				T1_Template=${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/biascorrected_SkullStripped_T1.nii
-				MNI_Template=/ufrc/rachaelseidler/tfettrow/Crunch_Code/MR_Templates/MNI_1mm.nii
+				MNI_Template=${Code_dir}/MR_Templates/MNI_1mm.nii
 
 				this_core_file_name=biascorrected_SkullStripped_T1
 
@@ -818,7 +820,7 @@ do
 			for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
 				cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
 				cp ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/unwarpedRealigned*.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
-				cp /ufrc/rachaelseidler/tfettrow/Crunch_Code/MR_Templates/MNI_2mm.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
+				cp ${Code_dir}/MR_Templates/MNI_2mm.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
 				gunzip -f *nii.gz
 				
 				ml gcc/5.2.0

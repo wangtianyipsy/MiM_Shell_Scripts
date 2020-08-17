@@ -18,12 +18,12 @@ for this_argument in "$@"; do
 	fi
 	
 	# Set the path for our custom matlab functions and scripts
-	Code_dir=/ufrc/rachaelseidler/tfettrow/Crunch_Code
+	Code_dir=/blue/rachaelseidler/tfettrow/Crunch_Code
 		
 	export MATLABPATH=${Code_dir}/Matlab_Scripts/helper
 		
-	study_dir=/ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/MiM_Data
-	Subject_dir=/ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/MiM_Data/$subject
+	study_dir=/blue/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/MiM_Data
+	Subject_dir=/blue/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/MiM_Data/$subject
 	cd $Subject_dir
 
 ########### determine which functional files you would like to ceres process (resting state and fmri) ############################
@@ -113,7 +113,7 @@ for this_argument in "$@"; do
         	        rm coregToT1_*.nii
         	    fi
 
-				for this_func_run in unwarpedRealigned*.nii; do
+				for this_func_run in unwarpedRealigned_*.nii; do
 					this_core_file_name=$(echo $this_func_run | cut -d. -f 1)
 
 					ml fsl
@@ -158,7 +158,48 @@ for this_argument in "$@"; do
 		if [[ $this_ceres_processing_step ==  "ceres_cb_mask_spm_norm" ]]; then
 			for this_functional_run_folder in ${fmri_processed_folder_names[@]} ${restingstate_processed_folder_names[@]}; do
 				cd $Subject_dir/Processed/MRI_files/$this_functional_run_folder/ANTS_Normalization
-				echo 'running normalization steps... this may take a while...'
+				cp $Code_dir/MR_Templates/SUIT_Nobrainstem_2mm.nii $Subject_dir/Processed/MRI_files/$this_functional_run_folder/ANTS_Normalization
+			    
+			    ml gcc/5.2.0
+				ml ants
+				echo 'registering' coregToT1_native_tissue_CB.nii 'to' SUIT_Nobrainstem_2mm.nii
+				# moving low res func to high res T1
+				antsRegistration --dimensionality 3 --float 0 \
+				    --output [coregToSUITParams,coregToSUITEstimate.nii] \
+				    --interpolation Linear \
+				    --winsorize-image-intensities [0.005,0.995] \
+				    --use-histogram-matching 0 \
+				    --initial-moving-transform [ SUIT_Nobrainstem_2mm.nii,coregToT1_native_tissue_CB.nii,1] \
+				    --transform Rigid[0.1] \
+				    --metric MI[ SUIT_Nobrainstem_2mm.nii,coregToT1_native_tissue_CB.nii,1,32,Regular,0.25] \
+				    --convergence [1000x500x250x100,1e-6,10] \
+				    --shrink-factors 8x4x2x1 \
+				    --smoothing-sigmas 3x2x1x0vox
+
+				
+				gunzip -f *nii.gz
+				for this_func_run in CBmasked_coregToT1_*.nii; do
+					antsApplyTransforms -d 3 -e 3 -i $this_func_run --float 0 -r SUIT_Nobrainstem_2mm.nii \
+					-n BSpline -o coregToSUIT_${this_func_run}.nii -t [coregToSUITParams0GenericAffine.mat,0] -v 
+				done
+
+				antsApplyTransforms -d 3 -e 3 -i native_tissue*.nii --float 0 -r SUIT_Nobrainstem_2mm.nii \
+				-n BSpline -o coregToSUIT_coregToT1_native_tissue_CB.nii -t [coregToSUITParams0GenericAffine.mat,0] -v
+
+				antsApplyTransforms -d 3 -e 3 -i CB_mask.nii --float 0 -r SUIT_Nobrainstem_2mm.nii \
+				-n BSpline -o coregToSUIT_coregToT1_CB_mask.nii -t [coregToSUITParams0GenericAffine.mat,0] -v  					
+
+				antsApplyTransforms -d 3 -e 3 -i WM_mask.nii --float 0 -r SUIT_Nobrainstem_2mm.nii \
+				-n BSpline -o coregToSUIT_coregToT1_WM_mask.nii -t [coregToSUITParams0GenericAffine.mat,0] -v  					
+
+				antsApplyTransforms -d 3 -e 3 -i GM_mask.nii --float 0 -r SUIT_Nobrainstem_2mm.nii \
+				-n BSpline -o coregToSUIT_coregToT1_GM_mask.nii -t [coregToSUITParams0GenericAffine.mat,0] -v  		
+
+				if [[ -e Affine_GM_mask.mat ]]; then
+        	        rm warpedToSUITdartelNoBrainstem_*.nii
+        	        rm Affine_GM_mask.mat
+        	        rm u_a_GM_mask.nii
+        	    fi
 
 				ml matlab
 				matlab -nodesktop -nosplash -r "try; ceres_norm_suit_estimate; catch; end; quit"
@@ -183,7 +224,6 @@ for this_argument in "$@"; do
 		if [[ $this_ceres_processing_step ==  "ceres_cb_mask_ants_norm" ]]; then
 			for this_functional_run_folder in ${fmri_processed_folder_names[@]} ${restingstate_processed_folder_names[@]}; do
 				cd $Subject_dir/Processed/MRI_files/$this_functional_run_folder/ANTS_Normalization
-				echo 'running normalization steps... this may take a while...'
 				
 				# TO DO: remove this for loop
 				for ceres_image in native_*.nii; do
@@ -218,7 +258,7 @@ for this_argument in "$@"; do
 				   	 	--smoothing-sigmas 3x2x1x0vox
 				done
 
-				# gunzip -f *nii.gz
+				gunzip -f *nii.gz
 
 				# ml gcc/5.2.0; ml ants
 				# antsApplyTransforms -d 3 -e 3 -i $ceres_image -r $SUIT_Template_2mm \

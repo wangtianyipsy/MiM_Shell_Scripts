@@ -61,7 +61,7 @@ convertDICOM(){
 }
 
 
-Subject_dir=/ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/MiM_Data/${subject}
+Subject_dir=/blue/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/MiM_Data/${subject}
 cd $Subject_dir
 
 lines_to_ignore=$(awk '/#/{print NR}' file_settings.txt)
