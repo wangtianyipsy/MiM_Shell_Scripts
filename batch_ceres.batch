@@ -1,22 +1,25 @@
 #!/bin/bash
-#SBATCH --job-name=1004ceres						# Job name
+#SBATCH --job-name=A05ceres						# Job name
 #SBATCH --mail-type=END,FAIL          			# Mail events (NONE, BEGIN, END, FAIL, ALL)
 #SBATCH --mail-user=<tfettrow@ufl.edu>  		# Where to send mail	
 #SBATCH --ntasks=1                    			# Run a single task
-#SBATCH --mem=16000mb	                   	    # Memory limit
+#SBATCH --mem=6000mb	                   	    # Memory limit
 #SBATCH --qos=rachaelseidler
 #SBATCH --time=96:00:00               			# Time limit hrs:min:sec
 #output=ceres_%j.log 	 	  				    # Standard output and error log
 
 pwd; hostname; date
 
-cd /ufrc/rachaelseidler/tfettrow/Crunch_Code/
+cd /blue/rachaelseidler/tfettrow/Crunch_Code/
 
-subject=1004
+subject=A05
+# 2007,2012,2008,2021,2015'
 
-./Shell_Scripts/ceres_processing.sh $subject ceres_cb_mask_norm
+./Shell_Scripts/ceres_processing.sh $subject ceres_unzip coreg_func_to_ceresT1 ceres_cb_mask_spm_norm
 
 # ceres_unzip
 # coreg_func_to_ceresT1
-# ceres_cb_mask_norm
-# ceres_smooth_norm
+# ceres_cb_mask_spm_norm
+# ceres_smooth_spm_norm
+# ceres_cb_mask_ants_norm
+# ceres_smooth_ants_norm
