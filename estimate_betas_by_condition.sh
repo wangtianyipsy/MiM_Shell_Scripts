@@ -45,11 +45,11 @@ done
 # echo $fmri_processed_folder_names
 # echo $roi_settings_file
 
-Code_dir=/ufrc/rachaelseidler/tfettrow/Crunch_Code
+Code_dir=/blue/rachaelseidler/tfettrow/Crunch_Code
 export MATLABPATH=${Code_dir}/Matlab_Scripts/helper
 
 #for SUB in ${subjects[@]}; do
-Study_dir=/ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/MiM_Data
+Study_dir=/blue/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/MiM_Data
 #cd "${Study_dir}"
 	
 #####################################################################################################################################################
@@ -75,36 +75,39 @@ for this_functional_run_folder in ${fmri_processed_folder_names[@]}; do # only d
 					cd ${Study_dir}/$this_subject/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/Level1_Results
     					if [[ $this_functional_run_folder == "05_MotorImagery" ]]; then
 			 	
-			 			if ! [ -e noNANcon_0001.nii ]; then
-     						fslmaths con_0001.nii -nan noNANcon_0001
-     						fslmaths con_0002.nii -nan noNANcon_0002
-     						fslmaths con_0003.nii -nan noNANcon_0003
-     						fslmaths con_0004.nii -nan noNANcon_0004
-     						gunzip *nii.gz*
-     					fi
+			 			# if ! [ -e noNANcon_0001.nii ]; then
+     						# fslmaths con_0001.nii -nan noNANcon_0001
+     						# fslmaths con_0002.nii -nan noNANcon_0002
+     						# fslmaths con_0003.nii -nan noNANcon_0003
+     						# fslmaths con_0004.nii -nan noNANcon_0004
+     						# gunzip *nii.gz*
+     					# fi
+
 						outfile=${this_subject}_roi_results.txt
 						beta=0
-						beta=$(fslmeants -i noNANcon_0001.nii -m $this_roi_image_name)
+						beta=$(fslmeants -i con_0001.nii -m $this_roi_image_name)
 			 			echo $this_roi_file_corename_squeeze, "$beta", flat >> "$outfile"				​
 						
-			 			beta=$(fslmeants -i noNANcon_0003.nii -m $this_roi_image_name)
+			 			beta=$(fslmeants -i con_0003.nii -m $this_roi_image_name)
 			 			echo $this_roi_file_corename_squeeze, "$beta", low >> "$outfile"				​
 						
-			 			beta=$(fslmeants -i noNANcon_0004.nii -m $this_roi_image_name)
+			 			beta=$(fslmeants -i con_0004.nii -m $this_roi_image_name)
 						echo $this_roi_file_corename_squeeze, "$beta", medium >> "$outfile"				​
 						
-						beta=$(fslmeants -i noNANcon_0002.nii -m $this_roi_image_name)
+						beta=$(fslmeants -i con_0002.nii -m $this_roi_image_name)
 						echo $this_roi_file_corename_squeeze, "$beta", high >> "$outfile"				​								
 					fi	
 					#echo $this_roi_file_corename_squeeze, $this_roi_condition, $this_roi_beta, >> ${this_subject}_roi_results.txt
 	 				cd ${Study_dir}
  				fi			
 			done
-			cd $Study_dir/Group_Results_loadModulation/MRI_files/${this_functional_run_folder}/${group_name}
-			rm ${this_subject}_roi_results.txt
+			# cd $Study_dir/Group_Results_loadModulation/MRI_files/${this_functional_run_folder}/${group_name}
+			# rm ${this_subject}_roi_results.txt
+			# 
 			cd ${Study_dir}/$this_subject/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/Level1_Results
-			cp ${this_subject}_roi_results.txt $Study_dir/Group_Results_loadModulation/MRI_files/${this_functional_run_folder}/${group_name}
-			cd ${Study_dir}
+			
+			# cp ${this_subject}_roi_results.txt $Study_dir/Group_Results_loadModulation/MRI_files/${this_functional_run_folder}/${group_name}
+			# cd ${Study_dir}
 		done
  	done <<< "$subjects"
 done

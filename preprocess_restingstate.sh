@@ -20,11 +20,11 @@ do
 	fi
 	
 	# Set the path for our custom matlab functions and scripts
-	Code_dir=/ufrc/rachaelseidler/tfettrow/Crunch_Code
+	Code_dir=/blue/rachaelseidler/tfettrow/Crunch_Code
 	
 	export MATLABPATH=${Code_dir}/Matlab_Scripts/helper
 	
-	Subject_dir=/ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/MiM_Data/${subject}
+	Subject_dir=/blue/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/MiM_Data/${subject}
 	cd "${Subject_dir}"
 
 	lines_to_ignore=$(awk '/#/{print NR}' file_settings.txt)
@@ -75,7 +75,7 @@ do
 	
 	restingstate_processed_folder_names=$(echo "${restingstate_processed_folder_name_array[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' ')
 	t1_processed_folder_names=$(echo "${t1_processed_folder_name_array[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' ')
-
+	# echo $restingstate_processed_folder_names
 	#for this_preprocessing_step in "${preprocessing_step[@]}"; do
 		if [[ $this_preprocessing_step == "slicetime_restingstate" ]]; then
 		    data_folder_to_analyze=($restingstate_processed_folder_names)
@@ -95,12 +95,105 @@ do
 		fi
 
 		if [[ $this_preprocessing_step == "create_fieldmap_restingstate" ]]; then
-			data_folder_to_copy_to=($restingstate_processed_folder_names)
+			####  this section was for hcp 1200 rsfMRI data ... what i learned.. need to make this more universal 
+			# data_folder_to_copy_to=($restingstate_processed_folder_names)
+			# cd "${Subject_dir}/Processed/MRI_files/03_Fieldmaps/04_rsfMRI"
+			#    	# just cleaning up in case this is being rerun
+			#    	if [ -e my_fieldmap_nifti.nii ]; then
+			#    		rm my_fieldmap_nifti.nii
+			#    	fi
+			#    	if [ -e acqParams.txt ]; then
+			#    		rm acqParams.txt
+			#    	fi
+			#    	if [ -e my_fieldmap_mag.nii ]; then
+			# 		rm my_fieldmap_mag.nii
+			# 	fi
+			# 	if [ -e Distmap_merged.nii ]; then 
+			# 		rm Distmap_merged.nii
+			# 	fi
+			# 	if [ -e Mean_Distmap_merged.nii ]; then 
+			# 		rm Mean_Distmap_merged.nii
+			# 	fi
+			# 	if [ -e se_epi_unwarped.nii ]; then 
+			# 		rm se_epi_unwarped.nii
+			# 	fi
+			# 	if [ -e topup_results_fieldcoef.nii ]; then 
+			# 		rm topup_results_fieldcoef.nii
+			# 	fi
+			# 	if [ -e topup_results_movpar.txt ]; then 
+			# 		rm topup_results_movpar.txt
+			# 	fi
+				
+			# 	ml fsl
+			# 	fslmerge -t Distmap_merged.nii Distmap_LR.nii Distmap_RL.nii
+		
+			# 	this_file_header_info=$(fslhd Distmap_merged.nii )
+			# 	this_file_number_of_slices=$(echo $this_file_header_info | grep -o dim3.* | tr -s ' ' | cut -d ' ' -f 2)
+	
+			# 	if [ $((this_file_number_of_slices%2)) -ne 0 ]; then
+			# 		fslsplit Distmap_merged.nii slice -z
+			# 		gunzip -f *nii.gz
+			# 		rm slice0000.nii
+			# 		fslmerge -z Distmap_merged slice0*
+			# 		rm slice00*.nii
+			# 	fi
+	
+			# 	fslmaths Distmap_merged.nii -Tmean Mean_Distmap_merged.nii
+			# 	gunzip -f *nii.gz
+	
+			# 	cp Mean_Distmap_merged.nii "${Subject_dir}/Processed/MRI_files/${data_folder_to_copy_to}"
+			
+			#    	echo creating fieldmap...
+					
+			# 	# just a dummy value to check whether ecoding direction is same between distmaps
+			# 	previous_encoding_direction=k
+			# 	# assuming only the DistMaps have .jsons in this folder
+			# 	for this_json_file in *.json; do
+											
+			# 		total_readout=$(grep "TotalReadoutTime" ${this_json_file} | tr -dc '0.00-9.00')
+			# 		encoding_direction=$(grep "PhaseEncodingDirection" ${this_json_file} | cut -d: -f 2 | head -1 | tr -d '"' |  tr -d ',')
 
+			# 		this_file_name=$(echo $this_json_file | cut -d. -f 1)
+			# 		ml fsl
+			# 		this_file_header_info=$(fslhd $this_file_name.nii)
+			# 		this_file_number_of_volumes=$(echo $this_file_header_info | grep -o dim4.* | tr -s ' ' | cut -d ' ' -f 2)
+	
+			# 		for (( this_volume=1; this_volume<=$this_file_number_of_volumes; this_volume++ )); do
+			# 			if [[ $encoding_direction =~ i- ]]; then
+			# 				echo 1 0 0 ${total_readout} >> acqParams.txt
+			# 			else
+			# 				echo -1 0 0 ${total_readout} >> acqParams.txt
+			# 			fi
+			# 			if [[ $encoding_direction == $previous_encoding_direction ]]; then
+			# 				echo WARNING: the phase encoding directions appear to be the same between distmaps!!!
+			# 			fi
+			# 		done
+			# 		previous_encoding_direction=$encoding_direction
+			# 	done
+		
+			# 	ml fsl
+	
+			# 	topup --imain=Distmap_merged.nii --datain=acqParams.txt --fout=my_fieldmap_nifti --config=b02b0.cnf --iout=se_epi_unwarped --out=topup_results
+	
+			# 	fslmaths se_epi_unwarped -Tmean my_fieldmap_mag
+	
+			# 	ml fsl/5.0.8
+			# 	fslchfiletype ANALYZE my_fieldmap_nifti.nii fpm_my_fieldmap
+	
+			# 	gunzip -f *nii.gz
+			# 	cp fpm_my_fieldmap.hdr ${Subject_dir}/Processed/MRI_files/${data_folder_to_copy_to}
+   #   	    	cp fpm_my_fieldmap.img ${Subject_dir}/Processed/MRI_files/${data_folder_to_copy_to}
+   #   	    	cp ${Code_dir}/Matlab_Scripts/helper/vdm_defaults.m ${Subject_dir}/Processed/MRI_files/${data_folder_to_copy_to}
+			# 	cp se_epi_unwarped.nii ${Subject_dir}/Processed/MRI_files/${data_folder_to_copy_to}
+			##########################################################
+
+   			# This really needs to be reworked.. for all scripts
    			# WARNING: this logic is specific to MiM until decide on better method
    			subject_level=$(echo $subject | cut -c1-1)
    			echo $subject_level
 
+   			# This logic says if MiM subject id starts with 3 (harmonized) then go ahead and process fieldmaps..
+   			# if not, then copy fieldmaps for restingstate from task fmri folder
    			if [[ $subject_level == 3 ]]; then
 
    				cd "${Subject_dir}/Processed/MRI_files/03_Fieldmaps"
@@ -207,54 +300,53 @@ do
 
    		if [[ $this_preprocessing_step == "unwarp_restingstate" ]]; then
    			data_folder_to_copy_to=($restingstate_processed_folder_names)
-
-			cd ${Subject_dir}/Processed/MRI_files/${data_folder_to_copy_to}
-			read_out=$(cat vdm_defaults.m)
-
-			array[0]=$(echo $read_out | awk -F";" '{print $1}')
-			array[1]=$(echo $read_out | awk -F";" '{print $2}')
-			array[2]=$(echo $read_out | awk -F";" '{print $3}')
-			array[3]=$(echo $read_out | awk -F";" '{print $4}')
-			array[4]=$(echo $read_out | awk -F";" '{print $5}')
-
-			# WARNING: TF hard coded this file name
-			this_core_functional_file_name=$(echo RestingState.json | cut -d. -f 1)
-   			echo $this_core_functional_file_name
-   			total_readout_sec=$(grep "TotalReadoutTime" RestingState.json | tr -dc '0.00-9.00')
-			encoding_direction=$(grep "PhaseEncodingDirection" RestingState.json | cut -d: -f 2 | head -1 | tr -d '"' |  tr -d ',')
-			if [[ $encoding_direction =~ j- ]]; then
-				array[2]="pm_def.K_SPACE_TRAVERSAL_BLIP_DIR = -1;"
-			else
-				array[2]="pm_def.K_SPACE_TRAVERSAL_BLIP_DIR = 1;"
-			fi
-			total_readout_ms=$(echo "1000 * $total_readout_sec" | bc )
-	  			
-	  		echo $total_readout_ms
-			array[1]="pm_def.EPI_BASED_FIELDMAPS = 0;"
-	  		array[3]="pm_def.TOTAL_EPI_READOUT_TIME = $total_readout_ms;"
-	  		array[4]="pm_def.DO_JACOBIAN_MODULATION = 0;"
-			
-			#cd ${Subject_dir}/Processed/MRI_files/${this_fieldmap_folder}/
-	  		rm vdm_defaults.m
-	  		rm vdm5_fpm_my_fieldmap.img
-	  		rm vdm5_fpm_my_fieldmap.hdr
-	  		echo ${array[0]} >> vdm_defaults.m
-	  		echo ${array[1]} >> vdm_defaults.m
-	  		echo ${array[2]} >> vdm_defaults.m
-	  		echo ${array[3]} >> vdm_defaults.m
-	  		echo ${array[4]} >> vdm_defaults.m
-
-			ml matlab
-	    	matlab -nodesktop -nosplash -r "try; create_vdm_img('slicetimed_RestingState.nii'); catch; end; quit"
-	   		matlab -nodesktop -nosplash -r "try; realign_unwarp_single('slicetimed_RestingState.nii'); catch; end; quit"
-			for this_rp_file in rp_*.txt; do
-				if ! [[ $this_rp_file =~ "unwarpedRealigned" ]]; then
-					this_filename_1=$(echo $this_rp_file | cut -d'_' -f1)
-					this_filename_2=$(echo $this_rp_file | cut -d'_' -f2)
-					this_filename_3=$(echo $this_rp_file | cut -d'_' -f3)
-					this_filename_4=$(echo $this_rp_file | cut -d'_' -f4)
-					mv -v $this_rp_file ${this_filename_1}_unwarpedRealigned_${this_filename_2}_${this_filename_3}_${this_filename_4}
+   			cd ${Subject_dir}/Processed/MRI_files/${data_folder_to_copy_to}
+				
+			for this_rsfMRI_file in RestingState1*.nii; do
+				this_core_functional_file_name=$(echo $this_rsfMRI_file | cut -d. -f 1)
+				read_out=$(cat vdm_defaults.m)
+				array[0]=$(echo $read_out | awk -F";" '{print $1}')
+				array[1]=$(echo $read_out | awk -F";" '{print $2}')
+				array[2]=$(echo $read_out | awk -F";" '{print $3}')
+				array[3]=$(echo $read_out | awk -F";" '{print $4}')
+				array[4]=$(echo $read_out | awk -F";" '{print $5}')
+	
+   				total_readout_sec=$(grep "TotalReadoutTime" ${this_core_functional_file_name}.json | tr -dc '0.00-9.00')
+				encoding_direction=$(grep "PhaseEncodingDirection" ${this_core_functional_file_name}.json | cut -d: -f 2 | head -1 | tr -d '"' |  tr -d ',')
+				if [[ $encoding_direction =~ LR ]]; then
+					array[2]="pm_def.K_SPACE_TRAVERSAL_BLIP_DIR = -1;"
+				else
+					array[2]="pm_def.K_SPACE_TRAVERSAL_BLIP_DIR = 1;"
 				fi
+				total_readout_ms=$(echo "1000 * $total_readout_sec" | bc )
+	  				
+	  			echo $total_readout_ms
+				array[1]="pm_def.EPI_BASED_FIELDMAPS = 0;"
+	  			array[3]="pm_def.TOTAL_EPI_READOUT_TIME = $total_readout_ms;"
+	  			array[4]="pm_def.DO_JACOBIAN_MODULATION = 0;"
+				
+				rm vdm_defaults.m
+	  			rm vdm5_fpm_my_fieldmap.img
+	  			rm vdm5_fpm_my_fieldmap.hdr
+	  			echo ${array[0]} >> vdm_defaults.m
+	  			echo ${array[1]} >> vdm_defaults.m
+	  			echo ${array[2]} >> vdm_defaults.m
+	  			echo ${array[3]} >> vdm_defaults.m
+	  			echo ${array[4]} >> vdm_defaults.m
+	
+				ml matlab
+	    		matlab -nodesktop -nosplash -r "try; create_vdm_img('slicetimed_${this_core_functional_file_name}.nii'); catch; end; quit"
+	   			matlab -nodesktop -nosplash -r "try; realign_unwarp_single('slicetimed_${this_core_functional_file_name}.nii'); catch; end; quit"
+				
+				for this_rp_file in rp_*.txt; do
+					if ! [[ $this_rp_file =~ "unwarpedRealigned" ]]; then
+						this_filename_1=$(echo $this_rp_file | cut -d'_' -f1)
+						this_filename_2=$(echo $this_rp_file | cut -d'_' -f2)
+						this_filename_3=$(echo $this_rp_file | cut -d'_' -f3)
+						# this_filename_4=$(echo $this_rp_file | cut -d'_' -f4)
+						mv -v $this_rp_file ${this_filename_1}_unwarpedRealigned_${this_filename_2}_${this_filename_3} #_${this_filename_4}
+					fi
+				done
 			done
 			echo This step took $SECONDS seconds to execute
 			cd "${Subject_dir}"
@@ -381,7 +473,22 @@ do
 			echo "Outlier Removal: $SECONDS sec" >> preprocessing_log.txt
 			SECONDS=0
 		fi
+		
+		if [[ $this_preprocessing_step == "skull_strip_t1_4_ants" ]]; then
+			this_t1_folder=($t1_processed_folder_names)
+			cp ${Code_dir}/MR_Templates/TPM.nii ${Subject_dir}/Processed/MRI_files/${this_t1_folder}
+			cd ${Subject_dir}/Processed/MRI_files/${this_t1_folder}/
+			ml matlab
+			matlab -nodesktop -nosplash -r "try; segment_t1; catch; end; quit"
+			matlab -nodesktop -nosplash -r "try; skull_strip_t1; catch; end; quit"
+	
+			echo This step took $SECONDS seconds to execute
+			cd "${Subject_dir}"
+			echo "Skull Strip T1: $SECONDS sec" >> preprocessing_log.txt
+			SECONDS=0
+		fi
 
+		# run this if MiM and want to copy from when processed fmri
 		if [[ $this_preprocessing_step == "copy_skullstripped_biascorrected_t1_4_ants" ]]; then
 			# hard coded to go in and copy segmented T1
 			data_folder_to_copy_to=($restingstate_processed_folder_names)
@@ -393,7 +500,16 @@ do
 			SECONDS=0
 		fi
 
+		# warp T1 as well?? where does this happen??
+
 		if [[ $this_preprocessing_step == "n4_bias_correct" ]]; then
+			this_t1_folder=($t1_processed_folder_names)
+			data_folder_to_copy_to=($restingstate_processed_folder_names)
+			cd ${Subject_dir}/Processed/MRI_files/${this_t1_folder}/
+			ml gcc/5.2.0; ml ants
+			N4BiasFieldCorrection -i SkullStripped_T1.nii -o biascorrected_SkullStripped_T1.nii
+			cp ${Subject_dir}/Processed/MRI_files/02_T1/* ${Subject_dir}/Processed/MRI_files/${data_folder_to_copy_to}/
+
 			data_folder_to_analyze=($restingstate_processed_folder_names)
 			cd ${Subject_dir}/Processed/MRI_files/${data_folder_to_analyze}
 			mkdir -p ${Subject_dir}/Processed/MRI_files/${data_folder_to_analyze}/ANTS_Normalization
@@ -513,7 +629,7 @@ do
 			this_core_file_name=biascorrected_SkullStripped_T1
 
 			antsApplyTransforms -d 3 -e 3 -i ${this_core_file_name}.nii -r MNI_2mm.nii \
-			-n BSpline -o warpedToMNI_${this_core_file_name}.nii -t [warpToMNIParams_${this_core_file_name}1Warp.nii.gz] -t [warpToMNIParams_${this_core_file_name}0GenericAffine.mat,0] -v
+			-n BSpline -o warpedToMNI_${this_core_file_name}.nii -t [warpToMNIParams_${this_core_file_name}1Warp.nii] -t [warpToMNIParams_${this_core_file_name}0GenericAffine.mat,0] -v
 
 			antsApplyTransforms -d 3 -e 3 -i c1T1.nii -r MNI_2mm.nii \
 			-n BSpline -o warpedToMNI_c1T1.nii -t [warpToMNIParams_${this_core_file_name}1Warp.nii] -t [warpToMNIParams_${this_core_file_name}0GenericAffine.mat,0] -v
