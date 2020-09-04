@@ -61,9 +61,9 @@ for (( this_row=1; this_row<=${roi_line_numbers}; this_row++ )); do
 		ml fsl
 		echo converting ${this_roi_name}: $this_roi_x $this_roi_y $this_roi_z to 5mm sphere ....
 		fslmaths MNI_2mm.nii -mul 0 -add 1 -roi $this_roi_x 1 $this_roi_y 1 $this_roi_z 1 0 1 ${this_roi_name}_point -odt float
-		gunzip *.nii.gz*
+		gunzip -f *nii.gz
 		fslmaths ${this_roi_name}_point.nii -kernel sphere 5 -fmean ${this_roi_name}.nii -odt float
-		gunzip *.nii.gz*
+		gunzip -f *nii.gz
 
 		#rm roi_${this_roi_corename}.csv
 		rm ${this_roi_name}_point.nii
