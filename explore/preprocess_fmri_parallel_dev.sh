@@ -9,12 +9,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-subjects=(CrunchPilot01_development1)
+subjects=(CrunchPilot01)
 
 preprocessing_steps=("slicetime_fmri")
 
 # Set the path for our custom matlab functions and scripts
-Code_dir=/ufrc/rachaelseidler/tfettrow/Crunch_Code
+Code_dir=/ufrc/rachaelseidler/tfettrow/Crunch_Code/
 
 
 export MATLABPATH=${Code_dir}/Matlab_Scripts/helper
@@ -105,21 +105,31 @@ for SUB in ${subjects[@]}; do
 			
 			#ml parallel
 			#mkdir -p "temp"
-			cp "${Code_dir}/Matlab_Scripts/scripts/slicetime_fmri_parallel_dev.m" "${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}"
+			#cp "${Code_dir}/Matlab_Scripts/scripts/slicetime_fmri_parallel_dev.m" "${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}"
 			#cd "temp"
-			ml matlab
-			mcc -R -singleCompThread -m slicetime_fmri_parallel_dev.m
+			#ml matlab
+			#mcc -R -singleCompThread -m slicetime_fmri_parallel_dev.m
+			file_num=0
 			for file in fMRI_Run*.nii*; do
-				this_file_name=${file%.*}
-				echo $this_file_name
-
+				file_matrix[file_num]=${file%.*}
+				#echo $this_file_name
+				#echo $file
+				(( file_num++ ))
 				#matlab -nodesktop -nosplash -r "try; slicetime_fmri_parallel_dev('$this_file_name'); catch; end; quit"
 
 				#parallel --will-cite --jobs 3 matlab -nodesktop -nosplash -r "try; slicetime_fmri_parallel_dev('$this_file_name'); catch; end; quit"
 
-				./run_slicetime_fmri_parallel_dev.sh /mathworks/devel/application/matlab-MCRInstaller.zip $this_file_name
+				#./run_slicetime_fmri_parallel_dev.sh /mathworks/devel/application/matlab-MCRInstaller.zip $this_file_name
 			done
-
+			#parallel --will-cite --jobs 2 matlab -nodesktop -nosplash -r "try; slicetime_fmri_parallel_dev('$this_file_name'); catch; end; quit"
+			#parallel 'matlab -nodesktop -nosplash -r "try; slicetime_fmri_parallel_dev('$this_file_name'); catch; end; quit"'
+			echo ${file_matrix[0]}
+			echo ${file_matrix[1]}
+			ml matlab
+			ml parallel
+			parallel --will-cite 'matlab -nodesktop -nosplash -r "slicetime_fmri_parallel_dev({})"' ::: ${file_matrix[0]} ${file_matrix[1]}
+			#echo ${file_matrix[@]}
+			
 		done
 		echo "This step took $SECONDS seconds to execute"
 	fi
