@@ -63,35 +63,61 @@ for this_functional_run_folder in ${fmri_processed_folder_names[@]}; do # only d
 					cd ${Study_dir}/$this_subject/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/Level1_WholeBrain
     				if [[ $this_functional_run_folder == "05_MotorImagery" ]]; then
 			 	
-			 			if ! [ -e noNANcon_0001.nii ]; then
-     						fslmaths con_0001.nii -nan noNANcon_0001
-     						fslmaths con_0002.nii -nan noNANcon_0002
-     						fslmaths con_0003.nii -nan noNANcon_0003
-     						fslmaths con_0004.nii -nan noNANcon_0004
-     						gunzip -f *nii.gz
-     					fi
+			 			# if ! [ -e noNANcon_0001.nii ]; then
+     		# 				fslmaths con_0001.nii -nan noNANcon_0001
+     		# 				fslmaths con_0002.nii -nan noNANcon_0002
+     		# 				fslmaths con_0003.nii -nan noNANcon_0003
+     		# 				fslmaths con_0004.nii -nan noNANcon_0004
+     		# 				gunzip -f *nii.gz
+     		# 			fi
+
+						# beta=0
+						# beta=$(fslmeants -i noNANcon_0001.nii -m $this_roi_image_name)
+						# # echo $this_roi_file_corename_squeeze
+						# first_row=$(cat $outfile | sed -n 1p)
+						# second_row=$(cat $outfile | sed -n 2p) 
+						# rm $outfile
+						# echo -e "${first_row},flat_${this_roi_file_corename_squeeze}\n${second_row},$beta" >> "$outfile"
+
+						# beta=$(fslmeants -i noNANcon_0003.nii -m $this_roi_image_name)
+						# first_row=$(cat $outfile | sed -n 1p)
+						# second_row=$(cat $outfile | sed -n 2p) 
+						# rm $outfile
+						# echo -e "${first_row},low_${this_roi_file_corename_squeeze}\n${second_row},$beta" >> "$outfile"
+
+						# beta=$(fslmeants -i noNANcon_0004.nii -m $this_roi_image_name)
+						# first_row=$(cat $outfile | sed -n 1p)
+						# second_row=$(cat $outfile | sed -n 2p) 
+						# rm $outfile
+						# echo -e "${first_row},med_${this_roi_file_corename_squeeze}\n${second_row},$beta" >> "$outfile"
+
+						# beta=$(fslmeants -i noNANcon_0002.nii -m $this_roi_image_name)
+						# first_row=$(cat $outfile | sed -n 1p)
+						# second_row=$(cat $outfile | sed -n 2p) 
+						# rm $outfile
+						# echo -e "${first_row},high_${this_roi_file_corename_squeeze}\n${second_row},$beta" >> "$outfile"		​
 
 						beta=0
-						beta=$(fslmeants -i noNANcon_0001.nii -m $this_roi_image_name)
+						beta=$(fslmeants -i con_0001.nii -m $this_roi_image_name)
 						# echo $this_roi_file_corename_squeeze
 						first_row=$(cat $outfile | sed -n 1p)
 						second_row=$(cat $outfile | sed -n 2p) 
 						rm $outfile
 						echo -e "${first_row},flat_${this_roi_file_corename_squeeze}\n${second_row},$beta" >> "$outfile"
 
-						beta=$(fslmeants -i noNANcon_0003.nii -m $this_roi_image_name)
+						beta=$(fslmeants -i con_0003.nii -m $this_roi_image_name)
 						first_row=$(cat $outfile | sed -n 1p)
 						second_row=$(cat $outfile | sed -n 2p) 
 						rm $outfile
 						echo -e "${first_row},low_${this_roi_file_corename_squeeze}\n${second_row},$beta" >> "$outfile"
 
-						beta=$(fslmeants -i noNANcon_0004.nii -m $this_roi_image_name)
+						beta=$(fslmeants -i con_0004.nii -m $this_roi_image_name)
 						first_row=$(cat $outfile | sed -n 1p)
 						second_row=$(cat $outfile | sed -n 2p) 
 						rm $outfile
 						echo -e "${first_row},med_${this_roi_file_corename_squeeze}\n${second_row},$beta" >> "$outfile"
 
-						beta=$(fslmeants -i noNANcon_0002.nii -m $this_roi_image_name)
+						beta=$(fslmeants -i con_0002.nii -m $this_roi_image_name)
 						first_row=$(cat $outfile | sed -n 1p)
 						second_row=$(cat $outfile | sed -n 2p) 
 						rm $outfile
@@ -100,61 +126,109 @@ for this_functional_run_folder in ${fmri_processed_folder_names[@]}; do # only d
 					if [[ $this_functional_run_folder == "06_Nback" ]]; then
 			 	
 			 			# if ! [ -e noNANcon_0001.nii ]; then
-     						fslmaths con_0001.nii -nan noNANcon_0001
-     						fslmaths con_0002.nii -nan noNANcon_0002
-     						fslmaths con_0003.nii -nan noNANcon_0003
-     						fslmaths con_0004.nii -nan noNANcon_0004
-     						fslmaths con_0005.nii -nan noNANcon_0005
-     						fslmaths con_0006.nii -nan noNANcon_0006
-     						fslmaths con_0007.nii -nan noNANcon_0007
-     						fslmaths con_0008.nii -nan noNANcon_0008
-     						gunzip -f *nii.gz
+     						# fslmaths con_0001.nii -nan noNANcon_0001
+     						# fslmaths con_0002.nii -nan noNANcon_0002
+     						# fslmaths con_0003.nii -nan noNANcon_0003
+     						# fslmaths con_0004.nii -nan noNANcon_0004
+     						# fslmaths con_0005.nii -nan noNANcon_0005
+     						# fslmaths con_0006.nii -nan noNANcon_0006
+     						# fslmaths con_0007.nii -nan noNANcon_0007
+     						# fslmaths con_0008.nii -nan noNANcon_0008
+     						# gunzip -f *nii.gz
      					# fi
 
+						# beta=0
+						# beta=$(fslmeants -i noNANcon_0004.nii -m $this_roi_image_name)
+						# first_row=$(cat $outfile | sed -n 1p)
+						# second_row=$(cat $outfile | sed -n 2p) 
+						# rm $outfile
+						# echo -e "${first_row},zero_long_${this_roi_file_corename_squeeze}\n${second_row},$beta" >> "$outfile"
+
+						# beta=$(fslmeants -i noNANcon_0001.nii -m $this_roi_image_name)
+						# first_row=$(cat $outfile | sed -n 1p)
+						# second_row=$(cat $outfile | sed -n 2p) 
+						# rm $outfile
+						# echo -e "${first_row},one_long_${this_roi_file_corename_squeeze}\n${second_row},$beta" >> "$outfile"
+
+						# beta=$(fslmeants -i noNANcon_0003.nii -m $this_roi_image_name)
+						# first_row=$(cat $outfile | sed -n 1p)
+						# second_row=$(cat $outfile | sed -n 2p) 
+						# rm $outfile
+						# echo -e "${first_row},two_long_${this_roi_file_corename_squeeze}\n${second_row},$beta" >> "$outfile"
+
+						# beta=$(fslmeants -i noNANcon_0002.nii -m $this_roi_image_name)
+						# first_row=$(cat $outfile | sed -n 1p)
+						# second_row=$(cat $outfile | sed -n 2p) 
+						# rm $outfile
+						# echo -e "${first_row},three_long_${this_roi_file_corename_squeeze}\n${second_row},$beta" >> "$outfile"
+
+						# beta=$(fslmeants -i noNANcon_0008.nii -m $this_roi_image_name)
+						# first_row=$(cat $outfile | sed -n 1p)
+						# second_row=$(cat $outfile | sed -n 2p) 
+						# rm $outfile
+						# echo -e "${first_row},zero_short_${this_roi_file_corename_squeeze}\n${second_row},$beta" >> "$outfile"
+
+						# beta=$(fslmeants -i noNANcon_0005.nii -m $this_roi_image_name)
+						# first_row=$(cat $outfile | sed -n 1p)
+						# second_row=$(cat $outfile | sed -n 2p) 
+						# rm $outfile
+						# echo -e "${first_row},one_short_${this_roi_file_corename_squeeze}\n${second_row},$beta" >> "$outfile"
+
+						# beta=$(fslmeants -i noNANcon_0007.nii -m $this_roi_image_name)
+						# first_row=$(cat $outfile | sed -n 1p)
+						# second_row=$(cat $outfile | sed -n 2p) 
+						# rm $outfile
+						# echo -e "${first_row},two_short_${this_roi_file_corename_squeeze}\n${second_row},$beta" >> "$outfile"
+
+						# beta=$(fslmeants -i noNANcon_0006.nii -m $this_roi_image_name)
+						# first_row=$(cat $outfile | sed -n 1p)
+						# second_row=$(cat $outfile | sed -n 2p) 
+						# rm $outfile
+						# echo -e "${first_row},three_short_${this_roi_file_corename_squeeze}\n${second_row},$beta" >> "$outfile"		
 						beta=0
-						beta=$(fslmeants -i noNANcon_0004.nii -m $this_roi_image_name)
+						beta=$(fslmeants -i con_0004.nii -m $this_roi_image_name)
 						first_row=$(cat $outfile | sed -n 1p)
 						second_row=$(cat $outfile | sed -n 2p) 
 						rm $outfile
 						echo -e "${first_row},zero_long_${this_roi_file_corename_squeeze}\n${second_row},$beta" >> "$outfile"
 
-						beta=$(fslmeants -i noNANcon_0001.nii -m $this_roi_image_name)
+						beta=$(fslmeants -i con_0001.nii -m $this_roi_image_name)
 						first_row=$(cat $outfile | sed -n 1p)
 						second_row=$(cat $outfile | sed -n 2p) 
 						rm $outfile
 						echo -e "${first_row},one_long_${this_roi_file_corename_squeeze}\n${second_row},$beta" >> "$outfile"
 
-						beta=$(fslmeants -i noNANcon_0003.nii -m $this_roi_image_name)
+						beta=$(fslmeants -i con_0003.nii -m $this_roi_image_name)
 						first_row=$(cat $outfile | sed -n 1p)
 						second_row=$(cat $outfile | sed -n 2p) 
 						rm $outfile
 						echo -e "${first_row},two_long_${this_roi_file_corename_squeeze}\n${second_row},$beta" >> "$outfile"
 
-						beta=$(fslmeants -i noNANcon_0002.nii -m $this_roi_image_name)
+						beta=$(fslmeants -i con_0002.nii -m $this_roi_image_name)
 						first_row=$(cat $outfile | sed -n 1p)
 						second_row=$(cat $outfile | sed -n 2p) 
 						rm $outfile
 						echo -e "${first_row},three_long_${this_roi_file_corename_squeeze}\n${second_row},$beta" >> "$outfile"
 
-						beta=$(fslmeants -i noNANcon_0008.nii -m $this_roi_image_name)
+						beta=$(fslmeants -i con_0008.nii -m $this_roi_image_name)
 						first_row=$(cat $outfile | sed -n 1p)
 						second_row=$(cat $outfile | sed -n 2p) 
 						rm $outfile
 						echo -e "${first_row},zero_short_${this_roi_file_corename_squeeze}\n${second_row},$beta" >> "$outfile"
 
-						beta=$(fslmeants -i noNANcon_0005.nii -m $this_roi_image_name)
+						beta=$(fslmeants -i con_0005.nii -m $this_roi_image_name)
 						first_row=$(cat $outfile | sed -n 1p)
 						second_row=$(cat $outfile | sed -n 2p) 
 						rm $outfile
 						echo -e "${first_row},one_short_${this_roi_file_corename_squeeze}\n${second_row},$beta" >> "$outfile"
 
-						beta=$(fslmeants -i noNANcon_0007.nii -m $this_roi_image_name)
+						beta=$(fslmeants -i con_0007.nii -m $this_roi_image_name)
 						first_row=$(cat $outfile | sed -n 1p)
 						second_row=$(cat $outfile | sed -n 2p) 
 						rm $outfile
 						echo -e "${first_row},two_short_${this_roi_file_corename_squeeze}\n${second_row},$beta" >> "$outfile"
 
-						beta=$(fslmeants -i noNANcon_0006.nii -m $this_roi_image_name)
+						beta=$(fslmeants -i con_0006.nii -m $this_roi_image_name)
 						first_row=$(cat $outfile | sed -n 1p)
 						second_row=$(cat $outfile | sed -n 2p) 
 						rm $outfile
