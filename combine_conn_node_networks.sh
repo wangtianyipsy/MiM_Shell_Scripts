@@ -36,8 +36,10 @@ cd $Study_dir
 	node_index=0
 
 	outfile=ROI_settings_${conn_project}.txt
+	if  [ -e $outfile ]; then
+		rm $outfile
+	fi
 
-	
 	while IFS=',' read -ra nodes; do
    	    for this_node in "${nodes[@]}"; do
    	    	cd ${Study_dir}/${conn_project}/results/secondlevel/SBC_01/AllSubjects/rest/${this_node}
