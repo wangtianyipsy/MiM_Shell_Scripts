@@ -67,13 +67,13 @@ for this_subject_directory in wu120_*/; do
 	# mv RestingState.nii slicetimed_RestingState.nii
 
 	#step 11
-	cd Processed/MRI_files/04_rsfMRI
-	FILE=(slicetimed_RestingState1.nii)
-	if [[ -e "$FILE" ]];then
-		echo ${this_subject_directory}
-		# cd ${wu_dir}
-		# cp file_settings.txt ${this_subject_directory}
-		# cd ${this_subject_directory}Processed/MRI_files/04_rsfMRI
+	# cd Processed/MRI_files/04_rsfMRI
+	# FILE=(slicetimed_RestingState1.nii)
+	# if [[ -e "$FILE" ]];then
+	# 	echo ${this_subject_directory}
+	# 	cd ${wu_dir}
+	# 	cp file_settings.txt ${this_subject_directory}
+	# 	cd ${this_subject_directory}Processed/MRI_files/04_rsfMRI
 		# files_to_change=$(echo *bold.nii)
 		# index=1
 		# for this_file in ${files_to_change[@]}; do 
@@ -82,5 +82,16 @@ for this_subject_directory in wu120_*/; do
 		# done
 		# files_to_change=
 		# cd ${wu_dir}
-	fi
+	# fi
+
+ # reverting the multi runs to single run
+	# cd Processed/MRI_files/04_rsfMRI
+	# FILE=(slicetimed_RestingState1.nii)
+	# if [[ -e "$FILE" ]];then
+	# 	echo ${this_subject_directory}
+	# 	cd ${wu_dir}
+	# 	cp file_settings.txt ${this_subject_directory}
+	# 	cd ${this_subject_directory}Processed/MRI_files/04_rsfMRI
+	# 	mv 
+	# fi
 done
