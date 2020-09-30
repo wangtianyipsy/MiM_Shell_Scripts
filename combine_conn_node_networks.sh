@@ -12,6 +12,7 @@
 # this script requires arguments 
 
 # example >> combine_conn_node_networks.sh conn_wu120_test 'left_dlpfc,medial_prefrontal_cortex,post_cingulate'
+#combine_conn_node_networks.sh conn_wu120_all 'left_dlpfc,right_dlpfc,left_acc,right_acc,medial_prefrontal_cortex,post_cingulate,left_aud_cortex,left_post_ips,right_post_ips,left_insular,right_insular,visual_cortex,left_ips,right_ips,right_thalamus,left_hand,right_hand,left_mouth,right_mouth,left_rsc,right_rsc'
 
 argument_counter=0
 for this_argument in "$@"; do
