@@ -42,7 +42,6 @@ for (( this_row=1; this_row<=${roi_line_numbers}; this_row++ )); do
 		
 		gunzip -f *nii.gz
 
-		rm roi_${this_roi_name}.csv
 		rm ${this_roi_name}_point.nii
 		cd $Study_dir
 	fi

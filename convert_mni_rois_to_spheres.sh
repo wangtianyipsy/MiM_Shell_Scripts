@@ -29,7 +29,7 @@ for (( this_row=1; this_row<=${roi_line_numbers}; this_row++ )); do
 
 		cd ${Study_dir}/ROIs/
 
-		ml matlab
+		ml matlab/2020a
 		matlab -nodesktop -nosplash -r "try; convert_to_voxel_coordinates '$this_roi_name' '$this_roi_x' '$this_roi_y' '${this_roi_z}'; catch; end; quit"
 				
 		cd $Study_dir
