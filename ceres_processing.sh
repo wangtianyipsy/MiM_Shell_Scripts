@@ -282,7 +282,7 @@ for this_argument in "$@"; do
         	SECONDS=0
 		fi
 		
-		if [[ $this_ceres_processing_step ==  "ceres_smooth_norm"  ]]; then
+		if [[ $this_ceres_processing_step ==  "ceres_smooth_ants_norm"  ]]; then
 			for this_functional_run_folder in ${fmri_processed_folder_names[@]} ${restingstate_processed_folder_names[@]}; do
 				cd $Subject_dir/Processed/MRI_files/$this_functional_run_folder/ANTS_Normalization
 				ml matlab
@@ -312,6 +312,25 @@ for this_argument in "$@"; do
     		cd "${Subject_dir}"
 			echo "Level One ANTS: $SECONDS sec" >> preprocessing_log.txt
 			SECONDS=0
+		fi
+		if [[ $this_ceres_processing_step == "check_ceres_ants" ]]; then
+			for this_functional_run_folder in ${fmri_processed_folder_names[@]} ${restingstate_processed_folder_names[@]}; do
+				cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
+				ml fsl/6.0.1
+				for this_functional_file in smoothed_warpedToSUIT_CBmasked*.nii; do
+					this_core_functional_file_name=$(echo $this_functional_file | cut -d. -f 1)
+					echo saving jpeg of $this_core_functional_file_name for $subject
+					xvfb-run -s "-screen 0 640x480x24" fsleyes render --scene ortho --outfile ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/check_SUIT_ants_${this_core_functional_file_name} \
+					${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/SUIT_Nobrainstem_2mm.nii -cm red-yellow \
+					${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/$this_functional_file --alpha 85
+					# echo "Created screenshot for": ${SUB}-${SSN};
+					display check_SUIT_ants_${this_core_functional_file_name}.png
+				done
+			done
+			# echo This step took $SECONDS seconds to execute
+			# cd "${Subject_dir}"
+			# echo "Smoothing ANTS files: $SECONDS sec" >> preprocessing_log.txt
+			# SECONDS=0
 		fi
 		### potentially mask smoothed images ####
 	done
