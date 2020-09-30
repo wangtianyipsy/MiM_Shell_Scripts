@@ -13,15 +13,77 @@ Code_dir=/blue/rachaelseidler/tfettrow/Crunch_Code
 
 export MATLABPATH=${Code_dir}/Matlab_Scripts/helper
 
+# Study_dir=/blue/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/option2
+# output_filename=option2_subject_normalized_intensity_variability.nii
+
+# cd ${Study_dir}
+# for file_to_compare in functTempTarget_*.nii; do
+#    echo $this_file
+#    ml fsl
+
+#    this_file_header_info=$(fslhd $file_to_compare)
+#    this_file_number_of_volumes=$(echo $this_file_header_info | grep -o dim4.* | tr -s ' ' | cut -d ' ' -f 2)
+#    echo $this_file_number_of_volumes
+
+#    if [[ $this_file_number_of_volumes == 1 ]]; then
+         
+#          fslmaths $file_to_compare -nan noNAN_$file_to_compare
+#          gunzip -f *nii.gz
+#          cp noNAN_$file_to_compare duplicate_$file_to_compare
+#          gunzip -f *nii.gz
+#          fslmerge -t merged_$file_to_compare noNAN_$file_to_compare duplicate_$file_to_compare
+#          gunzip -f *nii.gz
+#          fslmaths merged_$file_to_compare -Tmean Mean_$file_to_compare
+#          gunzip -f *nii.gz
+         
+#          # rm merged_$file_to_compare
+#          # rm duplicate_$file_to_compare
+#          # rm noNAN_$file_to_compare
+
+#          in_brain_mean=$(fslmeants -i Mean_$file_to_compare -m Mean_$file_to_compare)
+#          echo $in_brain_mean
+
+#          fslmaths $file_to_compare -div $in_brain_mean normalized_$file_to_compare
+#          gunzip -f *nii.gz
+#       # else
+#       #    fslmaths $file_to_compare -Tmean Mean_$file_to_compare
+         
+#       #    in_brain_mean=$(fslmeants -i Mean_$file_to_compare -m Mean_$file_to_compare)
+#       #    echo $in_brain_mean
+
+#       #    fslmaths Mean_$file_to_compare -div $in_brain_mean normalized_$file_to_compare
+#       fi
+# done 
+
+
+# # cd $Study_dir
+# # ml fsl
+# fslmerge -t all_subject_normalized_intensity.nii normalized_*
+# gunzip -f *nii.gz
+# fslmaths all_subject_normalized_intensity.nii -Tstd $output_filename
+# gunzip -f *nii.gz
+# rm normalized_*
+# rm all_subject_normalized_intensity.nii
+
+
+
+
+
+
+
 Study_dir=/blue/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/MiM_Data
 
-subjects='2007,2012,2008,2021,2015'
-# subjects='1002,1004,1010,1011,1013'
+# subjects='2007,2012,2008,2021,2015'
+subjects='1002,1004,1010,1011,1013'
+# subjects='wu120_001,wu120_002,wu120_003,wu120_004,wu120_005'
 
-output_filename=OAnsDartelNoBS_subject_normalized_intensity_variability.nii
-file_to_compare='warpedToSUITdartelNoBrainstem_coregToSUIT_CBmasked_coregToT1_unwarpedRealigned_slicetimed_fMRI_Run1.nii'
+output_filename=mim_subject_normalized_intensity_variability.nii
+# file_to_compare='warpedToSUITdartelNoBrainstem_coregToSUIT_CBmasked_coregToT1_unwarpedRealigned_slicetimed_fMRI_Run1.nii'
+# file_to_compare='warpedToMNI_unwarpedRealigned_slicetimed_RestingState.nii'
+file_to_compare='warpedToMNI_unwarpedRealigned_slicetimed_fMRI_Run1.nii'
 image_folder='05_MotorImagery'
-#image_folder='06_Nback'
+# image_folder='06_Nback'
+# image_folder='04_rsfMRI'
 
 while IFS=',' read -ra subject_list; do
    for this_subject in "${subject_list[@]}"; do
