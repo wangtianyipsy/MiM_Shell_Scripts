@@ -681,14 +681,15 @@ do
 		data_folder_to_analyze=($restingstate_processed_folder_names)
 			for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
 				cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
-				ml fsl
+				ml fsl/6.0.1
 				for this_functional_file in smoothed_warpedToMNI_unwarpedRealigned*.nii; do
 					this_core_functional_file_name=$(echo $this_functional_file | cut -d. -f 1)
-					echo saving jpeg of $this_core_functional_file_name
+					echo saving jpeg of $this_core_functional_file_name for ${subject}
 					xvfb-run -s "-screen 0 640x480x24" fsleyes render --scene ortho --outfile ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/check_MNI_ants_${this_core_functional_file_name} \
 					${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/MNI_2mm.nii -cm red-yellow \
 					${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/$this_functional_file --alpha 85
 					# echo "Created screenshot for": ${SUB}-${SSN};
+					display check_MNI_ants_${this_core_functional_file_name}.png
 				done
 			done
 			# echo This step took $SECONDS seconds to execute

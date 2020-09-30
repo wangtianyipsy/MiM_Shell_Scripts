@@ -218,16 +218,16 @@ do
 			fieldmap_folders=($fmri_fieldmap_processed_folder_names)
 			fmri_folders=($fmri_processed_folder_names)
    			this_loop_index=0
-		   	for this_fieldmap_folder in ${fieldmap_folders[@]}; do
-				cd ${Subject_dir}/Processed/MRI_files/${fmri_folders[$this_loop_index]}/
+		   	for this_fmri_folder in ${fmri_folders[@]}; do
+				cd ${Subject_dir}/Processed/MRI_files/${this_fmri_folder}/
 				for this_functional_run_file_json in *.json; do 
 					echo $this_functional_run_file_json
-					cd ${Subject_dir}/Processed/MRI_files/$this_fieldmap_folder
-			   		cp fpm_my_fieldmap.hdr ${Subject_dir}/Processed/MRI_files/${fmri_folders[$this_loop_index]}
-	    	        cp fpm_my_fieldmap.img ${Subject_dir}/Processed/MRI_files/${fmri_folders[$this_loop_index]}
-					cp ${Code_dir}/Matlab_Scripts/helper/vdm_defaults.m ${Subject_dir}/Processed/MRI_files/${fmri_folders[$this_loop_index]}
-					cp se_epi_unwarped.nii ${Subject_dir}/Processed/MRI_files/${fmri_folders[$this_loop_index]}
-					cd ${Subject_dir}/Processed/MRI_files/${fmri_folders[$this_loop_index]}/
+					cd ${Subject_dir}/Processed/MRI_files/${fieldmap_folders[$this_loop_index]}
+			   		cp fpm_my_fieldmap.hdr ${Subject_dir}/Processed/MRI_files/${this_fmri_folder}
+	    	        cp fpm_my_fieldmap.img ${Subject_dir}/Processed/MRI_files/${this_fmri_folder}
+					cp ${Code_dir}/Matlab_Scripts/helper/vdm_defaults.m ${Subject_dir}/Processed/MRI_files/${this_fmri_folder}
+					cp se_epi_unwarped.nii ${Subject_dir}/Processed/MRI_files/${this_fmri_folder}
+					cd ${Subject_dir}/Processed/MRI_files/${this_fmri_folder}/
 
 					read_out=$(cat vdm_defaults.m)
 	
@@ -872,14 +872,15 @@ do
 			data_folder_to_analyze=($fmri_processed_folder_names)
 			for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
 				cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
-				ml fsl
+				ml fsl/6.0.1
 				for this_functional_file in smoothed_warpedToMNI_unwarpedRealigned*.nii; do
 					this_core_functional_file_name=$(echo $this_functional_file | cut -d. -f 1)
 					echo saving jpeg of $this_core_functional_file_name
 					xvfb-run -s "-screen 0 640x480x24" fsleyes render --scene ortho --outfile ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/check_MNI_ants_${this_core_functional_file_name} \
 					${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/MNI_2mm.nii -cm red-yellow \
 					${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/$this_functional_file --alpha 85
-				
+					
+					display check_MNI_ants_${this_core_functional_file_name}.jpg
 				done
 			done
 			# echo This step took $SECONDS seconds to execute
