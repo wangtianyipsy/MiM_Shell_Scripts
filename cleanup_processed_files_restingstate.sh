@@ -14,8 +14,10 @@ subject=$1
 
 Subject_dir=/ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/MiM_Data/${subject}
 cd "${Subject_dir}"
+
 lines_to_ignore=$(awk '/#/{print NR}' file_settings.txt)
-fmri_line_numbers_in_file_info=$(awk '/functional_run/{print NR}' file_settings.txt)
+
+fmri_line_numbers_in_file_info=$(awk '/restingstate/{print NR}' file_settings.txt)
 
 fmri_line_numbers_to_process=$fmri_line_numbers_in_file_info
 
@@ -43,24 +45,31 @@ fmri_processed_folder_names=$(echo "${fmri_processed_folder_name_array[@]}" | tr
 	
 data_folder_to_analyze=($fmri_processed_folder_names)
 #cd $Subject_dir/Processed/MRI_files
+GLOBIGNORE=Condition_Onsets*:slicetimed*.nii:*.json:rp_*:art_*:*.jpeg:warpedToMNI*:warpedToT1*:unwarpedRealigned*:smoothed_warpedToMNI*:biascorrected*:MNI_2mm*:meanunwarpedRealigned_*:RestingState*:coregToT1*
+
 for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
 	cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}
-
 	#zip processed_files.zip *
-	#wait
-	
-	shopt -s extglob
 	#rm !(art_*|ARTscreenshot*|Condition_Onsets*|smoothed*|fMRI_Run*|*.json)
-	rm !(Condition_Onsets*|slicetimed*|fMRI_Run*|*.json)
+	# shopt -s extglob
+	# rm !(Condition_Onsets*|slicetimed*|fMRI_Run*|*.json)
+	# find . -type f -not \(-name 'Condition_Onsets*' -or -name 'slicetimed*' -or -name 'fMRI_Run*' -or -name '*.json' \) -delete
 	#wait
+	rm -r Level1_Results
+	rm -v *
+
+	
 ################################################################
 	cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
+	rm -r Level1_Results
+	rm -v *
 
 	#zip ants_processed_files.zip *
 	#wait
 
 	# rm !(art_*|ARTscreenshot*|Condition_Onsets*|smoothed*|warpedToMNI_biascorrected*|fMRI_Run*|*.json|ANTs_*)
-	rm !(Condition_Onsets*|fMRI_Run*|*.json)
-	#shopt -u extglob
+	# rm !(Condition_Onsets*|fMRI_Run*|*.json)
+	
 
 done
+unset GLOBIGNORE

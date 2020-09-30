@@ -7,11 +7,11 @@ for this_argument in "$@"; do
 	fi
 	echo $subjects
 	# Set the path for our custom matlab functions and scripts
-	Code_dir=/ufrc/rachaelseidler/tfettrow/Crunch_Code
+	Code_dir=/blue/rachaelseidler/tfettrow/Crunch_Code
 	
 	export MATLABPATH=${Code_dir}/Matlab_Scripts/helper
 	
-	Study_dir=/ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/MiM_Data
+	Study_dir=/blue/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/MiM_Data
 	cd "${Study_dir}"
 
 	while IFS=',' read -ra subject_list; do

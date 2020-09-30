@@ -12,7 +12,7 @@
 subject=$1
 
 
-Subject_dir=/ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/MiM_Data/${subject}
+Subject_dir=/blue/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/MiM_Data/${subject}
 cd "${Subject_dir}"
 lines_to_ignore=$(awk '/#/{print NR}' file_settings.txt)
 fmri_line_numbers_in_file_info=$(awk '/functional_run/{print NR}' file_settings.txt)
@@ -42,25 +42,23 @@ done
 fmri_processed_folder_names=$(echo "${fmri_processed_folder_name_array[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' ')
 	
 data_folder_to_analyze=($fmri_processed_folder_names)
-#cd $Subject_dir/Processed/MRI_files
+
+# leave the slicetimed bc in the event of outlier removals, the volumes are removed from slicetimed, not the raw image
+
 for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
 	cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}
-
-	#zip processed_files.zip *
-	#wait
+	GLOBIGNORE=Condition_Onsets*:slicetimed*.nii:fMRI_Run*:*.json:rp_*:art_*:*.jpeg:warpedToMNI_*:warpToMNIParams*:smoothed_*:MNI_2mm*:meanunwarpedRealigned_*:RestingState*:*T1.nii:mean*:SUIT_Nobrainstem_2mm.nii:Affine*:warpedToSUIT_*:warpToSUITParams*
+	rm -r Level1_Results
+	rm -v *
+	unset GLOBIGNORE
+	gzip *.nii
 	
-	shopt -s extglob
-	#rm !(art_*|ARTscreenshot*|Condition_Onsets*|smoothed*|fMRI_Run*|*.json)
-	rm !(Condition_Onsets*|slicetimed*|fMRI_Run*|*.json)
-	#wait
 ################################################################
 	cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
-
-	#zip ants_processed_files.zip *
-	#wait
-
-	# rm !(art_*|ARTscreenshot*|Condition_Onsets*|smoothed*|warpedToMNI_biascorrected*|fMRI_Run*|*.json|ANTs_*)
-	rm !(Condition_Onsets*|fMRI_Run*|*.json)
-	#shopt -u extglob
-
+	GLOBIGNORE=Condition_Onsets*:slicetimed*.nii:fMRI_Run*:*.json:rp_*:art_*:*.jpeg:warpedToMNI_*:warpToMNIParams*:smoothed_*:MNI_2mm*:meanunwarpedRealigned_*:RestingState*:*T1.nii:mean*:SUIT_Nobrainstem_2mm.nii:Affine*:warpedToSUIT_*:warpToSUITParams*
+	rm -r Level1_Results
+	rm -v *
+	unset GLOBIGNORE
+	gzip *.nii
 done
+unset GLOBIGNORE
