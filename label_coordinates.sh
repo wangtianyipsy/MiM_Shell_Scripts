@@ -1,0 +1,75 @@
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# this script requires arguments 
+
+settings_file=$1
+
+Code_dir=/blue/rachaelseidler/tfettrow/Crunch_Code
+export MATLABPATH=${Code_dir}/Matlab_Scripts/helper
+
+Study_dir=/blue/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/MiM_Data
+
+cd "${Study_dir}"
+analysis_name=$(echo "$settings_file" | cut -d'_' -f3-)
+
+if [ -e $ROI_labels_${analysis_name} ]; then
+  	rm $ROI_labels_${analysis_name}
+fi
+
+outfile=ROI_labels_${analysis_name}
+
+lines_to_ignore=$(awk '/#/{print NR}' $settings_file)
+
+roi_line_numbers=$(awk 'END{print NR}' $settings_file)
+for (( this_row=1; this_row<=${roi_line_numbers}; this_row++ )); do
+	if ! [[ ${lines_to_ignore[*]} =~ $this_row ]]; then
+		this_roi_name=$(cat $settings_file | sed -n ${this_row}p | cut -d ',' -f4)
+		this_roi_x=$(cat $settings_file | sed -n ${this_row}p | cut -d ',' -f1)
+		this_roi_y=$(cat $settings_file | sed -n ${this_row}p | cut -d ',' -f2)
+		this_roi_z=$(cat $settings_file | sed -n ${this_row}p | cut -d ',' -f3)
+		this_network_name=$(cat $settings_file | sed -n ${this_row}p | cut -d ',' -f5)
+		echo $this_network_name
+		cd ${Study_dir}/ROIs/
+		
+		# for this ROI
+		# 1) grab the .nii
+		# 2) round fslmeants to determine area code
+		# 3) read in the AAL3.txt to determine brain area associated with area code
+		# 4) create a ROI_labels_XXstudyXX.txt that contains the a) coordinates, b) AAL area name, c) network 
+
+	
+		ml fsl
+		fslmaths MNI_2mm.nii -mul 0 -add 1 -roi $this_roi_x 1 $this_roi_y 1 $this_roi_z 1 0 1 ${this_roi_name}_point.nii -odt float	
+	
+	
+		brain_area_code=$(fslmeants -i ${Study_dir}/ROIs/AAL_Labeling_Files/AAL3_2mm.nii -m ${this_roi_name}_point.nii)
+		brain_area_code=$(printf "%.0f" $(echo "$brain_area_code" | bc))
+		#echo $brain_area_code
+
+		brain_area_name=$(cat ${Study_dir}/ROIs/AAL_Labeling_Files/AAL3.nii.txt | sed -n ${brain_area_code}p | cut -d ' ' -f2)
+		#echo $brain_area_name
+
+		echo ROI:$this_roi_name located in $brain_area_name 
+		cd $Study_dir
+		echo $this_roi_x, $this_roi_y, $this_roi_z, "$brain_area_name", "$this_network_name" >> "$outfile"	
+		# ml fsl
+		# fslmaths MNI_2mm.nii -mul 0 -add 1 -roi $this_roi_x 1 $this_roi_y 1 $this_roi_z 1 0 1 ${this_roi_name}_point -odt float
+		
+		# gunzip -f *nii.gz
+		# fslmaths ${this_roi_name}_point.nii -kernel sphere 4 -fmean ${this_roi_name}.nii -odt float
+		
+		# gunzip -f *nii.gz
+
+		# rm ${this_roi_name}_point.nii
+		
+	fi
+done
