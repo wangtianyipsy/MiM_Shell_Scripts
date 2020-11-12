@@ -85,7 +85,7 @@ do
             if [ -e slicetimed_*.nii ]; then 
                 rm slicetimed_*.nii
             fi
-            ml matlab
+            ml matlab/2020a
             matlab -nodesktop -nosplash -r "try; slicetime_restingstate; catch; end; quit"
 
         	echo This step took $SECONDS seconds to execute
@@ -95,8 +95,9 @@ do
 		fi
 
 		if [[ $this_preprocessing_step == "create_fieldmap_restingstate" ]]; then
+
+			data_folder_to_copy_to=($restingstate_processed_folder_names)
 			####  this section was for hcp 1200 rsfMRI data ... what i learned.. need to make this more universal 
-			# data_folder_to_copy_to=($restingstate_processed_folder_names)
 			# cd "${Subject_dir}/Processed/MRI_files/03_Fieldmaps/04_rsfMRI"
 			#    	# just cleaning up in case this is being rerun
 			#    	if [ -e my_fieldmap_nifti.nii ]; then
@@ -255,7 +256,7 @@ do
 					encoding_direction=$(grep "PhaseEncodingDirection" ${this_json_file} | cut -d: -f 2 | head -1 | tr -d '"' |  tr -d ',')
 
 					this_file_name=$(echo $this_json_file | cut -d. -f 1)
-					ml fsl
+					ml fsl/6.0.1
 					this_file_header_info=$(fslhd $this_file_name.nii)
 					this_file_number_of_volumes=$(echo $this_file_header_info | grep -o dim4.* | tr -s ' ' | cut -d ' ' -f 2)
 	
@@ -272,7 +273,7 @@ do
 					previous_encoding_direction=$encoding_direction
 				done
 		
-				ml fsl
+				ml fsl/6.0.1
 	
 				topup --imain=AP_PA_merged.nii --datain=acqParams.txt --fout=my_fieldmap_nifti --config=b02b0.cnf --iout=se_epi_unwarped --out=topup_results
 	
@@ -298,7 +299,7 @@ do
 			SECONDS=0
 		fi
 
-   		if [[ $this_preprocessing_step == "unwarp_restingstate" ]]; then
+   		if [[ $this_preprocessing_step == "realign_unwarp_restingstate" ]]; then
    			data_folder_to_copy_to=($restingstate_processed_folder_names)
    			cd ${Subject_dir}/Processed/MRI_files/${data_folder_to_copy_to}
 				
@@ -334,7 +335,7 @@ do
 	  			echo ${array[3]} >> vdm_defaults.m
 	  			echo ${array[4]} >> vdm_defaults.m
 	
-				ml matlab
+				ml matlab/2020a
 	    		matlab -nodesktop -nosplash -r "try; create_vdm_img('slicetimed_${this_core_functional_file_name}.nii'); catch; end; quit"
 	   			matlab -nodesktop -nosplash -r "try; realign_unwarp_single('slicetimed_${this_core_functional_file_name}.nii'); catch; end; quit"
 				
@@ -372,7 +373,7 @@ do
 			done
 
 			for this_functional_file in unwarpedRealigned*.nii; do
-				ml matlab
+				ml matlab/2020a
 				matlab -nodesktop -nosplash -r "try; art_restingstate('$this_functional_file'); catch; end; quit"
 	
 				rm T1.nii
@@ -404,7 +405,7 @@ do
 						cd "${Subject_dir}/Processed/MRI_files/${this_processed_folder}"
 		
 						this_slicetimed_file=slicetimed_RestingState.nii						
-						ml fsl
+						ml fsl/6.0.1
 						## need to check the length of slicetimed run with respect to raw.. if already changed throw an error
 						this_slicetimed_file_corename=$(echo $this_slicetimed_file | cut -d. -f 1)
 						this_raw_file_name=$(echo $this_slicetimed_file | cut -d_ -f2-)
@@ -443,7 +444,7 @@ do
 							rm vol*
 							gunzip -f *nii.gz
 							
-							ml matlab			
+							ml matlab/2020a			
 			
 							matlab -nodesktop -nosplash -r "try; realign_unwarp_single('$this_slicetimed_file'); catch; end; quit"
 						
@@ -478,7 +479,7 @@ do
 			this_t1_folder=($t1_processed_folder_names)
 			cp ${Code_dir}/MR_Templates/TPM.nii ${Subject_dir}/Processed/MRI_files/${this_t1_folder}
 			cd ${Subject_dir}/Processed/MRI_files/${this_t1_folder}/
-			ml matlab
+			ml matlab/2020a
 			matlab -nodesktop -nosplash -r "try; segment_t1; catch; end; quit"
 			matlab -nodesktop -nosplash -r "try; skull_strip_t1; catch; end; quit"
 	
@@ -493,6 +494,7 @@ do
 			# hard coded to go in and copy segmented T1
 			data_folder_to_copy_to=($restingstate_processed_folder_names)
 			cp ${Subject_dir}/Processed/MRI_files/02_T1/* ${Subject_dir}/Processed/MRI_files/${data_folder_to_copy_to}/
+			# mkdir -p ${Subject_dir}/Processed/MRI_files/${data_folder_to_copy_to}/ANTS_Normalization
 			
 			echo This step took $SECONDS seconds to execute
 			cd "${Subject_dir}"
@@ -669,7 +671,7 @@ do
 				if [ -e smoothed_*.nii ]; then
                 	rm smoothed_*.nii
             	fi
-				ml matlab
+				ml matlab/2020a
 				matlab -nodesktop -nosplash -r "try; smooth_restingstate_ants; catch; end; quit"
 			echo This step took $SECONDS seconds to execute
 			cd "${Subject_dir}"
@@ -699,8 +701,9 @@ do
 		fi
 		if [[ $this_preprocessing_step == "copy_files_restingstate" ]]; then
 			data_folder_to_analyze=($restingstate_processed_folder_names)
-			cp ${Subject_dir}/Processed/MRI_files/${data_folder_to_analyze}/art_regression_outliers_and_movement*.mat ${Subject_dir}/Processed/MRI_files/${data_folder_to_analyze}/ANTS_Normalization
-			cp ${Subject_dir}/Processed/MRI_files/05_MotorImagery/ANTS_Normalization/warpedToMNI_biascorrected*.nii ${Subject_dir}/Processed/MRI_files/${data_folder_to_analyze}/ANTS_Normalization
+			cp ${Subject_dir}/Processed/MRI_files/${data_folder_to_analyze}/rp_* ${Subject_dir}/Processed/MRI_files/${data_folder_to_analyze}/ANTS_Normalization
+			# cp ${Subject_dir}/Processed/MRI_files/${data_folder_to_analyze}/art_regression_outliers_and_movement*.mat ${Subject_dir}/Processed/MRI_files/${data_folder_to_analyze}/ANTS_Normalization
+			# cp ${Subject_dir}/Processed/MRI_files/05_MotorImagery/ANTS_Normalization/warpedToMNI_biascorrected*.nii ${Subject_dir}/Processed/MRI_files/${data_folder_to_analyze}/ANTS_Normalization
 		fi
 
 	#done
