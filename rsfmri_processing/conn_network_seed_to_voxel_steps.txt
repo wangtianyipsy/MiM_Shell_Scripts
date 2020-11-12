@@ -1,9 +1,19 @@
 ########### README
-order of events for conn seed->voxel network creation
+##### steps for conn wb seed->voxel network creation
 1) conn network seed to voxel analysis
 2) identify peak coordinates (identify_seed_voxel_nodes.m) 
-3) combine the networks into cohesive ROI_settings file (combine_node_networks.sh)
-4) create spheres for the nodes in ROI_settings (convert_voxel_rois_to_sphers.sh)
+3) combine the networks into cohesive ROI_settings file (combine_conn_node_networks.sh)
+4) create spheres for the nodes in ROI_settings (convert_voxel_rois_to_spheres.sh)
 5) combine the sphere ROIs for each network in ROI_settings (add_rois_network.m)
+6) run displayNetworks.py in MRIcroGL
+7) run add_number_of_nodes_to_jpg.m to insert the # of nodes on image
+8) label the coordinates of nodes (label_coordinates.sh)
+
+##### steps for inclusion of cb analysis
+1) cb mask the wb spmT (conn_mask_wb_for_cb_analysis.m)
+2) run steps 1-4 above on cb and wb seed->voxel results
+3) combine wb and cb settings files (combine_wb_and_cb_settings_files.sh)
+4) label the coordinates of nodes (label_coordinates.sh)
+5) call 5 (above) on the combined ROI_settings_XX_wb_cb.txt
 6) run displayNetworks.py in MRIcroGL
 7) run add_number_of_nodes_to_jpg.m to insert the # of nodes on image
