@@ -11,7 +11,7 @@
 
 # this script requires arguments 
 
-# example >> export_fmri_rois_to_redcap.sh '1002,1004' 05_MotorImagery ROI_settings_motorimagerySWE.txt
+# example >> export_fmri_rois_to_redcap.sh '1002,1004,1007,1009,1010,1011,1013,2021,2015,2002,2018,2017,2012,2025,2020,2026,2023,2022,2007,2013,2008,2033,2034,2037' 05_MotorImagery ROI_settings_MiMRedcap.txt
 
 
 ##################################################

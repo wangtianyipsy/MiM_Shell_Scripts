@@ -314,10 +314,12 @@ for this_argument in "$@"; do
 			SECONDS=0
 		fi
 		if [[ $this_ceres_processing_step == "check_ceres_ants" ]]; then
-			for this_functional_run_folder in ${fmri_processed_folder_names[@]} ${restingstate_processed_folder_names[@]}; do
+			for this_functional_run_folder in ${fmri_processed_folder_names[@]}; do
 				cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
 				ml fsl/6.0.1
-				for this_functional_file in smoothed_warpedToSUIT_CBmasked*.nii; do
+				gunzip smoothed_warpedToSUIT_CBmasked_*
+				gunzip SUIT_Nobrainstem_2mm.nii.gz
+				for this_functional_file in smoothed_warpedToSUIT_CBmasked_*; do
 					this_core_functional_file_name=$(echo $this_functional_file | cut -d. -f 1)
 					echo saving jpeg of $this_core_functional_file_name for $subject
 					xvfb-run -s "-screen 0 640x480x24" fsleyes render --scene ortho --outfile ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/check_SUIT_ants_${this_core_functional_file_name} \

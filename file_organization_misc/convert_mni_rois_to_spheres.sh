@@ -30,7 +30,7 @@ for (( this_row=1; this_row<=${roi_line_numbers}; this_row++ )); do
 		cd ${Study_dir}/ROIs/
 
 		ml matlab/2020a
-		matlab -nodesktop -nosplash -r "try; convert_to_voxel_coordinates '$this_roi_name' '$this_roi_x' '$this_roi_y' '${this_roi_z}'; catch; end; quit"
+		matlab -nodesktop -nosplash -r "try; convert_to_mniVoxel_coordinates '$this_roi_name' '$this_roi_x' '$this_roi_y' '${this_roi_z}'; catch; end; quit"
 				
 		cd $Study_dir
 	fi
@@ -51,9 +51,9 @@ for (( this_row=1; this_row<=${roi_line_numbers}; this_row++ )); do
 		fi
 		
 		# this_roi_file=roi_${this_roi_name}.csv
-		this_roi_x=$(cat roi_${this_roi_name}.csv | sed -n 2p | cut -d ',' -f1)
-		this_roi_y=$(cat roi_${this_roi_name}.csv | sed -n 2p | cut -d ',' -f2)
-		this_roi_z=$(cat roi_${this_roi_name}.csv | sed -n 2p | cut -d ',' -f3)
+		this_roi_x=$(cat mniVoxel_${this_roi_name}.csv | sed -n 2p | cut -d ',' -f1)
+		this_roi_y=$(cat mniVoxel_${this_roi_name}.csv | sed -n 2p | cut -d ',' -f2)
+		this_roi_z=$(cat mniVoxel_${this_roi_name}.csv | sed -n 2p | cut -d ',' -f3)
 		
 		echo converting ${this_roi_name}: $this_roi_x $this_roi_y $this_roi_z to 5mm sphere ....
 
