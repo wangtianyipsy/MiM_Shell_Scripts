@@ -11,7 +11,18 @@
 
 # this script requires arguments 
 
-settings_file=$1
+#### use neuromorphometrica ####
+#### insert different templates ### as argument??
+
+argument_counter=0
+for this_argument in "$@"; do
+	if	[[ $argument_counter == 0 ]]; then
+		settings_file=$this_argument
+	elif [[ $argument_counter == 1 ]]; then
+		atlas=$this_argument
+	fi
+	(( argument_counter++ ))
+done
 
 Code_dir=/blue/rachaelseidler/tfettrow/Crunch_Code
 export MATLABPATH=${Code_dir}/Matlab_Scripts/helper
@@ -20,7 +31,7 @@ Study_dir=/blue/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Mi
 
 cd "${Study_dir}"
 analysis_name=$(echo "$settings_file" | cut -d'_' -f3-)
-
+# echo $analysis_name
 if [ -e $ROI_labels_${analysis_name} ]; then
   	rm $ROI_labels_${analysis_name}
 fi
@@ -37,7 +48,8 @@ for (( this_row=1; this_row<=${roi_line_numbers}; this_row++ )); do
 		this_roi_y=$(cat $settings_file | sed -n ${this_row}p | cut -d ',' -f2)
 		this_roi_z=$(cat $settings_file | sed -n ${this_row}p | cut -d ',' -f3)
 		this_network_name=$(cat $settings_file | sed -n ${this_row}p | cut -d ',' -f5)
-		echo $this_network_name
+		
+		# echo $this_network_name
 		cd ${Study_dir}/ROIs/
 		
 		# for this ROI
@@ -46,30 +58,48 @@ for (( this_row=1; this_row<=${roi_line_numbers}; this_row++ )); do
 		# 3) read in the AAL3.txt to determine brain area associated with area code
 		# 4) create a ROI_labels_XXstudyXX.txt that contains the a) coordinates, b) AAL area name, c) network 
 
-	
+	# might need to convert mni_2mm voxel to suit_2mm voxel... how to do this?? idk
 		ml fsl
-		fslmaths MNI_2mm.nii -mul 0 -add 1 -roi $this_roi_x 1 $this_roi_y 1 $this_roi_z 1 0 1 ${this_roi_name}_point.nii -odt float	
+		# echo $atlas
+		if [[ $atlas == AAL ]]; then
+			fslmaths MNI_2mm.nii -mul 0 -add 1 -roi $this_roi_x 1 $this_roi_y 1 $this_roi_z 1 0 1 ${this_roi_name}_point.nii -odt float	
+			gunzip -f *nii.gz
+			brain_area_code=$(fslmeants -i ${Study_dir}/ROIs/AAL_Labeling_Files/AAL3_2mm.nii -m ${this_roi_name}_point.nii)
+			brain_area_code=$(printf "%.0f" $(echo "$brain_area_code" | bc))
+			#echo $brain_area_code
 	
+			brain_area_name=$(cat ${Study_dir}/ROIs/AAL_Labeling_Files/AAL3.nii.txt | sed -n ${brain_area_code}p | cut -d ' ' -f2)
+			#echo $brain_area_name
+		elif [[ $atlas == SUIT ]] ; then
+			ml matlab/2020a
+			matlab -nodesktop -nosplash -r "try; convert_to_mni_coordinates '$this_roi_name' '$this_roi_x' '$this_roi_y' '${this_roi_z}'; catch; end; quit"
+			this_roi_x=$(cat "mni_${this_roi_name}.csv" | sed -n 2p | cut -d ',' -f1)
+			this_roi_y=$(cat "mni_${this_roi_name}.csv" | sed -n 2p | cut -d ',' -f2)
+			this_roi_z=$(cat "mni_${this_roi_name}.csv" | sed -n 2p | cut -d ',' -f3)
+
+			matlab -nodesktop -nosplash -r "try; convert_to_suitVoxel_coordinates '$this_roi_name' '$this_roi_x' '$this_roi_y' '${this_roi_z}'; catch; end; quit"
+			this_roi_x=$(cat "suitVoxel_${this_roi_name}.csv" | sed -n 2p | cut -d ',' -f1)
+			this_roi_y=$(cat "suitVoxel_${this_roi_name}.csv" | sed -n 2p | cut -d ',' -f2)
+			this_roi_z=$(cat "suitVoxel_${this_roi_name}.csv" | sed -n 2p | cut -d ',' -f3)
+			
+			if [ -e ${this_roi_name}_point.nii ]; then
+				rm ${this_roi_name}_point.nii
+			fi
+			fslmaths ${Study_dir}/ROIs/SUIT_Labeling_Files/SUIT_2mm.nii -mul 0 -add 1 -roi $this_roi_x 1 $this_roi_y 1 $this_roi_z 1 0 1 ${this_roi_name}_point.nii -odt float
+			gunzip -f *nii.gz
+			brain_area_code=$(fslmeants -i ${Study_dir}/ROIs/SUIT_Labeling_Files/SUIT_2mm.nii -m ${this_roi_name}_point.nii)
+			brain_area_code=$(printf "%.0f" $(echo "$brain_area_code" | bc))
+			echo $brain_area_code
 	
-		brain_area_code=$(fslmeants -i ${Study_dir}/ROIs/AAL_Labeling_Files/AAL3_2mm.nii -m ${this_roi_name}_point.nii)
-		brain_area_code=$(printf "%.0f" $(echo "$brain_area_code" | bc))
-		#echo $brain_area_code
+			brain_area_name=$(cat ${Study_dir}/ROIs/SUIT_Labeling_Files/Cerebellum-SUIT.nii.txt | sed -n ${brain_area_code}p | cut -d ' ' -f2)
+			echo $brain_area_name
+		fi
 
-		brain_area_name=$(cat ${Study_dir}/ROIs/AAL_Labeling_Files/AAL3.nii.txt | sed -n ${brain_area_code}p | cut -d ' ' -f2)
-		#echo $brain_area_name
-
-		echo ROI:$this_roi_name located in $brain_area_name 
+		# echo ROI:$this_roi_name located in $brain_area_name 
 		cd $Study_dir
 		echo $this_roi_x, $this_roi_y, $this_roi_z, "$brain_area_name", "$this_network_name" >> "$outfile"	
-		# ml fsl
-		# fslmaths MNI_2mm.nii -mul 0 -add 1 -roi $this_roi_x 1 $this_roi_y 1 $this_roi_z 1 0 1 ${this_roi_name}_point -odt float
 		
-		# gunzip -f *nii.gz
-		# fslmaths ${this_roi_name}_point.nii -kernel sphere 4 -fmean ${this_roi_name}.nii -odt float
-		
-		# gunzip -f *nii.gz
 
-		# rm ${this_roi_name}_point.nii
-		
+
 	fi
 done
