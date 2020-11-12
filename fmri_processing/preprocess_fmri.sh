@@ -422,105 +422,105 @@ do
 			SECONDS=0
 		fi
 	
-		if [[ $this_preprocessing_step == "coregister_t1_to_MeanFM" ]]; then 
+		# if [[ $this_preprocessing_step == "coregister_t1_to_MeanFM" ]]; then 
     	    
-    	    this_t1_folder=($t1_processed_folder_names)
-    	    for this_fieldmap_folder in ${fmri_fieldmap_processed_folder_names[@]}; do
-    	    	mkdir -p "${Subject_dir}/Processed/MRI_files/${this_t1_folder}/Coregistered2_$this_fieldmap_folder"
-    	    	cp "${Subject_dir}/Processed/MRI_files/${this_t1_folder}/T1.nii" "${Subject_dir}/Processed/MRI_files/${this_t1_folder}/Coregistered2_$this_fieldmap_folder"
-    	    	cp "${Subject_dir}/Processed/MRI_files/${this_fieldmap_folder}/Mean_AP_PA_merged.nii" "${Subject_dir}/Processed/MRI_files/${this_t1_folder}/Coregistered2_$this_fieldmap_folder"
-    	    	cd "${Subject_dir}/Processed/MRI_files/${this_t1_folder}/Coregistered2_$this_fieldmap_folder"
-    	    	ml matlab
-    	    	matlab -nodesktop -nosplash -r "try; coregister_t1_to_MeanFM; catch; end; quit"
-    	    done
+  #   	    this_t1_folder=($t1_processed_folder_names)
+  #   	    for this_fieldmap_folder in ${fmri_fieldmap_processed_folder_names[@]}; do
+  #   	    	mkdir -p "${Subject_dir}/Processed/MRI_files/${this_t1_folder}/Coregistered2_$this_fieldmap_folder"
+  #   	    	cp "${Subject_dir}/Processed/MRI_files/${this_t1_folder}/T1.nii" "${Subject_dir}/Processed/MRI_files/${this_t1_folder}/Coregistered2_$this_fieldmap_folder"
+  #   	    	cp "${Subject_dir}/Processed/MRI_files/${this_fieldmap_folder}/Mean_AP_PA_merged.nii" "${Subject_dir}/Processed/MRI_files/${this_t1_folder}/Coregistered2_$this_fieldmap_folder"
+  #   	    	cd "${Subject_dir}/Processed/MRI_files/${this_t1_folder}/Coregistered2_$this_fieldmap_folder"
+  #   	    	ml matlab
+  #   	    	matlab -nodesktop -nosplash -r "try; coregister_t1_to_MeanFM; catch; end; quit"
+  #   	    done
 	
-    	    echo This step took $SECONDS seconds to execute
-    	    cd "${Subject_dir}"
-			echo "Coregiser t1 to Mean FM: $SECONDS sec" >> preprocessing_log.txt
-			SECONDS=0
-    	fi
+  #   	    echo This step took $SECONDS seconds to execute
+  #   	    cd "${Subject_dir}"
+		# 	echo "Coregiser t1 to Mean FM: $SECONDS sec" >> preprocessing_log.txt
+		# 	SECONDS=0
+  #   	fi
 	
-		if [[ $this_preprocessing_step == "segment_t1" ]]; then
-			#this needs to go into t1 folder and then for each fieldmap folder go into the t1 sub folder for that fieldmap
-			this_t1_folder=($t1_processed_folder_names)
-			for this_fieldmap_folder in ${fmri_fieldmap_processed_folder_names[@]}; do
-				cp ${Code_dir}/MR_Templates/TPM.nii ${Subject_dir}/Processed/MRI_files/${this_t1_folder}/Coregistered2_$this_fieldmap_folder
-				cd ${Subject_dir}/Processed/MRI_files/${this_t1_folder}/Coregistered2_$this_fieldmap_folder
+		# if [[ $this_preprocessing_step == "segment_t1" ]]; then
+		# 	#this needs to go into t1 folder and then for each fieldmap folder go into the t1 sub folder for that fieldmap
+		# 	this_t1_folder=($t1_processed_folder_names)
+		# 	for this_fieldmap_folder in ${fmri_fieldmap_processed_folder_names[@]}; do
+		# 		cp ${Code_dir}/MR_Templates/TPM.nii ${Subject_dir}/Processed/MRI_files/${this_t1_folder}/Coregistered2_$this_fieldmap_folder
+		# 		cd ${Subject_dir}/Processed/MRI_files/${this_t1_folder}/Coregistered2_$this_fieldmap_folder
 	
-				ml matlab
-				matlab -nodesktop -nosplash -r "try; segment_t1; catch; end; quit"
-				rm TPM.nii
-			done
-			echo This step took $SECONDS seconds to execute
-			cd "${Subject_dir}"
-			echo "Segment T1: $SECONDS sec" >> preprocessing_log.txt
-			SECONDS=0
-		fi
+		# 		ml matlab
+		# 		matlab -nodesktop -nosplash -r "try; segment_t1; catch; end; quit"
+		# 		rm TPM.nii
+		# 	done
+		# 	echo This step took $SECONDS seconds to execute
+		# 	cd "${Subject_dir}"
+		# 	echo "Segment T1: $SECONDS sec" >> preprocessing_log.txt
+		# 	SECONDS=0
+		# fi
 	
-		if [[ $this_preprocessing_step == "spm_norm_fmri" ]]; then
-			data_folder_to_analyze=($fmri_processed_folder_names)
-			data_folder_to_copy_from=($t1_processed_folder_names)
-			this_loop_index=0
-			for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
+		# if [[ $this_preprocessing_step == "spm_norm_fmri" ]]; then
+		# 	data_folder_to_analyze=($fmri_processed_folder_names)
+		# 	data_folder_to_copy_from=($t1_processed_folder_names)
+		# 	this_loop_index=0
+		# 	for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
 				
-				cd ${Subject_dir}/Processed/MRI_files/${data_folder_to_copy_from}/Coregistered2_${fmri_fieldmap_processed_folder_names[$this_loop_index]}
+		# 		cd ${Subject_dir}/Processed/MRI_files/${data_folder_to_copy_from}/Coregistered2_${fmri_fieldmap_processed_folder_names[$this_loop_index]}
 				
-				cp y_T1.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/
-				cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/
+		# 		cp y_T1.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/
+		# 		cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/
 				
-				ml matlab
-				matlab -nodesktop -nosplash -r "try; spm_norm_fmri; catch; end; quit"
-				(( this_loop_index++ ))
-			done
-			echo This step took $SECONDS seconds to execute
-			cd "${Subject_dir}"
-			echo "fMRI Normalization: $SECONDS sec" >> preprocessing_log.txt
-			SECONDS=0
-		fi
+		# 		ml matlab
+		# 		matlab -nodesktop -nosplash -r "try; spm_norm_fmri; catch; end; quit"
+		# 		(( this_loop_index++ ))
+		# 	done
+		# 	echo This step took $SECONDS seconds to execute
+		# 	cd "${Subject_dir}"
+		# 	echo "fMRI Normalization: $SECONDS sec" >> preprocessing_log.txt
+		# 	SECONDS=0
+		# fi
 	
-		if [[ $this_preprocessing_step == "spm_norm_t1" ]]; then
-			this_t1_folder=($t1_processed_folder_names)
-			for this_fieldmap_folder in ${fmri_fieldmap_processed_folder_names[@]}; do			
-				cd ${Subject_dir}/Processed/MRI_files/${this_t1_folder}/Coregistered2_$this_fieldmap_folder
+		# if [[ $this_preprocessing_step == "spm_norm_t1" ]]; then
+		# 	this_t1_folder=($t1_processed_folder_names)
+		# 	for this_fieldmap_folder in ${fmri_fieldmap_processed_folder_names[@]}; do			
+		# 		cd ${Subject_dir}/Processed/MRI_files/${this_t1_folder}/Coregistered2_$this_fieldmap_folder
 				
-				ml matlab
-				matlab -nodesktop -nosplash -r "try; spm_norm_t1; catch; end; quit"
-			done
-			echo This step took $SECONDS seconds to execute
-			cd "${Subject_dir}"
-			echo "T1 Normalization: $SECONDS sec" >> preprocessing_log.txt
-			SECONDS=0
-		fi
+		# 		ml matlab
+		# 		matlab -nodesktop -nosplash -r "try; spm_norm_t1; catch; end; quit"
+		# 	done
+		# 	echo This step took $SECONDS seconds to execute
+		# 	cd "${Subject_dir}"
+		# 	echo "T1 Normalization: $SECONDS sec" >> preprocessing_log.txt
+		# 	SECONDS=0
+		# fi
 	
-		if [[ $this_preprocessing_step == "smooth_fmri" ]]; then
-			data_folder_to_analyze=($fmri_processed_folder_names)
-			for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
-				cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/
-				ml matlab
-				matlab -nodesktop -nosplash -r "try; smooth_fmri; catch; end; quit"
-			done
-			echo This step took $SECONDS seconds to execute
-			cd "${Subject_dir}"
-			echo "Smoothing: $SECONDS sec" >> preprocessing_log.txt
-			SECONDS=0
-		fi
+		# if [[ $this_preprocessing_step == "smooth_fmri" ]]; then
+		# 	data_folder_to_analyze=($fmri_processed_folder_names)
+		# 	for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
+		# 		cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/
+		# 		ml matlab
+		# 		matlab -nodesktop -nosplash -r "try; smooth_fmri; catch; end; quit"
+		# 	done
+		# 	echo This step took $SECONDS seconds to execute
+		# 	cd "${Subject_dir}"
+		# 	echo "Smoothing: $SECONDS sec" >> preprocessing_log.txt
+		# 	SECONDS=0
+		# fi
 	
-		if [[ $this_preprocessing_step == "level_one_stats_spm" ]]; then
+		# if [[ $this_preprocessing_step == "level_one_stats_spm" ]]; then
 
-			data_folder_to_analyze=($fmri_processed_folder_names)
-			for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
-				cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}
-				for this_functional_run_file in *.json; do
-					TR_from_json=$(grep "RepetitionTime" ${this_functional_run_file} | tr -dc '0.00-9.00')
-  				break; done
-  				ml matlab
-    			matlab -nodesktop -nosplash -r "try; level_one_stats(1, '$TR_from_json'); catch; end; quit"
-    		done
-    		echo This step took $SECONDS seconds to execute
-    		cd "${Subject_dir}"
-			echo "Smoothing: $SECONDS sec" >> preprocessing_log.txt
-			SECONDS=0
-		fi
+		# 	data_folder_to_analyze=($fmri_processed_folder_names)
+		# 	for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
+		# 		cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}
+		# 		for this_functional_run_file in *.json; do
+		# 			TR_from_json=$(grep "RepetitionTime" ${this_functional_run_file} | tr -dc '0.00-9.00')
+  # 				break; done
+  # 				ml matlab
+  #   			matlab -nodesktop -nosplash -r "try; level_one_stats(1, '$TR_from_json'); catch; end; quit"
+  #   		done
+  #   		echo This step took $SECONDS seconds to execute
+  #   		cd "${Subject_dir}"
+		# 	echo "Smoothing: $SECONDS sec" >> preprocessing_log.txt
+		# 	SECONDS=0
+		# fi
 	
 		if [[ $this_preprocessing_step == "skull_strip_t1_4_ants" ]]; then
 			this_t1_folder=($t1_processed_folder_names)
@@ -713,142 +713,142 @@ do
 			SECONDS=0		
 		fi
 		
-		if [[ $this_preprocessing_step == "ants_norm_fmri_method2" ]]; then
-			data_folder_to_analyze=($fmri_processed_folder_names)
-			for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
-				cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
+		# if [[ $this_preprocessing_step == "ants_norm_fmri_method2" ]]; then
+		# 	data_folder_to_analyze=($fmri_processed_folder_names)
+		# 	for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
+		# 		cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
 				
-				ml gcc/5.2.0
-				ml ants
+		# 		ml gcc/5.2.0
+		# 		ml ants
 				
-				for this_mean_file in biascorrected_mean*.nii; do
-					T1_Template=biascorrected_SkullStripped_T1.nii
-					Mean_Func=$this_mean_file
+		# 		for this_mean_file in biascorrected_mean*.nii; do
+		# 			T1_Template=biascorrected_SkullStripped_T1.nii
+		# 			Mean_Func=$this_mean_file
 
-					this_core_file_name=$(echo $this_mean_file | cut -d. -f 1)
-					echo 'registering' $Mean_Func 'to' $T1_Template
-					# moving low res func to high res T1
-					antsRegistration --dimensionality 3 --float 0 \
-					    --output [warpToT1ParamsARMethod2_${this_core_file_name},warpToT1AREstimateMethod2_${this_core_file_name}.nii] \
-					    --interpolation Linear \
-					    --winsorize-image-intensities [0.005,0.995] \
-					    --use-histogram-matching 0 \
-					    --initial-moving-transform [$Mean_Func,$T1_Template,1] \
-					    --transform Rigid[0.1] \
-					    --metric MI[$Mean_Func,$T1_Template,1,32,Regular,0.25] \
-					    --convergence [1000x500x250x100,1e-6,10] \
-					    --shrink-factors 8x4x2x1 \
-					    --smoothing-sigmas 3x2x1x0vox
-					antsRegistration --dimensionality 3 --float 0 \
-						--output [warpToT1ParamsSrMethod2_${this_core_file_name},warpToT1SEstimateMethod2_${this_core_file_name}.nii] \
-						--transform SyN[0.1,3,0] \
-        				--metric CC[$Mean_Func,$T1_Template,1,2] \
-        				--convergence [100x70x50x20,1e-6,10] \
-        				--restrict-deformation 1x1x0 \
-        				--shrink-factors 8x4x2x1 \
-        				--smoothing-sigmas 3x2x1x0vox
-				done
-				gunzip -f *nii.gz
-			done
+		# 			this_core_file_name=$(echo $this_mean_file | cut -d. -f 1)
+		# 			echo 'registering' $Mean_Func 'to' $T1_Template
+		# 			# moving low res func to high res T1
+		# 			antsRegistration --dimensionality 3 --float 0 \
+		# 			    --output [warpToT1ParamsARMethod2_${this_core_file_name},warpToT1AREstimateMethod2_${this_core_file_name}.nii] \
+		# 			    --interpolation Linear \
+		# 			    --winsorize-image-intensities [0.005,0.995] \
+		# 			    --use-histogram-matching 0 \
+		# 			    --initial-moving-transform [$Mean_Func,$T1_Template,1] \
+		# 			    --transform Rigid[0.1] \
+		# 			    --metric MI[$Mean_Func,$T1_Template,1,32,Regular,0.25] \
+		# 			    --convergence [1000x500x250x100,1e-6,10] \
+		# 			    --shrink-factors 8x4x2x1 \
+		# 			    --smoothing-sigmas 3x2x1x0vox
+		# 			antsRegistration --dimensionality 3 --float 0 \
+		# 				--output [warpToT1ParamsSrMethod2_${this_core_file_name},warpToT1SEstimateMethod2_${this_core_file_name}.nii] \
+		# 				--transform SyN[0.1,3,0] \
+  #       				--metric CC[$Mean_Func,$T1_Template,1,2] \
+  #       				--convergence [100x70x50x20,1e-6,10] \
+  #       				--restrict-deformation 1x1x0 \
+  #       				--shrink-factors 8x4x2x1 \
+  #       				--smoothing-sigmas 3x2x1x0vox
+		# 		done
+		# 		gunzip -f *nii.gz
+		# 	done
 		
-			data_folder_to_analyze=($fmri_processed_folder_names)
-			for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
-				cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
-				gunzip -f *nii.gz
-				ml gcc/5.2.0
-				ml ants
+		# 	data_folder_to_analyze=($fmri_processed_folder_names)
+		# 	for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
+		# 		cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
+		# 		gunzip -f *nii.gz
+		# 		ml gcc/5.2.0
+		# 		ml ants
 
-				for this_mean_file in biascorrected_mean*.nii; do
-					this_core_file_name=$(echo $this_mean_file | cut -d. -f 1)
-					antsApplyTransforms -d 3 -e 3 -i ${this_core_file_name}.nii -r biascorrected_SkullStripped_T1.nii \
-					-n BSpline -o warpedToT1Method2AR_${this_core_file_name}.nii -t [warpToT1ParamsARMethod2_${this_core_file_name}0GenericAffine.mat,1] -v
-					antsApplyTransforms -d 3 -e 3 -i ${this_core_file_name}.nii -r biascorrected_SkullStripped_T1.nii \
-					-n BSpline -o warpedToT1Method2ARSr_${this_core_file_name}.nii -t [warpToT1ParamsSrMethod2_${this_core_file_name}0InverseWarp.nii] -t [warpToT1ParamsARMethod2_${this_core_file_name}0GenericAffine.mat,1] -v 
-				done
-			done
+		# 		for this_mean_file in biascorrected_mean*.nii; do
+		# 			this_core_file_name=$(echo $this_mean_file | cut -d. -f 1)
+		# 			antsApplyTransforms -d 3 -e 3 -i ${this_core_file_name}.nii -r biascorrected_SkullStripped_T1.nii \
+		# 			-n BSpline -o warpedToT1Method2AR_${this_core_file_name}.nii -t [warpToT1ParamsARMethod2_${this_core_file_name}0GenericAffine.mat,1] -v
+		# 			antsApplyTransforms -d 3 -e 3 -i ${this_core_file_name}.nii -r biascorrected_SkullStripped_T1.nii \
+		# 			-n BSpline -o warpedToT1Method2ARSr_${this_core_file_name}.nii -t [warpToT1ParamsSrMethod2_${this_core_file_name}0InverseWarp.nii] -t [warpToT1ParamsARMethod2_${this_core_file_name}0GenericAffine.mat,1] -v 
+		# 		done
+		# 	done
 		
-			data_folder_to_analyze=($fmri_processed_folder_names)
-			for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
-				this_t1_folder=($t1_processed_folder_names)
-				cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
+		# 	data_folder_to_analyze=($fmri_processed_folder_names)
+		# 	for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
+		# 		this_t1_folder=($t1_processed_folder_names)
+		# 		cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
 	
-				if [ -e warpToMNIParams_*.nii ]; then 
-        	        rm warpToMNIParams_*.nii
-        	        rm warpToMNIParams_*.mat
-        	        rm warpToMNIEstimate_*.nii
-        	        rm warpedToMNI_*.nii
-        	   		# rm c1*
-        	   		# rm c2*
-        	   		# rm c3*
-        	    fi
+		# 		if [ -e warpToMNIParams_*.nii ]; then 
+  #       	        rm warpToMNIParams_*.nii
+  #       	        rm warpToMNIParams_*.mat
+  #       	        rm warpToMNIEstimate_*.nii
+  #       	        rm warpedToMNI_*.nii
+  #       	   		# rm c1*
+  #       	   		# rm c2*
+  #       	   		# rm c3*
+  #       	    fi
 
-				ml gcc/5.2.0
-				ml ants
+		# 		ml gcc/5.2.0
+		# 		ml ants
 	
-				outputFolder=${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
-				T1_Template=${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/biascorrected_SkullStripped_T1.nii
-				MNI_Template=${Code_dir}/MR_Templates/MNI_1mm.nii
+		# 		outputFolder=${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
+		# 		T1_Template=${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/biascorrected_SkullStripped_T1.nii
+		# 		MNI_Template=${Code_dir}/MR_Templates/MNI_1mm.nii
 
-				this_core_file_name=biascorrected_SkullStripped_T1
+		# 		this_core_file_name=biascorrected_SkullStripped_T1
 
-				echo 'registering' $T1_Template 'to' $MNI_Template
+		# 		echo 'registering' $T1_Template 'to' $MNI_Template
 	
-				antsRegistration --dimensionality 3 --float 0 \
-        		--output [$outputFolder/warpToMNIParams_${this_core_file_name},$outputFolder/warpToMNIEstimate_${this_core_file_name}.nii] \
-        		--interpolation Linear \
-        		--winsorize-image-intensities [0.01,0.99] \
-        		--use-histogram-matching 1 \
-        		--initial-moving-transform [$MNI_Template,$T1_Template,1] \
-        		--transform Rigid[0.1] \
-        		--metric MI[$MNI_Template,$T1_Template,1,64,Regular,.5] \
-        		--convergence [1000x500x250x100,1e-6,10] \
-        		--shrink-factors 8x4x2x1 \
-        		--smoothing-sigmas 3x2x1x0vox \
-        		--transform Affine[0.1] \
-        		--metric MI[$MNI_Template,$T1_Template,1,64,Regular,.5] \
-        		--convergence [1000x500x250x100,1e-6,10] \
-        		--shrink-factors 8x4x2x1 \
-        		--smoothing-sigmas 3x2x1x0vox \
-        		--transform SyN[0.1,3,0] \
-        		--metric CC[$MNI_Template,$T1_Template,1,2] \
-        		--convergence [100x70x50x20,1e-6,10] \
-        		--shrink-factors 8x4x2x1 \
-        		--smoothing-sigmas 3x2x1x0vox
-        	done
+		# 		antsRegistration --dimensionality 3 --float 0 \
+  #       		--output [$outputFolder/warpToMNIParams_${this_core_file_name},$outputFolder/warpToMNIEstimate_${this_core_file_name}.nii] \
+  #       		--interpolation Linear \
+  #       		--winsorize-image-intensities [0.01,0.99] \
+  #       		--use-histogram-matching 1 \
+  #       		--initial-moving-transform [$MNI_Template,$T1_Template,1] \
+  #       		--transform Rigid[0.1] \
+  #       		--metric MI[$MNI_Template,$T1_Template,1,64,Regular,.5] \
+  #       		--convergence [1000x500x250x100,1e-6,10] \
+  #       		--shrink-factors 8x4x2x1 \
+  #       		--smoothing-sigmas 3x2x1x0vox \
+  #       		--transform Affine[0.1] \
+  #       		--metric MI[$MNI_Template,$T1_Template,1,64,Regular,.5] \
+  #       		--convergence [1000x500x250x100,1e-6,10] \
+  #       		--shrink-factors 8x4x2x1 \
+  #       		--smoothing-sigmas 3x2x1x0vox \
+  #       		--transform SyN[0.1,3,0] \
+  #       		--metric CC[$MNI_Template,$T1_Template,1,2] \
+  #       		--convergence [100x70x50x20,1e-6,10] \
+  #       		--shrink-factors 8x4x2x1 \
+  #       		--smoothing-sigmas 3x2x1x0vox
+  #       	done
        
-			data_folder_to_analyze=($fmri_processed_folder_names)
-			for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
-				cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
-				cp ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/unwarpedRealigned*.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
-				cp ${Code_dir}/MR_Templates/MNI_2mm.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
-				gunzip -f *nii.gz
+		# 	data_folder_to_analyze=($fmri_processed_folder_names)
+		# 	for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
+		# 		cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
+		# 		cp ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/unwarpedRealigned*.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
+		# 		cp ${Code_dir}/MR_Templates/MNI_2mm.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
+		# 		gunzip -f *nii.gz
 				
-				ml gcc/5.2.0
-				ml ants
+		# 		ml gcc/5.2.0
+		# 		ml ants
 
-				for this_file_to_warp in unwarpedRealigned*.nii; do 
-					ml fsl
-					this_file_header_info=$(fslhd $this_file_to_warp)
-					this_file_number_of_volumes=$(echo $this_file_header_info | grep -o dim4.* | tr -s ' ' | cut -d ' ' -f 2)
+		# 		for this_file_to_warp in unwarpedRealigned*.nii; do 
+		# 			ml fsl
+		# 			this_file_header_info=$(fslhd $this_file_to_warp)
+		# 			this_file_number_of_volumes=$(echo $this_file_header_info | grep -o dim4.* | tr -s ' ' | cut -d ' ' -f 2)
 	
-					this_func_core_file_name=$(echo $this_file_to_warp | cut -d. -f 1)
-					this_T1_core_file_name=biascorrected_SkullStripped_T1
+		# 			this_func_core_file_name=$(echo $this_file_to_warp | cut -d. -f 1)
+		# 			this_T1_core_file_name=biascorrected_SkullStripped_T1
 				
-					ml gcc/5.2.0; ml ants
-					antsApplyTransforms -d 3 -e 3 -i $this_file_to_warp -r MNI_2mm.nii \
-					-o warpedToMNIMethod2AR_$this_file_to_warp -t [warpToT1ParamsARMethod2_biascorrected_mean${this_func_core_file_name}0GenericAffine.mat,1] \
-					-t [warpToMNIParams_${this_T1_core_file_name}1Warp.nii] -t [warpToMNIParams_${this_T1_core_file_name}0GenericAffine.mat,0] -v
+		# 			ml gcc/5.2.0; ml ants
+		# 			antsApplyTransforms -d 3 -e 3 -i $this_file_to_warp -r MNI_2mm.nii \
+		# 			-o warpedToMNIMethod2AR_$this_file_to_warp -t [warpToT1ParamsARMethod2_biascorrected_mean${this_func_core_file_name}0GenericAffine.mat,1] \
+		# 			-t [warpToMNIParams_${this_T1_core_file_name}1Warp.nii] -t [warpToMNIParams_${this_T1_core_file_name}0GenericAffine.mat,0] -v
 
-					antsApplyTransforms -d 3 -e 3 -i $this_file_to_warp -r MNI_2mm.nii \
-					-o warpedToMNIMethod2ARSr_$this_file_to_warp -t [warpToT1ParamsSrMethod2_biascorrected_mean${this_func_core_file_name}0InverseWarp.nii] -t [warpToT1ParamsARMethod2_biascorrected_mean${this_func_core_file_name}0GenericAffine.mat,1] \
-					-t [warpToMNIParams_${this_T1_core_file_name}1Warp.nii] -t [warpToMNIParams_${this_T1_core_file_name}0GenericAffine.mat,0] -v
-				done
-			done
-			echo This step took $SECONDS seconds to execute
-			cd "${Subject_dir}"
-			echo "ANTS Normalization: $SECONDS sec" >> preprocessing_log.txt
-			SECONDS=0		
-		fi
+		# 			antsApplyTransforms -d 3 -e 3 -i $this_file_to_warp -r MNI_2mm.nii \
+		# 			-o warpedToMNIMethod2ARSr_$this_file_to_warp -t [warpToT1ParamsSrMethod2_biascorrected_mean${this_func_core_file_name}0InverseWarp.nii] -t [warpToT1ParamsARMethod2_biascorrected_mean${this_func_core_file_name}0GenericAffine.mat,1] \
+		# 			-t [warpToMNIParams_${this_T1_core_file_name}1Warp.nii] -t [warpToMNIParams_${this_T1_core_file_name}0GenericAffine.mat,0] -v
+		# 		done
+		# 	done
+		# 	echo This step took $SECONDS seconds to execute
+		# 	cd "${Subject_dir}"
+		# 	echo "ANTS Normalization: $SECONDS sec" >> preprocessing_log.txt
+		# 	SECONDS=0		
+		# fi
 
 		if [[ $this_preprocessing_step == "smooth_fmri_ants" ]]; then
 			data_folder_to_analyze=($fmri_processed_folder_names)
@@ -880,7 +880,7 @@ do
 					${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/MNI_2mm.nii -cm red-yellow \
 					${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/$this_functional_file --alpha 85
 					
-					display check_MNI_ants_${this_core_functional_file_name}.jpg
+					#display check_MNI_ants_${this_core_functional_file_name}.jpg
 				done
 			done
 			# echo This step took $SECONDS seconds to execute
@@ -999,7 +999,7 @@ do
 				# 		TR_from_json=$(grep "RepetitionTime" ${this_functional_run_file} | tr -dc '0.00-9.00')
 				# 		echo $TR_from_json
   		# 		done
-  				ml matlab
+  				ml matlab/2020a
     			# matlab -nodesktop -nosplash -r "try; level_one_stats(1, '$TR_from_json'); catch; end; quit"
     			matlab -nodesktop -nosplash -r "try; level_one_stats(1, 1.5, 'smoothed_warpedToMNI', 'Level1_WholeBrain'); catch; end; quit"
     		done
