@@ -3,7 +3,7 @@
 #SBATCH --mail-type=END,FAIL          			# Mail events (NONE, BEGIN, END, FAIL, ALL)
 #SBATCH --mail-user=<tfettrow@ufl.edu>  		# Where to send mail	
 #SBATCH --ntasks=1                    			# Run a single task
-#SBATCH --mem=12000mb	                   	    # Memory limit
+#SBATCH --mem=8000mb	                   	    # Memory limit
 #SBATCH --qos=rachaelseidler
 #SBATCH --time=96:00:00               			# Time limit hrs:min:sec
 #output=$j.log 	 	  							# Standard output and error log
@@ -15,28 +15,28 @@ cd /blue/rachaelseidler/tfettrow/Crunch_Code/
 # subject_array=(1012 1004 1011 1002 1010 1013 2021 2015 2002 2018 2017 2012 2025 2020 2026 2023 2022 2007 2013 2008 2033 2034)
 # subject_array=(1012 1011 1010 1013 2021 2015 2002 2018 2017 2012 2025 2020 2026 2023 2022 2007 2013 2008 2033 2034)
 
-#subject_array=(1009)
+subject_array=(2052)
 
-#subject=${subject_array[$SLURM_ARRAY_TASK_ID]}
-#echo processing subject $subject
+subject=${subject_array[$SLURM_ARRAY_TASK_ID]}
+echo processing subject $subject
 
 #./Shell_Scripts/file_organize.sh $subject
 #./Shell_Scripts/save_subject_info.sh $subject
 #./Shell_Scripts/zip_raw_files.sh $subject
 
-#./Shell_Scripts/preprocess_fmri.sh $subject slicetime_fmri create_fieldmap unwarp_fmri art_fmri 
+./Shell_Scripts/fmri_processing/preprocess_fmri.sh $subject slicetime_fmri create_fieldmap unwarp_fmri art_fmri 
 
-#./Shell_Scripts/preprocess_fmri.sh $subject unwarp_fmri art_fmri
-#./Shell_Scripts/preprocess_fmri.sh $subject art_fmri
+#./Shell_Scripts/fmri_processing/preprocess_fmri.sh $subject unwarp_fmri art_fmri
+#./Shell_Scripts/fmri_processing/preprocess_fmri.sh $subject art_fmri
 
-#./Shell_Scripts/preprocess_fmri.sh $subject skull_strip_t1_4_ants n4_bias_correction ants_norm_fmri smooth_fmri_ants
-#./Shell_Scripts/preprocess_fmri.sh $subject unwarp_fmri art_fmri 
-#./Shell_Scripts/preprocess_fmri.sh $subject ants_norm_fmri
-# ./Shell_Scripts/preprocess_fmri.sh $subject ants_norm_fmri
+#./Shell_Scripts/fmri_processing/preprocess_fmri.sh $subject skull_strip_t1_4_ants n4_bias_correction ants_norm_fmri smooth_fmri_ants
+#./Shell_Scripts/fmri_processing/preprocess_fmri.sh $subject unwarp_fmri art_fmri 
+#./Shell_Scripts/fmri_processing/preprocess_fmri.sh $subject ants_norm_fmri
+# ./Shell_Scripts/fmri_processing/preprocess_fmri.sh $subject ants_norm_fmri
 
-#./Shell_Scripts/preprocess_fmri.sh $subject check_fmri_ants
+#./Shell_Scripts/fmri_processing/preprocess_fmri.sh $subject check_fmri_ants
 
-#./Shell_Scripts/preprocess_fmri.sh $subject level_one_stats_ants
+#./Shell_Scripts/fmri_processing/preprocess_fmri.sh $subject level_one_stats_ants
 
 #./Shell_Scripts/process_level_two_fmri.sh
 
@@ -86,3 +86,7 @@ cd /blue/rachaelseidler/tfettrow/Crunch_Code/
 
 #./Shell_Scripts/estimate_betas_by_condition.sh '1002,1004,1010,1011,1013' youngAdult 05_MotorImagery convert_load_sensitive_voxel_coordinates
 #./Shell_Scripts/estimate_betas_by_condition.sh '1002,1004,1010,1011,1013' youngAdult 05_MotorImagery create_roi_sphere_for_load_sensitive_rois
+
+# for this_subject in "${subject_array[@]}"; do
+# 	./Shell_Scripts/fmri_processing/preprocess_fmri.sh $this_subject check_fmri_ants
+# done
