@@ -20,11 +20,11 @@ do
 	fi
 	
 	# Set the path for our custom matlab functions and scripts
-	Code_dir=/ufrc/rachaelseidler/tfettrow/Crunch_Code
+	Code_dir=/blue/rachaelseidler/tfettrow/Crunch_Code
 	
 	export MATLABPATH=${Code_dir}/Matlab_Scripts/helper
 	
-	Subject_dir=/ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/MiM_Data/${subject}
+	Subject_dir=/blue/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/MiM_Data/${subject}
 	cd "${Subject_dir}"
 
 
@@ -32,9 +32,23 @@ do
    		# MainDWIDenoising # # 
    		# # arguments  to automate ?? X X
    	#fi
+   	if [[ $preprocessing_steps == "check_dwi_raw" ]]; then
+		
+		cd ${Subject_dir}/Processed/MRI_files/08_DWI
+		ml fsl/6.0.1
+		xvfb-run -s "-screen 0 640x480x24" fsleyes render --scene ortho --outfile ${Subject_dir}/Processed/MRI_files/08_DWI/check_dwi_raw \
+		${Subject_dir}/Processed/MRI_files/08_DWI/DWI.nii --alpha 100
+		# echo "Created screenshot for": ${SUB}-${SSN};
+		display check_dwi_raw.png
+		# done
+		# echo This step took $SECONDS seconds to execute
+		# cd "${Subject_dir}"
+		# echo "Smoothing ANTS files: $SECONDS sec" >> preprocessing_log.txt
+		# SECONDS=0
+	fi
 
    	if [[ ${preprocessing_steps[*]} =~ "fieldmap_dti" ]]; then
-   		Fieldmap_dir=/ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/${SUB}/Processed/MRI_files/03_Fieldmaps
+   		Fieldmap_dir=/blue/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/Pilot_Study_Data/${SUB}/Processed/MRI_files/03_Fieldmaps
 		cd ${Fieldmap_dir}/Fieldmap_dti
 		rm my_fieldmap.nii
   		rm acqParams.txt
@@ -114,4 +128,27 @@ do
 		ml fsl
 		bet2 eddy_corrected_data.nii eddy_corrected_Skullstripped.nii
 	fi
+
+	if [[ $preprocessing_steps == "check_dwi_ants" ]]; then
+		data_folder_to_analyze=($restingstate_processed_folder_names)
+		for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
+			cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
+			ml fsl/6.0.1
+			for this_functional_file in smoothed_warpedToMNI_unwarpedRealigned*.nii; do
+				this_core_functional_file_name=$(echo $this_functional_file | cut -d. -f 1)
+				echo saving jpeg of $this_core_functional_file_name for ${subject}
+				xvfb-run -s "-screen 0 640x480x24" fsleyes render --scene ortho --outfile ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/check_MNI_ants_${this_core_functional_file_name} \
+				${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/MNI_2mm.nii -cm red-yellow \
+				${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/$this_functional_file --alpha 85
+				# echo "Created screenshot for": ${SUB}-${SSN};
+				display check_MNI_ants_${this_core_functional_file_name}.png
+			done
+		done
+		# echo This step took $SECONDS seconds to execute
+		# cd "${Subject_dir}"
+		# echo "Smoothing ANTS files: $SECONDS sec" >> preprocessing_log.txt
+		# SECONDS=0
+	fi
+	(( step_counter++ ))
+	(( argument_counter++ ))	
 done
