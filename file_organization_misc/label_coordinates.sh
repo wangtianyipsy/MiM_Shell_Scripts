@@ -11,6 +11,8 @@
 
 # this script requires arguments 
 
+# label_coordinates.sh ROI_labels_conn_wu120_all_wb.txt AAL
+
 #### use neuromorphometrica ####
 #### insert different templates ### as argument??
 
@@ -49,18 +51,8 @@ for (( this_row=1; this_row<=${roi_line_numbers}; this_row++ )); do
 		this_roi_z=$(cat $settings_file | sed -n ${this_row}p | cut -d ',' -f3)
 		this_network_name=$(cat $settings_file | sed -n ${this_row}p | cut -d ',' -f5)
 		
-		# echo $this_network_name
 		cd ${Study_dir}/ROIs/
-		
-		# for this ROI
-		# 1) grab the .nii
-		# 2) round fslmeants to determine area code
-		# 3) read in the AAL3.txt to determine brain area associated with area code
-		# 4) create a ROI_labels_XXstudyXX.txt that contains the a) coordinates, b) AAL area name, c) network 
-
-	# might need to convert mni_2mm voxel to suit_2mm voxel... how to do this?? idk
 		ml fsl
-		# echo $atlas
 		if [[ $atlas == AAL ]]; then
 			fslmaths MNI_2mm.nii -mul 0 -add 1 -roi $this_roi_x 1 $this_roi_y 1 $this_roi_z 1 0 1 ${this_roi_name}_point.nii -odt float	
 			gunzip -f *nii.gz
@@ -98,8 +90,5 @@ for (( this_row=1; this_row<=${roi_line_numbers}; this_row++ )); do
 		# echo ROI:$this_roi_name located in $brain_area_name 
 		cd $Study_dir
 		echo $this_roi_x, $this_roi_y, $this_roi_z, "$brain_area_name", "$this_network_name" >> "$outfile"	
-		
-
-
 	fi
 done
