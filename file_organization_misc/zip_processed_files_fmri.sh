@@ -52,6 +52,7 @@ for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
 	shopt -s extglob
 	#rm !(art_*|ARTscreenshot*|Condition_Onsets*|smoothed*|fMRI_Run*|*.json)
 	rm !(Condition_Onsets*|slicetimed*|fMRI_Run*|*.json)
+	gzip *.nii
 	#wait
 ################################################################
 	cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
@@ -61,6 +62,7 @@ for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
 
 	# rm !(art_*|ARTscreenshot*|Condition_Onsets*|smoothed*|warpedToMNI_biascorrected*|fMRI_Run*|*.json|ANTs_*)
 	rm !(Condition_Onsets*|fMRI_Run*|*.json)
+	gzip *.nii
 	#shopt -u extglob
 
 done
