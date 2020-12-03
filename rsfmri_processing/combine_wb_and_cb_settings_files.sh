@@ -12,6 +12,7 @@
 # this script requires arguments 
 
 # example >> combine_wb_and_cb_settings_files conn_wu120_all_wb conn_wu120_all_cb
+# combine_wb_and_cb_settings_files.sh ROI_settings_conn_wu120_all_wb.txt ROI_settings_conn_wu120_all_cb.txt
 
 argument_counter=0
 for this_argument in "$@"; do
