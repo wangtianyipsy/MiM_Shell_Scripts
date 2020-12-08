@@ -1,0 +1,16 @@
+########### README
+##### steps for creating and analyzing mim task-based fmri via ROIs (prior to 20200712)
+1) download ACC and DLPFC Neurosynth images
+2) run find_peak_coordinates.m on each neurosynth image
+3) find the highest coordinate in each hemisphere (manually)
+4) create ROI_settins file, using the identified coordinates from step 3
+5) create ROI spheres (XX.sh)
+6) run export_fmri_rois_to_redcap.sh
+7) for CRUNCH figs, run 
+
+##### steps for creating and analyzing mim task-based fmri via ROIs (since 20200712)
+1) download ACC and DLPFC Neurosynth images
+2) run split_brain_hemispheres.m for each neurosynth image
+3) create ROI_settings file, placing ~ in the coordinate rows and the ROI name created in step 2
+4) run export_fmri_rois_to_redcap.sh
+
