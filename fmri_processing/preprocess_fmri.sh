@@ -539,7 +539,7 @@ do
 		if [[ $this_preprocessing_step == "n4_bias_correction" ]]; then
 			this_t1_folder=($t1_processed_folder_names)
 			cd ${Subject_dir}/Processed/MRI_files/${this_t1_folder}/
-			ml gcc/5.2.0; ml ants
+			ml gcc/9.3.0; ml ants
 			N4BiasFieldCorrection -i SkullStripped_T1.nii -o biascorrected_SkullStripped_T1.nii
 			
 			data_folder_to_analyze=($fmri_processed_folder_names)
@@ -565,8 +565,7 @@ do
 			for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
 				cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
 				
-				ml gcc/5.2.0
-				ml ants
+				ml gcc/9.3.0; ml ants
 
 				if [[ -e warpToT1Params_*.nii ]]; then 
         	        rm warpToT1Params_*.nii
@@ -604,8 +603,7 @@ do
 			for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
 				cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
 				gunzip -f *nii.gz
-				ml gcc/5.2.0
-				ml ants
+				ml gcc/9.3.0; ml ants
 
 				if [ -e warpedToT1_*.nii ]; then 
         	        rm warpedToT1_*.nii
@@ -633,8 +631,7 @@ do
         	   		rm c3*
         	    fi
 
-				ml gcc/5.2.0
-				ml ants
+				ml gcc/9.3.0; ml ants
 	
 				outputFolder=${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
 				T1_Template=${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/biascorrected_SkullStripped_T1.nii
@@ -679,8 +676,7 @@ do
 
 				this_core_file_name=biascorrected_SkullStripped_T1
 				
-				ml gcc/5.2.0
-				ml ants
+				ml gcc/9.3.0; ml ants
 				antsApplyTransforms -d 3 -e 3 -i ${this_core_file_name}.nii -r MNI_2mm.nii \
 				-n BSpline -o warpedToMNI_${this_core_file_name}.nii -t [warpToMNIParams_${this_core_file_name}1Warp.nii] -t [warpToMNIParams_${this_core_file_name}0GenericAffine.mat,0] -v
 
@@ -713,143 +709,6 @@ do
 			SECONDS=0		
 		fi
 		
-		# if [[ $this_preprocessing_step == "ants_norm_fmri_method2" ]]; then
-		# 	data_folder_to_analyze=($fmri_processed_folder_names)
-		# 	for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
-		# 		cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
-				
-		# 		ml gcc/5.2.0
-		# 		ml ants
-				
-		# 		for this_mean_file in biascorrected_mean*.nii; do
-		# 			T1_Template=biascorrected_SkullStripped_T1.nii
-		# 			Mean_Func=$this_mean_file
-
-		# 			this_core_file_name=$(echo $this_mean_file | cut -d. -f 1)
-		# 			echo 'registering' $Mean_Func 'to' $T1_Template
-		# 			# moving low res func to high res T1
-		# 			antsRegistration --dimensionality 3 --float 0 \
-		# 			    --output [warpToT1ParamsARMethod2_${this_core_file_name},warpToT1AREstimateMethod2_${this_core_file_name}.nii] \
-		# 			    --interpolation Linear \
-		# 			    --winsorize-image-intensities [0.005,0.995] \
-		# 			    --use-histogram-matching 0 \
-		# 			    --initial-moving-transform [$Mean_Func,$T1_Template,1] \
-		# 			    --transform Rigid[0.1] \
-		# 			    --metric MI[$Mean_Func,$T1_Template,1,32,Regular,0.25] \
-		# 			    --convergence [1000x500x250x100,1e-6,10] \
-		# 			    --shrink-factors 8x4x2x1 \
-		# 			    --smoothing-sigmas 3x2x1x0vox
-		# 			antsRegistration --dimensionality 3 --float 0 \
-		# 				--output [warpToT1ParamsSrMethod2_${this_core_file_name},warpToT1SEstimateMethod2_${this_core_file_name}.nii] \
-		# 				--transform SyN[0.1,3,0] \
-  #       				--metric CC[$Mean_Func,$T1_Template,1,2] \
-  #       				--convergence [100x70x50x20,1e-6,10] \
-  #       				--restrict-deformation 1x1x0 \
-  #       				--shrink-factors 8x4x2x1 \
-  #       				--smoothing-sigmas 3x2x1x0vox
-		# 		done
-		# 		gunzip -f *nii.gz
-		# 	done
-		
-		# 	data_folder_to_analyze=($fmri_processed_folder_names)
-		# 	for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
-		# 		cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
-		# 		gunzip -f *nii.gz
-		# 		ml gcc/5.2.0
-		# 		ml ants
-
-		# 		for this_mean_file in biascorrected_mean*.nii; do
-		# 			this_core_file_name=$(echo $this_mean_file | cut -d. -f 1)
-		# 			antsApplyTransforms -d 3 -e 3 -i ${this_core_file_name}.nii -r biascorrected_SkullStripped_T1.nii \
-		# 			-n BSpline -o warpedToT1Method2AR_${this_core_file_name}.nii -t [warpToT1ParamsARMethod2_${this_core_file_name}0GenericAffine.mat,1] -v
-		# 			antsApplyTransforms -d 3 -e 3 -i ${this_core_file_name}.nii -r biascorrected_SkullStripped_T1.nii \
-		# 			-n BSpline -o warpedToT1Method2ARSr_${this_core_file_name}.nii -t [warpToT1ParamsSrMethod2_${this_core_file_name}0InverseWarp.nii] -t [warpToT1ParamsARMethod2_${this_core_file_name}0GenericAffine.mat,1] -v 
-		# 		done
-		# 	done
-		
-		# 	data_folder_to_analyze=($fmri_processed_folder_names)
-		# 	for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
-		# 		this_t1_folder=($t1_processed_folder_names)
-		# 		cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
-	
-		# 		if [ -e warpToMNIParams_*.nii ]; then 
-  #       	        rm warpToMNIParams_*.nii
-  #       	        rm warpToMNIParams_*.mat
-  #       	        rm warpToMNIEstimate_*.nii
-  #       	        rm warpedToMNI_*.nii
-  #       	   		# rm c1*
-  #       	   		# rm c2*
-  #       	   		# rm c3*
-  #       	    fi
-
-		# 		ml gcc/5.2.0
-		# 		ml ants
-	
-		# 		outputFolder=${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
-		# 		T1_Template=${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/biascorrected_SkullStripped_T1.nii
-		# 		MNI_Template=${Code_dir}/MR_Templates/MNI_1mm.nii
-
-		# 		this_core_file_name=biascorrected_SkullStripped_T1
-
-		# 		echo 'registering' $T1_Template 'to' $MNI_Template
-	
-		# 		antsRegistration --dimensionality 3 --float 0 \
-  #       		--output [$outputFolder/warpToMNIParams_${this_core_file_name},$outputFolder/warpToMNIEstimate_${this_core_file_name}.nii] \
-  #       		--interpolation Linear \
-  #       		--winsorize-image-intensities [0.01,0.99] \
-  #       		--use-histogram-matching 1 \
-  #       		--initial-moving-transform [$MNI_Template,$T1_Template,1] \
-  #       		--transform Rigid[0.1] \
-  #       		--metric MI[$MNI_Template,$T1_Template,1,64,Regular,.5] \
-  #       		--convergence [1000x500x250x100,1e-6,10] \
-  #       		--shrink-factors 8x4x2x1 \
-  #       		--smoothing-sigmas 3x2x1x0vox \
-  #       		--transform Affine[0.1] \
-  #       		--metric MI[$MNI_Template,$T1_Template,1,64,Regular,.5] \
-  #       		--convergence [1000x500x250x100,1e-6,10] \
-  #       		--shrink-factors 8x4x2x1 \
-  #       		--smoothing-sigmas 3x2x1x0vox \
-  #       		--transform SyN[0.1,3,0] \
-  #       		--metric CC[$MNI_Template,$T1_Template,1,2] \
-  #       		--convergence [100x70x50x20,1e-6,10] \
-  #       		--shrink-factors 8x4x2x1 \
-  #       		--smoothing-sigmas 3x2x1x0vox
-  #       	done
-       
-		# 	data_folder_to_analyze=($fmri_processed_folder_names)
-		# 	for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
-		# 		cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
-		# 		cp ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/unwarpedRealigned*.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
-		# 		cp ${Code_dir}/MR_Templates/MNI_2mm.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
-		# 		gunzip -f *nii.gz
-				
-		# 		ml gcc/5.2.0
-		# 		ml ants
-
-		# 		for this_file_to_warp in unwarpedRealigned*.nii; do 
-		# 			ml fsl
-		# 			this_file_header_info=$(fslhd $this_file_to_warp)
-		# 			this_file_number_of_volumes=$(echo $this_file_header_info | grep -o dim4.* | tr -s ' ' | cut -d ' ' -f 2)
-	
-		# 			this_func_core_file_name=$(echo $this_file_to_warp | cut -d. -f 1)
-		# 			this_T1_core_file_name=biascorrected_SkullStripped_T1
-				
-		# 			ml gcc/5.2.0; ml ants
-		# 			antsApplyTransforms -d 3 -e 3 -i $this_file_to_warp -r MNI_2mm.nii \
-		# 			-o warpedToMNIMethod2AR_$this_file_to_warp -t [warpToT1ParamsARMethod2_biascorrected_mean${this_func_core_file_name}0GenericAffine.mat,1] \
-		# 			-t [warpToMNIParams_${this_T1_core_file_name}1Warp.nii] -t [warpToMNIParams_${this_T1_core_file_name}0GenericAffine.mat,0] -v
-
-		# 			antsApplyTransforms -d 3 -e 3 -i $this_file_to_warp -r MNI_2mm.nii \
-		# 			-o warpedToMNIMethod2ARSr_$this_file_to_warp -t [warpToT1ParamsSrMethod2_biascorrected_mean${this_func_core_file_name}0InverseWarp.nii] -t [warpToT1ParamsARMethod2_biascorrected_mean${this_func_core_file_name}0GenericAffine.mat,1] \
-		# 			-t [warpToMNIParams_${this_T1_core_file_name}1Warp.nii] -t [warpToMNIParams_${this_T1_core_file_name}0GenericAffine.mat,0] -v
-		# 		done
-		# 	done
-		# 	echo This step took $SECONDS seconds to execute
-		# 	cd "${Subject_dir}"
-		# 	echo "ANTS Normalization: $SECONDS sec" >> preprocessing_log.txt
-		# 	SECONDS=0		
-		# fi
-
 		if [[ $this_preprocessing_step == "smooth_fmri_ants" ]]; then
 			data_folder_to_analyze=($fmri_processed_folder_names)
 			for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
@@ -896,7 +755,6 @@ do
 				for this_slicetimed_file in slicetimed*.nii; do
 					this_slicetimed_file_runnumber=$(echo "$this_slicetimed_file" | grep -o '[0-9]\+')
 					echo "checking run $this_slicetimed_file_runnumber is appropriate length"
-
 
 					cd ${Subject_dir}
 					lines_to_ignore=$(awk '/#/{print NR}' outlier_removal_settings.txt)
@@ -1034,6 +892,16 @@ do
     		cd "${Subject_dir}"
 			echo "copy fmri for conn processing: $SECONDS sec" >> preprocessing_log.txt
 			SECONDS=0
+		fi
+
+		if [[ $this_preprocessing_step == "copy_t1_for_vbm" ]]; then
+			data_folder_to_copy_from=('05_MotorImagery') # BEWARE, this is hard coded specific to MiM
+			data_folder_to_copy_to=($t1_processed_folder_names)
+			mkdir -p "${Subject_dir}/Processed/MRI_files/${data_folder_to_copy_to}/ANTS_Normalization"
+			cp ${Subject_dir}/Processed/MRI_files/${data_folder_to_copy_from}/ANTS_Normalization/warpToMNIParams_biascorrected_SkullStripped_T10GenericAffine.mat ${Subject_dir}/Processed/MRI_files/${data_folder_to_copy_to}/ANTS_Normalization
+			cp ${Subject_dir}/Processed/MRI_files/${data_folder_to_copy_from}/ANTS_Normalization/warpToMNIParams_biascorrected_SkullStripped_T11InverseWarp.nii ${Subject_dir}/Processed/MRI_files/${data_folder_to_copy_to}/ANTS_Normalization
+			cp ${Subject_dir}/Processed/MRI_files/${data_folder_to_copy_from}/ANTS_Normalization/warpToMNIParams_biascorrected_SkullStripped_T11Warp.nii ${Subject_dir}/Processed/MRI_files/${data_folder_to_copy_to}/ANTS_Normalization
+			cp ${Subject_dir}/Processed/MRI_files/${data_folder_to_copy_from}/ANTS_Normalization/*T1*.nii ${Subject_dir}/Processed/MRI_files/${data_folder_to_copy_to}/ANTS_Normalization
 		fi
 
 
