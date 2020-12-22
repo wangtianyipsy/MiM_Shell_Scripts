@@ -314,7 +314,7 @@ for this_argument in "$@"; do
 			SECONDS=0
 		fi
 		if [[ $this_ceres_processing_step == "check_ceres_ants" ]]; then
-			for this_functional_run_folder in ${fmri_processed_folder_names[@]}; do
+			for this_functional_run_folder in ${fmri_processed_folder_names[@]} ${restingstate_processed_folder_names[@]};; do
 				cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
 				ml fsl/6.0.1
 				gunzip smoothed_warpedToSUIT_CBmasked_*
