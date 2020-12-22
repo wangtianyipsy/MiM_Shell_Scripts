@@ -46,11 +46,11 @@ data_folder_to_analyze=($fmri_processed_folder_names)
 for this_functional_run_folder in ${data_folder_to_analyze[@]}; do
 	cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}
 
-	gunzip *.nii.gz
+	gunzip -f *.nii.gz
 	
 ################################################################
 	cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
 
-	gunzip *.nii.gz
+	gunzip -f *.nii.gz
 	
 done
