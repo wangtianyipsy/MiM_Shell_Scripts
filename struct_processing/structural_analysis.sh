@@ -2,11 +2,11 @@
 argument_counter=0
 for this_argument in "$@"
 do
-	if	[[ $argument_counter == 0 ]]; then
-    	subject=$this_argument
-	else
+	# if	[[ $argument_counter == 0 ]]; then
+ #    	subject=$this_argument
+	# else
 		processing_steps="$this_argument"
-	fi
+	# fi
 	
 	# Set the path for our custom matlab functions and scripts
 	Code_dir=/blue/rachaelseidler/tfettrow/Crunch_Code
@@ -45,16 +45,16 @@ do
 	t1_processed_folder_names=$(echo "${t1_processed_folder_name_array[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' ')
 	
 	for this_preprocessing_step in "${processing_steps[@]}"; do
-		if [[ $this_preprocessing_step == "cat12StructuralAnalysis" ]]; then
+		if [[ $this_preprocessing_step == "cat12" ]]; then
 			this_t1_folder=($t1_processed_folder_names)
 		    mkdir -p ${Subject_dir}/Processed/MRI_files/${this_t1_folder}/CAT12_Analysis
 		    #cat12('expert')
 			cp ${Code_dir}/MR_Templates/Template_*.nii ${Subject_dir}/Processed/MRI_files/${this_t1_folder}/CAT12_Analysis
 			cp ${Code_dir}/MR_Templates/TPM.nii ${Subject_dir}/Processed/MRI_files/${this_t1_folder}/CAT12_Analysis
 			cp ${Subject_dir}/Processed/MRI_files/${this_t1_folder}/T1.nii ${Subject_dir}/Processed/MRI_files/${this_t1_folder}/CAT12_Analysis
-			cd ${Subject_dir}/Processed/MRI_files/${this_t1_folder}
+			cd ${Subject_dir}/Processed/MRI_files/${this_t1_folder}/CAT12_Analysis
 			ml matlab/2020a
-			matlab -nodesktop -nosplash -r "try; cat12StructuralAnalysis; catch; end; quit"
+			matlab -nodesktop -nosplash -r "try; cat12StructuralAnalysis('subjects',{'1002','1004','2007','2008'},'t1_folder','02_T1','t1_filename','T1.nii','steps_to_run_vector',[1 0 0 0 0]); catch; end; quit"
 		fi
 
 	done
