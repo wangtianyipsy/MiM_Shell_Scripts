@@ -20,10 +20,12 @@ do
 	
 	# Set the path for our custom matlab functions and scripts
 	Code_dir=/blue/rachaelseidler/tfettrow/Crunch_Code
-	
 	export MATLABPATH=${Code_dir}/Matlab_Scripts/helper
-	
 	Subject_dir=/blue/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/MiM_Data/${subject}
+	ml matlab/2020a
+	ml gcc/5.2.0; ml ants ## ml gcc/9.3.0; ml ants/2.3.4
+	ml fsl/6.0.1
+	
 	cd "${Subject_dir}"
 
 	lines_to_ignore=$(awk '/#/{print NR}' file_settings.txt)
@@ -103,7 +105,6 @@ do
         	    if [[ -e slicetimed_*.nii ]]; then 
         	        rm slicetimed_*.nii
         	    fi
-        	    ml matlab
         	    matlab -nodesktop -nosplash -r "try; slicetime_fmri; catch; end; quit"
         	done
         	echo This step took $SECONDS seconds to execute
@@ -133,8 +134,6 @@ do
 				if [ -e topup_results_movpar.txt ]; then 
 					rm topup_results_movpar.txt
 				fi
-			
-				ml fsl
 				fslmerge -t AP_PA_merged.nii DistMap_AP.nii DistMap_PA.nii
 	
 				this_file_header_info=$(fslhd AP_PA_merged.nii )
@@ -180,7 +179,7 @@ do
 					encoding_direction=$(grep "PhaseEncodingDirection" ${this_json_file} | cut -d: -f 2 | head -1 | tr -d '"' |  tr -d ',')
 
 					this_file_name=$(echo $this_json_file | cut -d. -f 1)
-					ml fsl
+					
 					this_file_header_info=$(fslhd $this_file_name.nii)
 					this_file_number_of_volumes=$(echo $this_file_header_info | grep -o dim4.* | tr -s ' ' | cut -d ' ' -f 2)
 	
@@ -197,15 +196,13 @@ do
 					previous_encoding_direction=$encoding_direction
 				done
 	
-				ml fsl
-	
 				topup --imain=AP_PA_merged.nii --datain=acqParams.txt --fout=my_fieldmap_nifti --config=b02b0.cnf --iout=se_epi_unwarped --out=topup_results
 	
 				fslmaths se_epi_unwarped -Tmean my_fieldmap_mag
 	
 				ml fsl/5.0.8
 				fslchfiletype ANALYZE my_fieldmap_nifti.nii fpm_my_fieldmap
-	
+				ml fsl/6.0.1
 				gunzip -f *nii.gz
 			done
 			echo This step took $SECONDS seconds to execute
@@ -263,7 +260,6 @@ do
 	  				echo ${array[3]} >> vdm_defaults.m
 	  				echo ${array[4]} >> vdm_defaults.m
 		
-					ml matlab
 	    	        matlab -nodesktop -nosplash -r "try; create_vdm_img('slicetimed_${this_core_functional_file_name}.nii'); catch; end; quit"
 	   				matlab -nodesktop -nosplash -r "try; realign_unwarp_single('slicetimed_${this_core_functional_file_name}.nii'); catch; end; quit"
 
@@ -303,8 +299,7 @@ do
 					fi
 				done
 	
-				for this_functional_file in unwarpedRealigned*.nii; do
-					ml matlab
+				for this_functional_file in unwarpedRealigned*.nii; do 
 					matlab -nodesktop -nosplash -r "try; art_fmri('$this_functional_file'); catch; end; quit"
 		
 					rm T1.nii
@@ -340,7 +335,6 @@ do
 							this_slicetimed_file_runnumber=$(echo "$this_slicetimed_file" | grep -o '[0-9]\+')
 							echo $this_slicetimed_file_runnumber
 							if [[ $this_slicetimed_file_runnumber =~ ${run_number_array} ]]; then
-								ml fsl
 								## need to check the length of slicetimed run with respect to raw.. if already changed throw an error
 								this_slicetimed_file_corename=$(echo $this_slicetimed_file | cut -d. -f 1)
 								this_raw_file_name=$(echo $this_slicetimed_file | cut -d_ -f2-)
@@ -383,8 +377,7 @@ do
 										fslmerge -a $this_slicetimed_file vol*
 										rm vol*
 										gunzip -f *nii.gz
-										
-										ml matlab			
+												
 										## re-coregister slicetimed to mean_Distmap only if removing start of run (bc we coreg first volume to Distmap)
 										if ! [[ ${first_index_array} =~ NA ]]; then 
 											matlab -nodesktop -nosplash -r "try; coregister_fmri_to_MeanFM_single('$this_slicetimed_file'); catch; end; quit"
@@ -526,7 +519,6 @@ do
 			this_t1_folder=($t1_processed_folder_names)
 			cp ${Code_dir}/MR_Templates/TPM.nii ${Subject_dir}/Processed/MRI_files/${this_t1_folder}
 			cd ${Subject_dir}/Processed/MRI_files/${this_t1_folder}/
-			ml matlab
 			matlab -nodesktop -nosplash -r "try; segment_t1; catch; end; quit"
 			matlab -nodesktop -nosplash -r "try; skull_strip_t1; catch; end; quit"
 	
@@ -539,7 +531,6 @@ do
 		if [[ $this_preprocessing_step == "n4_bias_correction" ]]; then
 			this_t1_folder=($t1_processed_folder_names)
 			cd ${Subject_dir}/Processed/MRI_files/${this_t1_folder}/
-			ml gcc/9.3.0; ml ants
 			N4BiasFieldCorrection -i SkullStripped_T1.nii -o biascorrected_SkullStripped_T1.nii
 			
 			data_folder_to_analyze=($fmri_processed_folder_names)
@@ -690,7 +681,6 @@ do
 				-n BSpline -o warpedToMNI_c3T1.nii -t [warpToMNIParams_${this_core_file_name}1Warp.nii] -t [warpToMNIParams_${this_core_file_name}0GenericAffine.mat,0] -v
 
 				for this_file_to_warp in unwarpedRealigned*.nii; do 
-					ml fsl
 					this_file_header_info=$(fslhd $this_file_to_warp)
 					this_file_number_of_volumes=$(echo $this_file_header_info | grep -o dim4.* | tr -s ' ' | cut -d ' ' -f 2)
 	
@@ -718,7 +708,6 @@ do
 				if [ -e "$prefix_to_delete" ]; then
                 	rm smoothed_*.nii
             	fi
-				ml matlab
 				matlab -nodesktop -nosplash -r "try; smooth_fmri_ants; catch; end; quit"
 			done
 			echo This step took $SECONDS seconds to execute
@@ -857,7 +846,6 @@ do
 				# 		TR_from_json=$(grep "RepetitionTime" ${this_functional_run_file} | tr -dc '0.00-9.00')
 				# 		echo $TR_from_json
   		# 		done
-  				ml matlab/2020a
     			# matlab -nodesktop -nosplash -r "try; level_one_stats(1, '$TR_from_json'); catch; end; quit"
     			matlab -nodesktop -nosplash -r "try; level_one_stats(1, 1.5, 'smoothed_warpedToMNI', 'Level1_WholeBrain'); catch; end; quit"
     		done
@@ -912,7 +900,6 @@ do
 				cd ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/conn_processing
 
 				for this_functional_file in unwarpedRealigned*.nii; do
-					ml matlab
 					matlab -nodesktop -nosplash -r "try; art_fmri_conn('$this_functional_file'); catch; end; quit"
 		
 					rm -rf Conn_Art_Folder_Stuff
