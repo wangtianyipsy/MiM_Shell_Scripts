@@ -12,18 +12,17 @@
 argument_counter=0
 for this_argument in "$@"; do
 	if	[[ $argument_counter == 0 ]]; then
-    	subject=$this_argument
+		Matlab_dir=$this_argument
+	elif [[ $argument_counter == 1 ]]; then
+		Template_dir=$this_argument
+	elif [[ $argument_counter == 2 ]]; then
+    	Subject_dir=$this_argument
 	else
 		ceres_processing_steps="$this_argument"
 	fi
-	
-	# Set the path for our custom matlab functions and scripts
-	Code_dir=/blue/rachaelseidler/tfettrow/Crunch_Code
 		
-	export MATLABPATH=${Code_dir}/Matlab_Scripts/helper
-		
+	export MATLABPATH=${Matlab_dir}/helper
 	study_dir=/blue/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/MiM_Data
-	Subject_dir=/blue/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/MiM_Data/$subject
 	cd $Subject_dir
 
 ########### determine which functional files you would like to ceres process (resting state and fmri) ############################
@@ -158,7 +157,7 @@ for this_argument in "$@"; do
 		if [[ $this_ceres_processing_step ==  "ceres_cb_mask_spm_norm" ]]; then
 			for this_functional_run_folder in ${fmri_processed_folder_names[@]} ${restingstate_processed_folder_names[@]}; do
 				cd $Subject_dir/Processed/MRI_files/$this_functional_run_folder/ANTS_Normalization
-				cp $Code_dir/MR_Templates/SUIT_Nobrainstem_2mm.nii $Subject_dir/Processed/MRI_files/$this_functional_run_folder/ANTS_Normalization
+				cp ${Template_dir}/SUIT_Nobrainstem_2mm.nii $Subject_dir/Processed/MRI_files/$this_functional_run_folder/ANTS_Normalization
 			    
 			    ml gcc/5.2.0
 				ml ants
@@ -230,8 +229,8 @@ for this_argument in "$@"; do
 					ml gcc/5.2.0; ml ants
 					N4BiasFieldCorrection -i $ceres_image -o biascorrected_$ceres_image
 					ceres_image=biascorrected_$ceres_image
-					SUIT_Template_1mm=$Code_dir/MR_Templates/SUIT_Nobrainstem_1mm.nii
-					SUIT_Template_2mm=$Code_dir/MR_Templates/SUIT_Nobrainstem_2mm.nii
+					SUIT_Template_1mm=${Template_dir}/SUIT_Nobrainstem_1mm.nii
+					SUIT_Template_2mm=${Template_dir}/SUIT_Nobrainstem_2mm.nii
 					echo 'registering' $ceres_image 'to' $SUIT_Template_1mm
 					
 					ml gcc/5.2.0; ml ants
