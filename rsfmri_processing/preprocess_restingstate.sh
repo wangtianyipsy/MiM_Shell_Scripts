@@ -14,18 +14,21 @@ step_counter=0
 for this_argument in "$@"
 do
 	if	[[ $argument_counter == 0 ]]; then
-    	subject=$this_argument
+		Matlab_dir=$this_argument
+	elif [[ $argument_counter == 1 ]]; then
+		Template_dir=$this_argument
+	elif [[ $argument_counter == 2 ]]; then
+    	Subject_dir=$this_argument
 	else
 		this_preprocessing_step="$this_argument"
 	fi
 	
-	# Set the path for our custom matlab functions and scripts
-	Code_dir=/blue/rachaelseidler/tfettrow/Crunch_Code
+	export MATLABPATH=${Matlab_dir}/helper
+	ml matlab/2020a
+	ml gcc/5.2.0; ml ants ## ml gcc/9.3.0; ml ants/2.3.4
+	ml fsl/6.0.1
 	
-	export MATLABPATH=${Code_dir}/Matlab_Scripts/helper
-	
-	Subject_dir=/blue/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/MiM_Data/${subject}
-	cd "${Subject_dir}"
+	cd $Subject_dir
 
 	lines_to_ignore=$(awk '/#/{print NR}' file_settings.txt)
 
@@ -184,7 +187,7 @@ do
 			# 	gunzip -f *nii.gz
 			# 	cp fpm_my_fieldmap.hdr ${Subject_dir}/Processed/MRI_files/${data_folder_to_copy_to}
    #   	    	cp fpm_my_fieldmap.img ${Subject_dir}/Processed/MRI_files/${data_folder_to_copy_to}
-   #   	    	cp ${Code_dir}/Matlab_Scripts/helper/vdm_defaults.m ${Subject_dir}/Processed/MRI_files/${data_folder_to_copy_to}
+   #   	    	cp ${Matlab_dir}/helper/vdm_defaults.m ${Subject_dir}/Processed/MRI_files/${data_folder_to_copy_to}
 			# 	cp se_epi_unwarped.nii ${Subject_dir}/Processed/MRI_files/${data_folder_to_copy_to}
 			##########################################################
 
@@ -289,7 +292,7 @@ do
 				
     	    	cp fpm_my_fieldmap.hdr ${Subject_dir}/Processed/MRI_files/${data_folder_to_copy_to}
     	    	cp fpm_my_fieldmap.img ${Subject_dir}/Processed/MRI_files/${data_folder_to_copy_to}
-    	    	cp ${Code_dir}/Matlab_Scripts/helper/vdm_defaults.m ${Subject_dir}/Processed/MRI_files/${data_folder_to_copy_to}
+    	    	cp ${Matlab_dir}/helper/vdm_defaults.m ${Subject_dir}/Processed/MRI_files/${data_folder_to_copy_to}
 				cp se_epi_unwarped.nii ${Subject_dir}/Processed/MRI_files/${data_folder_to_copy_to}
 		
 			fi
@@ -477,7 +480,7 @@ do
 		
 		if [[ $this_preprocessing_step == "skull_strip_t1_4_ants" ]]; then
 			this_t1_folder=($t1_processed_folder_names)
-			cp ${Code_dir}/MR_Templates/TPM.nii ${Subject_dir}/Processed/MRI_files/${this_t1_folder}
+			cp ${Template_dir}/TPM.nii ${Subject_dir}/Processed/MRI_files/${this_t1_folder}
 			cd ${Subject_dir}/Processed/MRI_files/${this_t1_folder}/
 			ml matlab/2020a
 			matlab -nodesktop -nosplash -r "try; segment_t1; catch; end; quit"
@@ -592,7 +595,7 @@ do
 	
 			outputFolder=${Subject_dir}/Processed/MRI_files/${data_folder_to_analyze}/ANTS_Normalization
 			T1_Template=${Subject_dir}/Processed/MRI_files/${data_folder_to_analyze}/ANTS_Normalization/biascorrected_SkullStripped_T1.nii
-			MNI_Template=$Code_dir/MR_Templates/MNI_1mm.nii
+			MNI_Template=${Template_dir}/MNI_1mm.nii
 			this_core_file_name=biascorrected_SkullStripped_T1
 			echo 'registering' $T1_Template 'to' $MNI_Template
 
@@ -622,7 +625,7 @@ do
 			cp ${Subject_dir}/Processed/MRI_files/${data_folder_to_analyze}/c1T1.nii ${Subject_dir}/Processed/MRI_files/${data_folder_to_analyze}/ANTS_Normalization
 			cp ${Subject_dir}/Processed/MRI_files/${data_folder_to_analyze}/c2T1.nii ${Subject_dir}/Processed/MRI_files/${data_folder_to_analyze}/ANTS_Normalization
 			cp ${Subject_dir}/Processed/MRI_files/${data_folder_to_analyze}/c3T1.nii ${Subject_dir}/Processed/MRI_files/${data_folder_to_analyze}/ANTS_Normalization
-			cp $Code_dir/MR_Templates/MNI_2mm.nii ${Subject_dir}/Processed/MRI_files/${data_folder_to_analyze}/ANTS_Normalization
+			cp ${Template_dir}/MNI_2mm.nii ${Subject_dir}/Processed/MRI_files/${data_folder_to_analyze}/ANTS_Normalization
 							
         	gunzip -f *nii.gz
 			ml gcc/5.2.0
@@ -643,7 +646,7 @@ do
 			-n BSpline -o warpedToMNI_c3T1.nii -t [warpToMNIParams_${this_core_file_name}1Warp.nii] -t [warpToMNIParams_${this_core_file_name}0GenericAffine.mat,0] -v
 
 			cp ${Subject_dir}/Processed/MRI_files/${data_folder_to_analyze}/unwarpedRealigned*.nii ${Subject_dir}/Processed/MRI_files/${data_folder_to_analyze}/ANTS_Normalization
-			cp $Code_dir/MR_Templates/MNI_2mm.nii ${Subject_dir}/Processed/MRI_files/${data_folder_to_analyze}/ANTS_Normalization
+			cp ${Template_dir}/MNI_2mm.nii ${Subject_dir}/Processed/MRI_files/${data_folder_to_analyze}/ANTS_Normalization
 			cd ${Subject_dir}/Processed/MRI_files/${data_folder_to_analyze}/ANTS_Normalization
 			for this_file_to_warp in unwarpedRealigned*.nii; do 
 				echo $this_file_to_warp

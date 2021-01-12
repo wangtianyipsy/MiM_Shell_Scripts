@@ -9,23 +9,24 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# this script requires arguments 
+# this script requires arguments ... call from the batch_fmri.batch
 
-# example >> combine_wb_and_cb_settings_files conn_wu120_all_wb conn_wu120_all_cb
-# combine_wb_and_cb_settings_files.sh ROI_settings_conn_wu120_all_wb.txt ROI_settings_conn_wu120_all_cb.txt
+# example >> combine_wb_and_cb_settings_files $Matlab_dir conn_wu120_all_wb conn_wu120_all_cb
+# combine_wb_and_cb_settings_files.sh $Matlab_dir ROI_settings_conn_wu120_all_wb.txt ROI_settings_conn_wu120_all_cb.txt
 
 argument_counter=0
 for this_argument in "$@"; do
 	if	[[ $argument_counter == 0 ]]; then
-		conn_project1=$this_argument
+		Matlab_dir=$this_argument
 	elif [[ $argument_counter == 1 ]]; then
+		conn_project1=$this_argument
+	elif [[ $argument_counter == 2 ]]; then
 		conn_project2=$this_argument
 	fi
 	(( argument_counter++ ))
 done
 
-Code_dir=/blue/rachaelseidler/tfettrow/Crunch_Code
-export MATLABPATH=${Code_dir}/Matlab_Scripts/helper
+export MATLABPATH=${Matlab_dir}/helper
 
 #for SUB in ${subjects[@]}; do
 Study_dir=/blue/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/MiM_Data

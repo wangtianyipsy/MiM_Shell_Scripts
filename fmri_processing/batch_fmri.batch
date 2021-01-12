@@ -10,37 +10,50 @@
 #SBATCH --array=0							# array range
 pwd; hostname; date
 
-cd /blue/rachaelseidler/tfettrow/Crunch_Code/
+##### BATCH FILE INFO ######
+# 1) specify the anticipated memory for the job (>25% more than what it will actually use)
+# 2) specify the array (0-N) vector.. must be size of the subject_array.. starts with 0
+# 3) specify the subject_array
+# 4) make sure the directories are set to your repositories
+# 5) uncomment the step you would like to process for each subject specified in subject_array
+
+
 
 # subject_array=(1012 1004 1011 1002 1010 1013 2021 2015 2002 2018 2017 2012 2025 2020 2026 2023 2022 2007 2013 2008 2033 2034)
 # subject_array=(1012 1011 1010 1013 2021 2015 2002 2018 2017 2012 2025 2020 2026 2023 2022 2007 2013 2008 2033 2034)
 
-subject_array=(2052)
+subject_array=(1024)
 
 subject=${subject_array[$SLURM_ARRAY_TASK_ID]}
-echo processing subject $subject
 
-#./Shell_Scripts/file_organize.sh $subject
-#./Shell_Scripts/save_subject_info.sh $subject
-#./Shell_Scripts/zip_raw_files.sh $subject
+Subject_dir=/blue/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/MiM_Data/${subject}
+Shell_dir=/blue/rachaelseidler/tfettrow/Crunch_Code/Shell_Scripts
+Matlab_dir=/blue/rachaelseidler/tfettrow/Crunch_Code/Matlab_Scripts
+Template_dir=/blue/rachaelseidler/tfettrow/Crunch_Code/MR_Templates
 
-./Shell_Scripts/fmri_processing/preprocess_fmri.sh $subject slicetime_fmri create_fieldmap unwarp_fmri art_fmri 
+cd $Shell_dir
 
-#./Shell_Scripts/fmri_processing/preprocess_fmri.sh $subject unwarp_fmri art_fmri
-#./Shell_Scripts/fmri_processing/preprocess_fmri.sh $subject art_fmri
 
-#./Shell_Scripts/fmri_processing/preprocess_fmri.sh $subject skull_strip_t1_4_ants n4_bias_correction ants_norm_fmri smooth_fmri_ants
-#./Shell_Scripts/fmri_processing/preprocess_fmri.sh $subject unwarp_fmri art_fmri 
-#./Shell_Scripts/fmri_processing/preprocess_fmri.sh $subject ants_norm_fmri
-# ./Shell_Scripts/fmri_processing/preprocess_fmri.sh $subject ants_norm_fmri
+#./file_organization/file_organize.sh $Subject_dir
+#./file_organization/save_subject_info.sh $Subject_dir $Matlab_dir
+# ./file_organization/zip_raw_files.sh $Subject_dir
 
-#./Shell_Scripts/fmri_processing/preprocess_fmri.sh $subject check_fmri_ants
+./fmri_processing/preprocess_fmri.sh $Matlab_dir $Template_dir $Subject_dir slicetime_fmri create_fieldmap unwarp_fmri art_fmri 
 
-#./Shell_Scripts/fmri_processing/preprocess_fmri.sh $subject level_one_stats_ants
+#./fmri_processing/preprocess_fmri.sh $subject unwarp_fmri art_fmri
+#./fmri_processing/preprocess_fmri.sh $subject art_fmri
+#./fmri_processing/preprocess_fmri.sh $subject skull_strip_t1_4_ants n4_bias_correction ants_norm_fmri smooth_fmri_ants
+#./fmri_processing/preprocess_fmri.sh $subject unwarp_fmri art_fmri 
+#./fmri_processing/preprocess_fmri.sh $subject ants_norm_fmri
+# ./fmri_processing/preprocess_fmri.sh $subject ants_norm_fmri
 
-#./Shell_Scripts/process_level_two_fmri.sh
+#./fmri_processing/preprocess_fmri.sh $subject check_fmri_ants
 
-# ./Shell_Scripts/cleanup_processed_files_fmri.sh $subject
+#./fmri_processing/preprocess_fmri.sh $subject level_one_stats_ants
+
+#./process_level_two_fmri.sh
+
+# ./cleanup_processed_files_fmri.sh $subject
 
 # slicetime_fmri
 # create_fieldmap
@@ -67,26 +80,27 @@ echo processing subject $subject
 # ^^^^^^^^^^^^^^^^^^^^^
 
 ############################### redcap sphere creation #################################################
-# ./Shell_Scripts/convert_rois_to_sphers ROI_settings_MiMRedcap.txt
+# ./convert_rois_to_spheres ROI_settings_MiMRedcap.txt
+# ./combine_conn_node_networks $Matlab_dir conn_wu120_all_wb 'left_dlpfc,right_dlpfc,left_acc,right_acc,medial_prefrontal_cortex,post_cingulate,left_aud_cortex,left_post_ips,right_post_ips,left_insular,right_insular,visual_cortex,left_ips,right_ips,right_thalamus,left_hand,right_hand,left_mouth,right_mouth,left_rsc,right_rsc,dACC'
 
 ################################ redcap beta estimate extraction #######################################
-# ./Shell_Scripts/export_fmri_rois_to_redcap.sh '2002,2007,2008,2012,2013,2015,2017,2018,2020,2021,2022,2023,2025,2026,2033,2034' 05_MotorImagery ROI_settings_MiMRedcap.txt
-# ./Shell_Scripts/export_fmri_rois_to_redcap.sh '2002,2007,2008,2012,2013,2015,2017,2018,2020,2021,2022,2023,2025,2026,2033,2034' 06_Nback ROI_settings_MiMRedcap.txt
-# ./Shell_Scripts/export_fmri_rois_to_redcap.sh '1002,1004,1009,1010,1011,1013' 05_MotorImagery ROI_settings_MiMRedcap.txt
-# ./Shell_Scripts/export_fmri_rois_to_redcap.sh '1002,1004,1009,1010,1011,1013' 06_Nback ROI_settings_MiMRedcap.txt
+# ./export_fmri_rois_to_redcap.sh '2002,2007,2008,2012,2013,2015,2017,2018,2020,2021,2022,2023,2025,2026,2033,2034' 05_MotorImagery ROI_settings_MiMRedcap.txt
+# ./export_fmri_rois_to_redcap.sh '2002,2007,2008,2012,2013,2015,2017,2018,2020,2021,2022,2023,2025,2026,2033,2034' 06_Nback ROI_settings_MiMRedcap.txt
+# ./export_fmri_rois_to_redcap.sh '1002,1004,1009,1010,1011,1013' 05_MotorImagery ROI_settings_MiMRedcap.txt
+# ./export_fmri_rois_to_redcap.sh '1002,1004,1009,1010,1011,1013' 06_Nback ROI_settings_MiMRedcap.txt
 
-# ./Shell_Scripts/combine_subject_mri_redcap.sh '1002,1004,1009,1010,1011,1013,2002,2007,2008,2012,2013,2015,2017,2018,2020,2021,2022,2023,2025,2026,2033,2034' 05_MotorImagery 
-# ./Shell_Scripts/combine_subject_mri_redcap.sh '1002,1004,1009,1010,1011,1013,2002,2007,2008,2012,2013,2015,2017,2018,2020,2021,2022,2023,2025,2026,2033,2034' 06_Nback
+# ./combine_subject_mri_redcap.sh $Matlab_dir '1002,1004,1009,1010,1011,1013,2002,2007,2008,2012,2013,2015,2017,2018,2020,2021,2022,2023,2025,2026,2033,2034' 05_MotorImagery 
+# ./combine_subject_mri_redcap.sh $Matlab_dir '1002,1004,1009,1010,1011,1013,2002,2007,2008,2012,2013,2015,2017,2018,2020,2021,2022,2023,2025,2026,2033,2034' 06_Nback
 
 ################################ beta estimate extraction #######################################
-#./Shell_Scripts/estimate_betas_by_condition.sh '2002,2007,2008,2012,2013,2015,2018,2020,2021,2022,2023,2025,2026' oldAdult 05_MotorImagery convert_load_sensitive_voxel_coordinates
-#./Shell_Scripts/estimate_betas_by_condition.sh '2002,2007,2008,2012,2013,2015,2018,2020,2021,2022,2023,2025,2026' oldAdult 05_MotorImagery create_roi_sphere_for_load_sensitive_rois
+#./estimate_betas_by_condition.sh '2002,2007,2008,2012,2013,2015,2018,2020,2021,2022,2023,2025,2026' oldAdult 05_MotorImagery convert_load_sensitive_voxel_coordinates
+#./estimate_betas_by_condition.sh '2002,2007,2008,2012,2013,2015,2018,2020,2021,2022,2023,2025,2026' oldAdult 05_MotorImagery create_roi_sphere_for_load_sensitive_rois
 
-#./Shell_Scripts/estimate_betas_by_condition.sh '2002,2007,2008,2012,2013,2015,2018,2020,2021,2022,2023,2025,2026' oldAdult 05_MotorImagery collect_load_sensitive_rois
+#./estimate_betas_by_condition.sh '2002,2007,2008,2012,2013,2015,2018,2020,2021,2022,2023,2025,2026' oldAdult 05_MotorImagery collect_load_sensitive_rois
 
-#./Shell_Scripts/estimate_betas_by_condition.sh '1002,1004,1010,1011,1013' youngAdult 05_MotorImagery convert_load_sensitive_voxel_coordinates
-#./Shell_Scripts/estimate_betas_by_condition.sh '1002,1004,1010,1011,1013' youngAdult 05_MotorImagery create_roi_sphere_for_load_sensitive_rois
+#./estimate_betas_by_condition.sh '1002,1004,1010,1011,1013' youngAdult 05_MotorImagery convert_load_sensitive_voxel_coordinates
+#./estimate_betas_by_condition.sh '1002,1004,1010,1011,1013' youngAdult 05_MotorImagery create_roi_sphere_for_load_sensitive_rois
 
 # for this_subject in "${subject_array[@]}"; do
-# 	./Shell_Scripts/fmri_processing/preprocess_fmri.sh $this_subject check_fmri_ants
+# 	./fmri_processing/preprocess_fmri.sh $this_subject check_fmri_ants
 # done

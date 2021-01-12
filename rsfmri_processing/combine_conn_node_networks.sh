@@ -9,24 +9,25 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# this script requires arguments 
+# this script requires arguments .... call from the batch_fmri.batch
 
-# example >> combine_conn_node_networks.sh conn_wu120_test 'left_dlpfc,medial_prefrontal_cortex,post_cingulate'
-# combine_conn_node_networks.sh conn_wu120_all_wb 'left_dlpfc,right_dlpfc,left_acc,right_acc,medial_prefrontal_cortex,post_cingulate,left_aud_cortex,left_post_ips,right_post_ips,left_insular,right_insular,visual_cortex,left_ips,right_ips,right_thalamus,left_hand,right_hand,left_mouth,right_mouth,left_rsc,right_rsc,dACC'
-# combine_conn_node_networks.sh conn_wu120_all_wb 'left_hand,right_mouth,medial_prefrontal_cortex_post_cingulate,right_post_ips,left_insular,visual_cortex,right_thalamus,left_aud_cortex,right_mouth,left_dlpfc,right_dlpfc,left_acc,right_acc,dACC'
+# example >> combine_conn_node_networks.sh $Matlab_dir conn_wu120_test 'left_dlpfc,medial_prefrontal_cortex,post_cingulate'
+# combine_conn_node_networks.sh $Matlab_dir conn_wu120_all_wb 'left_dlpfc,right_dlpfc,left_acc,right_acc,medial_prefrontal_cortex,post_cingulate,left_aud_cortex,left_post_ips,right_post_ips,left_insular,right_insular,visual_cortex,left_ips,right_ips,right_thalamus,left_hand,right_hand,left_mouth,right_mouth,left_rsc,right_rsc,dACC'
+# combine_conn_node_networks.sh $Matlab_dir conn_wu120_all_wb 'left_hand,right_mouth,medial_prefrontal_cortex_post_cingulate,right_post_ips,left_insular,visual_cortex,right_thalamus,left_aud_cortex,right_mouth,left_dlpfc,right_dlpfc,left_acc,right_acc,dACC'
 
 argument_counter=0
 for this_argument in "$@"; do
 	if	[[ $argument_counter == 0 ]]; then
-		conn_project=$this_argument
+		Matlab_dir=$this_argument
 	elif [[ $argument_counter == 1 ]]; then
+		conn_project=$this_argument
+	elif [[ $argument_counter == 2 ]]; then
 		nodes=$this_argument
 	fi
 	(( argument_counter++ ))
 done
 
-Code_dir=/blue/rachaelseidler/tfettrow/Crunch_Code
-export MATLABPATH=${Code_dir}/Matlab_Scripts/helper
+export MATLABPATH=${Matlab_dir}/helper
 
 #for SUB in ${subjects[@]}; do
 Study_dir=/blue/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/MiM_Data

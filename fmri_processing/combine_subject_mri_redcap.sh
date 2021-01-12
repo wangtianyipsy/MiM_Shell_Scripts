@@ -9,27 +9,26 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# this script requires arguments 
-
-# example >> combine_subject_mri_redcap.sh '1002,1004,1007,1009,1010,1011,1013,2021,2015,2002,2018,2017,2012,2025,2020,2026,2023,2022,2007,2013,2008,2033,2034,2037' 05_MotorImagery 
+# this script requires arguments... use the batch_fmri.batch to call this shell script
+# example >> combine_subject_mri_redcap.sh $Matlab_dir '1002,1004,1007,1009,1010,1011,1013,2021,2015,2002,2018,2017,2012,2025,2020,2026,2023,2022,2007,2013,2008,2033,2034,2037' 05_MotorImagery 
 
 argument_counter=0
 for this_argument in "$@"; do
 	if	[[ $argument_counter == 0 ]]; then
-		subjects=$this_argument
+		Matlab_dir=$this_argument
 	elif [[ $argument_counter == 1 ]]; then
+		subjects=$this_argument
+	elif [[ $argument_counter == 2 ]]; then
 		fmri_processed_folder_names=$this_argument
 	fi
 	(( argument_counter++ ))
 done
 
-Code_dir=/blue/rachaelseidler/tfettrow/Crunch_Code
-export MATLABPATH=${Code_dir}/Matlab_Scripts/helper
+export MATLABPATH=${Matlab_dir}/helper
 
 #for SUB in ${subjects[@]}; do
 Study_dir=/blue/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/MiM_Data
 cd $Study_dir
-
 
 for this_functional_run_folder in ${fmri_processed_folder_names[@]}; do # only doing one task folder at a time so this for loop not necessary
 	ml fsl

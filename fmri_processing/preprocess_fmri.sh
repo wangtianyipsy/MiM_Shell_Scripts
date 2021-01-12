@@ -13,20 +13,21 @@ argument_counter=0
 for this_argument in "$@"
 do
 	if	[[ $argument_counter == 0 ]]; then
-    	subject=$this_argument
+		Matlab_dir=$this_argument
+	elif [[ $argument_counter == 1 ]]; then
+		Template_dir=$this_argument
+	elif [[ $argument_counter == 2 ]]; then
+    	Subject_dir=$this_argument
 	else
 		fmri_processing_steps="$this_argument"
 	fi
 	
-	# Set the path for our custom matlab functions and scripts
-	Code_dir=/blue/rachaelseidler/tfettrow/Crunch_Code
-	export MATLABPATH=${Code_dir}/Matlab_Scripts/helper
-	Subject_dir=/blue/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/MiM_Data/${subject}
+	export MATLABPATH=${Matlab_dir}/helper
 	ml matlab/2020a
 	ml gcc/5.2.0; ml ants ## ml gcc/9.3.0; ml ants/2.3.4
 	ml fsl/6.0.1
 	
-	cd "${Subject_dir}"
+	cd $Subject_dir
 
 	lines_to_ignore=$(awk '/#/{print NR}' file_settings.txt)
 
@@ -222,7 +223,7 @@ do
 					cd ${Subject_dir}/Processed/MRI_files/${fieldmap_folders[$this_loop_index]}
 			   		cp fpm_my_fieldmap.hdr ${Subject_dir}/Processed/MRI_files/${this_fmri_folder}
 	    	        cp fpm_my_fieldmap.img ${Subject_dir}/Processed/MRI_files/${this_fmri_folder}
-					cp ${Code_dir}/Matlab_Scripts/helper/vdm_defaults.m ${Subject_dir}/Processed/MRI_files/${this_fmri_folder}
+					cp ${Matlab_dir}/helper/vdm_defaults.m ${Subject_dir}/Processed/MRI_files/${this_fmri_folder}
 					cp se_epi_unwarped.nii ${Subject_dir}/Processed/MRI_files/${this_fmri_folder}
 					cd ${Subject_dir}/Processed/MRI_files/${this_fmri_folder}/
 
@@ -437,7 +438,7 @@ do
 		# 	#this needs to go into t1 folder and then for each fieldmap folder go into the t1 sub folder for that fieldmap
 		# 	this_t1_folder=($t1_processed_folder_names)
 		# 	for this_fieldmap_folder in ${fmri_fieldmap_processed_folder_names[@]}; do
-		# 		cp ${Code_dir}/MR_Templates/TPM.nii ${Subject_dir}/Processed/MRI_files/${this_t1_folder}/Coregistered2_$this_fieldmap_folder
+		# 		cp ${Template_dir}/TPM.nii ${Subject_dir}/Processed/MRI_files/${this_t1_folder}/Coregistered2_$this_fieldmap_folder
 		# 		cd ${Subject_dir}/Processed/MRI_files/${this_t1_folder}/Coregistered2_$this_fieldmap_folder
 	
 		# 		ml matlab
@@ -517,7 +518,7 @@ do
 	
 		if [[ $this_preprocessing_step == "skull_strip_t1_4_ants" ]]; then
 			this_t1_folder=($t1_processed_folder_names)
-			cp ${Code_dir}/MR_Templates/TPM.nii ${Subject_dir}/Processed/MRI_files/${this_t1_folder}
+			cp ${Template_dir}/TPM.nii ${Subject_dir}/Processed/MRI_files/${this_t1_folder}
 			cd ${Subject_dir}/Processed/MRI_files/${this_t1_folder}/
 			matlab -nodesktop -nosplash -r "try; segment_t1; catch; end; quit"
 			matlab -nodesktop -nosplash -r "try; skull_strip_t1; catch; end; quit"
@@ -626,7 +627,7 @@ do
 	
 				outputFolder=${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
 				T1_Template=${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/biascorrected_SkullStripped_T1.nii
-				MNI_Template=${Code_dir}/MR_Templates/MNI_1mm.nii
+				MNI_Template=${Template_dir}/MNI_1mm.nii
 
 				this_core_file_name=biascorrected_SkullStripped_T1
 
@@ -662,7 +663,7 @@ do
 				cp ${Subject_dir}/Processed/MRI_files/${this_t1_folder}/c1T1.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
 				cp ${Subject_dir}/Processed/MRI_files/${this_t1_folder}/c2T1.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
 				cp ${Subject_dir}/Processed/MRI_files/${this_t1_folder}/c3T1.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
-				cp ${Code_dir}/MR_Templates/MNI_2mm.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
+				cp ${Template_dir}/MNI_2mm.nii ${Subject_dir}/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization
 				gunzip -f *nii.gz
 
 				this_core_file_name=biascorrected_SkullStripped_T1

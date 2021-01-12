@@ -9,7 +9,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-subject=$1
+Subject_dir=$1
 
 #####################################################################################
 ml mricrogl
@@ -22,8 +22,6 @@ convertDICOM(){
 	this_raw_folder_name=$(cat file_settings.txt | sed -n ${this_folder_row}p | cut -d ',' -f1)
 	this_processed_folder_name=$(cat file_settings.txt | sed -n ${this_folder_row}p | cut -d ',' -f2)
 	this_processed_file_name=$(cat file_settings.txt | sed -n ${this_folder_row}p | cut -d ',' -f3)
-
-
 
 	mkdir -p "${Subject_dir}/Processed/MRI_files/${this_processed_folder_name}"
 
@@ -60,8 +58,6 @@ convertDICOM(){
 	cd $Subject_dir
 }
 
-
-Subject_dir=/blue/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/MiM_Data/${subject}
 cd $Subject_dir
 
 lines_to_ignore=$(awk '/#/{print NR}' file_settings.txt)

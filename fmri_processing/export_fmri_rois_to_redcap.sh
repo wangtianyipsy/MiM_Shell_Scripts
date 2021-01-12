@@ -28,9 +28,6 @@ for this_argument in "$@"; do
 	(( argument_counter++ ))
 done
 
-Code_dir=/blue/rachaelseidler/tfettrow/Crunch_Code
-
-
 Study_dir=/blue/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/MiM_Data
 	
 #####################################################################################################################################################

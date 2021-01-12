@@ -10,15 +10,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-subject=$1
+Subject_dir=$1
 
-Code_dir=/blue/rachaelseidler/tfettrow/Crunch_Code
+Matlab_dir=$2
 
-export MATLABPATH=${Code_dir}/Matlab_Scripts/helper
+export MATLABPATH=${Matlab_dir}/helper
 
-ml matlab
+ml matlab/2020a
 
-Subject_dir=/blue/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/MiM_Data/${subject}
 cd ${Subject_dir}/Raw/MRI_files/T1_MPRAGE_SAG_ISO_8MM_0006
 matlab -nodesktop -nosplash -r "try; save_subject_info; catch; end; quit"
 echo $SUB info saved took $SECONDS seconds to execute

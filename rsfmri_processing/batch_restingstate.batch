@@ -10,7 +10,13 @@
 #SBATCH --array=0								# array range
 pwd; hostname; date
 
-cd /blue/rachaelseidler/tfettrow/Crunch_Code/
+##### BATCH FILE INFO ######
+# 1) specify the anticipated memory for the job (>25% more than what it will actually use)
+# 2) specify the array (0-N) vector.. must be size of the subject_array.. starts with 0
+# 3) specify the subject_array
+# 4) make sure the directories are set to your repositories
+# 5) uncomment the step you would like to process for each subject specified in subject_array
+
 
 # subject_array=(wu120_001 wu120_002 wu120_003 wu120_004 wu120_005) #5
 #subject_array=(wu120_006 wu120_007 wu120_008 wu120_009 wu120_010 wu120_011 wu120_012 wu120_013 wu120_014 wu120_015 wu120_016 wu120_017 wu120_018 wu120_019 wu120_020 wu120_021 wu120_022 wu120_023 wu120_024 wu120_025 wu120_026 wu120_027 wu120_028 wu120_029) #24
@@ -35,23 +41,33 @@ subject_array=(2052)
 # subject_array=(2033)
 
 subject=${subject_array[$SLURM_ARRAY_TASK_ID]}
-echo processing subject $subject
+
+
+subject=${subject_array[$SLURM_ARRAY_TASK_ID]}
+
+Subject_dir=/blue/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/MiM_Data/${subject}
+Shell_dir=/blue/rachaelseidler/tfettrow/Crunch_Code/Shell_Scripts
+Matlab_dir=/blue/rachaelseidler/tfettrow/Crunch_Code/Matlab_Scripts
+Template_dir=/blue/rachaelseidler/tfettrow/Crunch_Code/MR_Templates
+
+cd $Shell_dir
+
 
 ################################ restingstate preprocessing #######################################
-#./Shell_Scripts/preprocess_restingstate.sh $subject slicetime_restingstate
-#./Shell_Scripts/preprocess_restingstate.sh $subject create_fieldmap_restingstate
-#./Shell_Scripts/rsfmri_processing/preprocess_restingstate.sh $subject slicetime_restingstate create_fieldmap_restingstate realign_unwarp_restingstate art_restingstate
-# ./Shell_Scripts/preprocess_restingstate.sh $subject unwarp_restingstate art_restingstate
+#./preprocess_restingstate.sh $subject slicetime_restingstate
+#./preprocess_restingstate.sh $subject create_fieldmap_restingstate
+#./rsfmri_processing/preprocess_restingstate.sh $subject slicetime_restingstate create_fieldmap_restingstate realign_unwarp_restingstate art_restingstate
+# ./preprocess_restingstate.sh $subject unwarp_restingstate art_restingstate
 
-#./Shell_Scripts/preprocess_restingstate.sh $subject remove_outlier_volumes
-# ./Shell_Scripts/rsfmri_processing/preprocess_restingstate.sh $subject skull_strip_t1_4_ants n4_bias_correct 
-./Shell_Scripts/rsfmri_processing/preprocess_restingstate.sh $subject skull_strip_t1_4_ants n4_bias_correct ants_norm_restingstate smooth_restingstate_ants
-# ./Shell_Scripts/rsfmri_processing/preprocess_restingstate.sh $subject ants_norm_restingstate
-# ./Shell_Scripts/rsfmri_processing/preprocess_restingstate.sh $subject smooth_restingstate_ants
-# ./Shell_Scripts/rsfmri_processing/preprocess_restingstate.sh $subject ants_norm_restingstate smooth_restingstate_ants
-#./Shell_Scripts/rsfmri_processing/preprocess_restingstate.sh $subject copy_files_restingstate
-# ./Shell_Scripts/preprocess_restingstate.sh $subject art_restingstate
-# ./Shell_Scripts/preprocess_restingstate.sh $subject check_restingstate_ants
+#./preprocess_restingstate.sh $subject remove_outlier_volumes
+# ./rsfmri_processing/preprocess_restingstate.sh $subject skull_strip_t1_4_ants n4_bias_correct 
+./rsfmri_processing/preprocess_restingstate.sh $subject skull_strip_t1_4_ants n4_bias_correct ants_norm_restingstate smooth_restingstate_ants
+# ./rsfmri_processing/preprocess_restingstate.sh $subject ants_norm_restingstate
+# ./rsfmri_processing/preprocess_restingstate.sh $subject smooth_restingstate_ants
+# ./rsfmri_processing/preprocess_restingstate.sh $subject ants_norm_restingstate smooth_restingstate_ants
+#./rsfmri_processing/preprocess_restingstate.sh $subject copy_files_restingstate
+# ./preprocess_restingstate.sh $subject art_restingstate
+# ./preprocess_restingstate.sh $subject check_restingstate_ants
 
 #slicetime_restingstate
 #create_fieldmap_restingstate
@@ -68,10 +84,10 @@ echo processing subject $subject
 #copy_files_restingstate
 
 ############### CONN ###############################
-#./Shell_Scripts/conn_network.sh
+#./conn_network.sh
 
 
 # for this_subject in "${subject_array[@]}"; do
-# 	# ./Shell_Scripts/rsfmri_processing/preprocess_restingstate.sh $this_subject check_restingstate_ants
-# 	./Shell_Scripts/rsfmri_processing/preprocess_restingstate.sh $this_subject copy_files_restingstate
+# 	# ./rsfmri_processing/preprocess_restingstate.sh $this_subject check_restingstate_ants
+# 	./rsfmri_processing/preprocess_restingstate.sh $this_subject copy_files_restingstate
 # done

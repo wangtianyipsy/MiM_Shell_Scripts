@@ -9,9 +9,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-subject=$1
+Subject_dir=$1
 
-Subject_dir=/ufrc/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/MiM_Data/${subject}
 cd ${Subject_dir}/Raw/MRI_files
 
 zip -r MRI_files.zip *

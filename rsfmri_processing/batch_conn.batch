@@ -10,9 +10,9 @@
 
 pwd; hostname; date
 
-Code_dir=/blue/rachaelseidler/tfettrow/Crunch_Code
+Matlab_dir=/blue/rachaelseidler/tfettrow/Crunch_Code/Matlab_Scripts
 
-export MATLABPATH=${Code_dir}/Matlab_Scripts/helper
+export MATLABPATH=${Matlab_dir}/helper
 
 Study_dir=/blue/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/MiM_Data
 
