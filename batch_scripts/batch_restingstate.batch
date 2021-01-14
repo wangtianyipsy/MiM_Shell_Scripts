@@ -1,0 +1,68 @@
+#!/bin/bash
+#SBATCH --job-name=batch_restingstate     			# Job name
+#SBATCH --mail-type=END,FAIL          			# Mail events (NONE, BEGIN, END, FAIL, ALL)
+#SBATCH --mail-user=<tfettrow@ufl.edu>  		# Where to send mail	
+#SBATCH --ntasks=1                    			# Run a single task
+#SBATCH --mem=8000mb	                   	    # Memory limit
+#SBATCH --qos=rachaelseidler
+#SBATCH --time=96:00:00               			# Time limit hrs:min:sec
+#SBATCH --output=batch_restingstate.%A_%a.out 	# Standard output and error log
+#SBATCH --array=0-3								# array range
+pwd; hostname; date
+
+##### BATCH FILE INFO ######
+# 1) specify the anticipated memory for the job (>25% more than what it will actually use)
+# 2) specify the array (0-N) vector.. must be size of the subject_array.. starts with 0
+# 3) specify the subject_array
+# 4) make sure the directories are set to your repositories
+# 5) uncomment the step you would like to process for each subject specified in subject_array
+
+subject_array=(1022 1027 1024 2042)
+
+subject=${subject_array[$SLURM_ARRAY_TASK_ID]}
+
+Subject_dir=/blue/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/MiM_Data/${subject}
+Shell_dir=/blue/rachaelseidler/tfettrow/Crunch_Code/Shell_Scripts
+Matlab_dir=/blue/rachaelseidler/tfettrow/Crunch_Code/Matlab_Scripts
+Template_dir=/blue/rachaelseidler/tfettrow/Crunch_Code/MR_Templates
+
+cd $Shell_dir
+
+
+################################ restingstate preprocessing #######################################
+#./preprocess_restingstate.sh $subject slicetime_restingstate
+#./preprocess_restingstate.sh $subject create_fieldmap_restingstate
+# ./rsfmri_processing/preprocess_restingstate.sh $Matlab_dir $Template_dir $Subject_dir slicetime_restingstate create_fieldmap_restingstate realign_unwarp_restingstate art_restingstate
+# ./preprocess_restingstate.sh $subject unwarp_restingstate art_restingstate
+
+#./preprocess_restingstate.sh $subject remove_outlier_volumes
+./rsfmri_processing/preprocess_restingstate.sh $Matlab_dir $Template_dir $Subject_dir copy_skullstripped_biascorrected_t1_4_ants n4_bias_correct ants_norm_restingstate smooth_restingstate_ants
+# ./rsfmri_processing/preprocess_restingstate.sh $subject ants_norm_restingstate
+# ./rsfmri_processing/preprocess_restingstate.sh $subject smooth_restingstate_ants
+# ./rsfmri_processing/preprocess_restingstate.sh $subject ants_norm_restingstate smooth_restingstate_ants
+#./rsfmri_processing/preprocess_restingstate.sh $subject copy_files_restingstate
+# ./preprocess_restingstate.sh $subject art_restingstate
+# ./preprocess_restingstate.sh $subject check_restingstate_ants
+
+#slicetime_restingstate
+#create_fieldmap_restingstate
+#unwarp_restingstate
+#art_restingstate
+#remove_outlier_volumes
+#art_restingstate
+#skull_strip_t1_4_ants (if running before fmri)
+#copy_skullstripped_biascorrected_t1_4_ants (if running after fmri)
+#n4_bias_correct
+#ants_norm_restingstate
+#smooth_restingstate_ants
+#check_restingstate_ants
+#copy_files_restingstate
+
+############### CONN ###############################
+#./conn_network.sh
+
+
+# for this_subject in "${subject_array[@]}"; do
+# 	# ./rsfmri_processing/preprocess_restingstate.sh $this_subject check_restingstate_ants
+# 	./rsfmri_processing/preprocess_restingstate.sh $this_subject copy_files_restingstate
+# done
