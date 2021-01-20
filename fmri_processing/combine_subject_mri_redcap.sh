@@ -23,29 +23,29 @@ for this_argument in "$@"; do
 	fi
 	(( argument_counter++ ))
 done
-
-export MATLABPATH=${Matlab_dir}/helper
+pwd;
+#export MATLABPATH=${Matlab_dir}/helper
 
 #for SUB in ${subjects[@]}; do
 Study_dir=/blue/rachaelseidler/share/FromExternal/Research_Projects_UF/CRUNCH/MiM_Data
 cd $Study_dir
-
+echo "CD set"
 for this_functional_run_folder in ${fmri_processed_folder_names[@]}; do # only doing one task folder at a time so this for loop not necessary
 	ml fsl
 	subject_index=0
 
-	outfile=${this_functional_run_folder}_fmri_redcap.csv
+	outfile=${this_functional_run_folder}_fmri_roi_betas_all.csv
 
-	if [ -e ${this_functional_run_folder}_fmri_redcap.csv ]; then
-		rm ${this_functional_run_folder}_fmri_redcap.csv
+	if [ -e ${this_functional_run_folder}_fmri_roi_betas_all.csv ]; then
+		rm ${this_functional_run_folder}_fmri_roi_betas_all.csv
 	fi
 
 	while IFS=',' read -ra subject_list; do
    	    for this_subject in "${subject_list[@]}"; do
    	    	cd ${Study_dir}/$this_subject/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/Level1_WholeBrain
 
-   	    	this_subject_header=$(cat ${this_subject}_fmri_redcap.csv | sed -n 1p)
-   	    	this_subject_data=$(cat ${this_subject}_fmri_redcap.csv | sed -n 2p)
+   	    	this_subject_header=$(cat ${this_subject}_fmri_roi_betas.csv | sed -n 1p)
+   	    	this_subject_data=$(cat ${this_subject}_fmri_roi_betas.csv | sed -n 2p)
 			
 			cd ${Study_dir}
    	    	this_subject_header_outfile=$(cat $outfile | sed 1d)
@@ -56,7 +56,7 @@ for this_functional_run_folder in ${fmri_processed_folder_names[@]}; do # only d
 			if [[ subject_index == 0 ]]; then
 				echo -e "$row1\n$new_row" >> "$outfile"
 			else
-				rm $outfile
+				#rm $outfile
 				echo -e "$row1\n$existing_section\n$new_row" >> "$outfile"
 			fi
 			(( subject_index++ ))
