@@ -31,7 +31,7 @@ do
 done
 export MATLABPATH=${Matlab_dir}/helper
 
-	
+cd $Study_dir
 ml matlab/2020a
 matlab -nodesktop -nosplash -r "try; cat12StructuralAnalysis('subjects',{'2002'},'t1_folder','02_T1','t1_filename','T1.nii','steps_to_run_vector',[1 0 0 0 0],'template_dir','/blue/rachaelseidler/wangtianyi/MR_Templates'); catch; end; quit"
 # ERROR (could not find Cat_log.)
