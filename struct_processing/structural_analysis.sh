@@ -20,7 +20,7 @@ do
 		Matlab_dir=$this_argument
 	elif [[ $argument_counter == 1 ]]; then
     	Template_dir=$this_argument
-    elif [[ $argument_counter == 1 ]]; then
+    elif [[ $argument_counter == 2 ]]; then
     	Study_dir=$this_argument
     elif [[ $argument_counter == 3 ]]; then
     	subject=$this_argument
@@ -30,56 +30,57 @@ do
 	(( argument_counter++ ))
 done
 export MATLABPATH=${Matlab_dir}/helper
+
 	
-# ml matlab/2020a
-# matlab -nodesktop -nosplash -r "try; cat12StructuralAnalysis('subjects',{'1002','1004','1007','1009','1010','1011','1013','1020','1022','1024','1027','2002','2007','2008','2012','2013','2015','2017','2018','2020','2021','2022','2023','2025','2026','2033','2034',2037','2042','2052','3004','3006','3007','3008'},'t1_folder','02_T1','t1_filename','T1.nii','steps_to_run_vector',[1 0 1 0 1],'template_dir','/blue/rachaelseidler/tfettrow/Crunch_Code/MR_Templates'); catch; end; quit"
+ml matlab/2020a
+matlab -nodesktop -nosplash -r "try; cat12StructuralAnalysis('subjects',{'2002'},'t1_folder','02_T1','t1_filename','T1.nii','steps_to_run_vector',[1 0 0 0 0],'template_dir','/blue/rachaelseidler/wangtianyi/MR_Templates'); catch; end; quit"
 # ERROR (could not find Cat_log.)
 
 # ml matlab/2020a
 # matlab -nodesktop -nosplash -r "try; cat12StructuralAnalysis('subjects',{$subject}','t1_folder','02_T1','t1_filename','T1.nii','steps_to_run_vector',[1 0 0 0 0],'template_dir','/blue/rachaelseidler/tfettrow/Crunch_Code/MR_Templates'); catch; end; quit"
 
-Subject_dir=$Study_dir/$subject
+# Subject_dir=$Study_dir/$subject
 
-	export MATLABPATH=${Matlab_dir}/helper
-	ml matlab/2020a
-	ml gcc/5.2.0; ml ants ## ml gcc/9.3.0; ml ants/2.3.4
-	ml fsl/6.0.1
-	ml itksnap
-	cd $Subject_dir
+# 	export MATLABPATH=${Matlab_dir}/helper
+# 	ml matlab/2020a
+# 	ml gcc/5.2.0; ml ants ## ml gcc/9.3.0; ml ants/2.3.4
+# 	ml fsl/6.0.1
+# 	ml itksnap
+# 	cd $Subject_dir
 
-	lines_to_ignore=$(awk '/#/{print NR}' file_settings.txt)
+# 	lines_to_ignore=$(awk '/#/{print NR}' file_settings.txt)
 
-	t1_line_numbers_in_file_info=$(awk '/t1/{print NR}' file_settings.txt)
+# 	t1_line_numbers_in_file_info=$(awk '/t1/{print NR}' file_settings.txt)
 
-	t1_line_numbers_to_process=$t1_line_numbers_in_file_info
+# 	t1_line_numbers_to_process=$t1_line_numbers_in_file_info
 
-	this_index_t1=0
-	for item_to_ignore in ${lines_to_ignore[@]}; do
-  		for item_to_check in ${t1_line_numbers_to_process[@]}; do
-  			if [[ $item_to_check == $item_to_ignore ]]; then 
-  				remove_this_item_t1[$this_index_t1]=$item_to_ignore
-  				(( this_index_t1++ ))
-  			fi
-  		done
-	done
+# 	this_index_t1=0
+# 	for item_to_ignore in ${lines_to_ignore[@]}; do
+#   		for item_to_check in ${t1_line_numbers_to_process[@]}; do
+#   			if [[ $item_to_check == $item_to_ignore ]]; then 
+#   				remove_this_item_t1[$this_index_t1]=$item_to_ignore
+#   				(( this_index_t1++ ))
+#   			fi
+#   		done
+# 	done
 
-	for item_to_remove_t1 in ${remove_this_item_t1[@]}; do
-		t1_line_numbers_to_process=$(echo ${t1_line_numbers_to_process[@]/$item_to_remove_t1})
-	done
+# 	for item_to_remove_t1 in ${remove_this_item_t1[@]}; do
+# 		t1_line_numbers_to_process=$(echo ${t1_line_numbers_to_process[@]/$item_to_remove_t1})
+# 	done
 
-	this_index=0
-	for this_line_number in ${t1_line_numbers_to_process[@]}; do
-		t1_processed_folder_name_array[$this_index]=$(cat file_settings.txt | sed -n ${this_line_number}p | cut -d ',' -f2)
-		(( this_index++ ))
-	done
+# 	this_index=0
+# 	for this_line_number in ${t1_line_numbers_to_process[@]}; do
+# 		t1_processed_folder_name_array[$this_index]=$(cat file_settings.txt | sed -n ${this_line_number}p | cut -d ',' -f2)
+# 		(( this_index++ ))
+# 	done
 	
-	t1_processed_folder_names=$(echo "${t1_processed_folder_name_array[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' ')
+# 	t1_processed_folder_names=$(echo "${t1_processed_folder_name_array[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' ')
 
 
-	for this_preprocessing_step in "${struct_processing_steps[@]}"; do
-		if [[ $this_preprocessing_step ==  "check_struct_segments" ]]; then
-			data_folder_to_analyze=($t1_processed_folder_names)
-			echo checking $subject
-			itksnap -g ${Study_dir}/ROIs/MNI_2mm.nii -o ${Subject_dir}/Processed/MRI_files/${data_folder_to_analyze}/CAT12_Analysis/mri/mwp1T1.nii
-		fi
-	done
+# 	for this_preprocessing_step in "${struct_processing_steps[@]}"; do
+# 		if [[ $this_preprocessing_step ==  "check_struct_segments" ]]; then
+# 			data_folder_to_analyze=($t1_processed_folder_names)
+# 			echo checking $subject
+# 			itksnap -g ${Study_dir}/ROIs/MNI_2mm.nii -o ${Subject_dir}/Processed/MRI_files/${data_folder_to_analyze}/CAT12_Analysis/mri/mwp1T1.nii
+# 		fi
+# 	done
