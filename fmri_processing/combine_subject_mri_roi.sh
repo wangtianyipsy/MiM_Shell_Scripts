@@ -14,10 +14,14 @@
 
 argument_counter=0
 for this_argument in "$@"; do
-	if [[ $argument_counter == 0 ]]; then
+	if	[[ $argument_counter == 0 ]]; then
 		subjects=$this_argument
 	elif [[ $argument_counter == 1 ]]; then
 		fmri_processed_folder_names=$this_argument
+	elif [[ $argument_counter == 2 ]]; then
+		in_ext=$this_argument
+	elif [[ $argument_counter == 3 ]]; then
+		out_ext=$this_argument
 	fi
 	(( argument_counter++ ))
 done
@@ -30,18 +34,17 @@ for this_functional_run_folder in ${fmri_processed_folder_names[@]}; do # only d
 	ml fsl
 	subject_index=0
 
-	outfile=${this_functional_run_folder}_fmri_roi_betas_all.csv
-
-	if [ -e ${this_functional_run_folder}_fmri_roi_betas_all.csv ]; then
-		rm ${this_functional_run_folder}_fmri_roi_betas_all.csv
+	outfile=${fmri_processed_folder_names}_${out_ext}
+	if [ -e ${fmri_processed_folder_names}_${out_ext} ]; then
+		rm ${fmri_processed_folder_names}_${out_ext}
 	fi
 
 	while IFS=',' read -ra subject_list; do
    	    for this_subject in "${subject_list[@]}"; do
    	    	cd ${Study_dir}/$this_subject/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/Level1_WholeBrain
 
-   	    	this_subject_header=$(cat ${this_subject}_fmri_roi_betas.csv | sed -n 1p)
-   	    	this_subject_data=$(cat ${this_subject}_fmri_roi_betas.csv | sed -n 2p)
+   	    	this_subject_header=$(cat ${this_subject}_${in_ext} | sed -n 1p)
+   	    	this_subject_data=$(cat ${this_subject}_${in_ext} | sed -n 2p)
 			
 			cd ${Study_dir}
    	    	this_subject_header_outfile=$(cat $outfile | sed 1d)
