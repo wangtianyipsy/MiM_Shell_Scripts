@@ -24,6 +24,8 @@ for this_argument in "$@"; do
 		this_functional_run_folder=$this_argument
 	elif [[ $argument_counter == 2 ]]; then
 		roi_settings_file=$this_argument
+	elif [[ $argument_counter == 3 ]]; then
+		out_ext=$this_argument
 	fi
 	(( argument_counter++ ))
 done
@@ -35,9 +37,9 @@ ml fsl/6.0.1
 while IFS=',' read -ra subject_list; do
        for this_subject in "${subject_list[@]}"; do
        	cd ${Study_dir}/$this_subject/Processed/MRI_files/${this_functional_run_folder}/ANTS_Normalization/Level1_WholeBrain	     					
-   	    outfile=${this_subject}_fmri_roi_betas.csv
-		if [ -e ${this_subject}_fmri_roi_betas.csv ]; then
-			rm ${this_subject}_fmri_roi_betas.csv
+   	    outfile=${this_subject}_${out_ext}
+		if [ -e ${this_subject}_${out_ext} ]; then
+			rm ${this_subject}_${out_ext}
 		fi
 		var1="record_id, redcap_event_name"
 		var2="$H${this_subject}, base_v4_mri_arm_1" 
